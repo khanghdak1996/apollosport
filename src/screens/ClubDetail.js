@@ -138,7 +138,7 @@ export function ClubDetail({ clubId, me, mySessions, myReactions, isAdmin, onBac
         ${loading
           ? html`<p style=${{ textAlign: 'center', color: C.txt3, fontSize: 13, padding: 40 }}>Đang tải...</p>`
           : !club
-            ? html`<${Empty} icon="🤔" msg="Nhóm không tồn tại"/>`
+            ? html`<${Empty} icon="other" msg="Nhóm không tồn tại"/>`
             : html`
               <div style=${{ padding: '20px 16px', textAlign: 'center', borderBottom: `1px solid ${C.bdr}`, background: '#fff' }}>
                 <div style=${{ width: 64, height: 64, borderRadius: 18, margin: '0 auto 10px', background: a.color + '1A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>${club.coverEmoji || a.emoji}</div>
@@ -201,7 +201,7 @@ export function ClubDetail({ clubId, me, mySessions, myReactions, isAdmin, onBac
               <div style=${{ padding: '8px 16px 20px' }}>
                 <p style=${{ margin: '0 0 10px', fontSize: 13, fontWeight: 600, color: C.txt2 }}>Hoạt động của nhóm · ${a.emoji} ${a.label}</p>
                 ${items.length === 0
-                  ? html`<${Empty} icon=${a.emoji} msg="Chưa có buổi ${a.label.toLowerCase()} nào" sub="Thành viên đăng buổi tập sẽ hiện ở đây"/>`
+                  ? html`<${Empty} icon=${a.iconKey} msg="Chưa có buổi ${a.label.toLowerCase()} nào" sub="Thành viên đăng buổi tập sẽ hiện ở đây"/>`
                   : items.map(p => html`<${PostCard}
                       key=${`${p.authorUid}_${p.id}`}
                       post=${p}

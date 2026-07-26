@@ -161,7 +161,7 @@ function ProgsTab({ progs, onNew, onDel, onEdit, onStart, onBack }) {
         <${Btn} onClick=${onNew} cx=${{ display: 'flex', alignItems: 'center', gap: 6 }}><${Icons.plus} size=${16}/> Tạo mới</${Btn}>
       </div>
       ${progs.length === 0
-      ? html`<${Empty} icon="📋" msg="Chưa có chương trình" sub='Nhấn "+ Tạo mới" để bắt đầu'/>`
+      ? html`<${Empty} icon="journal" msg="Chưa có chương trình" sub='Nhấn "+ Tạo mới" để bắt đầu'/>`
       : progs.map(prog => html`
           <${Card} key=${prog.id} cx=${{ border: `1px solid ${C.bdr}` }}>
             <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -764,7 +764,7 @@ function PickEx({ exList, onPick, onClose, onAddEx }) {
         </div>
       </div>
       <div style=${{ flex: 1, overflowY: 'auto', padding: '8px 16px', WebkitOverflowScrolling: 'touch' }}>
-        ${groups.length === 0 && html`<${Empty} icon="🔍" msg="Không tìm thấy bài tập" sub="Thử nhóm cơ khác hoặc từ khoá khác"/>`}
+        ${groups.length === 0 && html`<${Empty} icon="other" msg="Không tìm thấy bài tập" sub="Thử nhóm cơ khác hoặc từ khoá khác"/>`}
         ${groups.map(g => html`
           <div key=${g}>
             <${Label} t=${g} mt=${12}/>
@@ -1040,7 +1040,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
     setWKg('');
   };
 
-  if (sessions.length === 0) return html`<div class="fade-in"><${Empty} icon="📈" msg="Chưa có dữ liệu" sub="Hoàn thành buổi tập để thấy tiến bộ ở đây"/></div>`;
+  if (sessions.length === 0) return html`<div class="fade-in"><${Empty} icon="star" msg="Chưa có dữ liệu" sub="Hoàn thành buổi tập để thấy tiến bộ ở đây"/></div>`;
 
   // Thẻ cân nặng cơ thể — trung lập, đưa lên phần Tổng quan (không còn nằm sau phân tích gym).
   const weightCard = html`
@@ -1215,7 +1215,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
             <${Label} t=${`Quãng đường theo tuần (${isSwim ? 'm' : 'km'})`}/>
             <${BarChart} items=${dp.weeks.map(w => ({ label: fWeek(w.wk).split('–')[0], val: isSwim ? w.meters : Math.round(w.km * 10) / 10 }))}/>
           </${Card}>`
-      : html`<${Empty} icon=${a.emoji} msg="Cần thêm buổi để thấy xu hướng"/>`}`;
+      : html`<${Empty} icon=${a.iconKey} msg="Cần thêm buổi để thấy xu hướng"/>`}`;
   };
 
   // Drill-down môn theo buổi (yoga/bóng đá/…).
@@ -1242,7 +1242,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
             <${Label} t="Điểm theo tuần"/>
             <${BarChart} items=${wk.map(w => ({ label: fWeek(w.wk).split('–')[0], val: w.points }))}/>
           </${Card}>`
-      : html`<${Empty} icon=${a.emoji} msg="Cần thêm buổi để thấy xu hướng"/>`}`;
+      : html`<${Empty} icon=${a.iconKey} msg="Cần thêm buổi để thấy xu hướng"/>`}`;
   };
 
   return html`
@@ -1258,7 +1258,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
 
           ${mode === 'exercise' ? html`
             ${exOptions.length === 0
-            ? html`<${Empty} icon="🏋️" msg="Chưa có dữ liệu bài tập"/>`
+            ? html`<${Empty} icon="gym" msg="Chưa có dữ liệu bài tập"/>`
             : html`
                 <select value=${selExId} onChange=${e => setSelExId(e.target.value)}
                   class="workout-input" style=${{ width: '100%', padding: '12px 14px', borderRadius: r.md, fontSize: 14, fontWeight: 400, color: C.txt1, marginBottom: 16 }}>
@@ -1299,7 +1299,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
               `}
           `: html`
             ${dayOptions.length === 0
-            ? html`<${Empty} icon="📅" msg="Chưa có dữ liệu buổi tập"/>`
+            ? html`<${Empty} icon="calendar" msg="Chưa có dữ liệu buổi tập"/>`
             : html`
                 <select value=${selDay} onChange=${e => setSelDay(e.target.value)}
                   class="workout-input" style=${{ width: '100%', padding: '12px 14px', borderRadius: r.md, fontSize: 14, fontWeight: 400, color: C.txt1, marginBottom: 16 }}>

@@ -33,7 +33,7 @@ export function GoalsScreen({ me, mySessions, isAdmin, onBack }) {
         ${loading
           ? html`<p style=${{ textAlign: 'center', color: C.txt3, fontSize: 13, padding: 30 }}>Đang tải...</p>`
           : goals.length === 0
-            ? html`<${Empty} icon="🎯" msg="Chưa có mục tiêu chung nào" sub="Tạo mục tiêu đầu tiên để cả công ty cùng phấn đấu!"/>`
+            ? html`<${Empty} icon="target" msg="Chưa có mục tiêu chung nào" sub="Tạo mục tiêu đầu tiên để cả công ty cùng phấn đấu!"/>`
             : goals.map(g => html`<${GoalCard} key=${g.id} goal=${g} me=${me} mySessions=${mySessions} canContribute=${true} isAdmin=${isAdmin} onDeleted=${() => setGoals(gs => gs.filter(x => x.id !== g.id))}/>`)}
       </div>
 
