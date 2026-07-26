@@ -1297,78 +1297,74 @@ function CelebrationModal({ onClose, workout, profile, newPRs, newBadges, streak
     const delay = Math.random() * 2;
     const duration = 2 + Math.random() * 2;
     const size = 6 + Math.random() * 8;
-    const colors = ['#0084ff', '#db2777', '#10b981', '#f97316', '#eab308', '#ec4899'];
-    const color = colors[Math.floor(Math.random() * colors.length)];
+    const colors = ['#FFD95C', '#BCD9F2', '#EB9CC4', '#FFFFFF', '#EB4754'];
+    const color = colors[i % colors.length];
     return html`
       <div key=${i} class="confetti-piece" style=${{
         left: `${left}%`,
         animationDelay: `${delay}s`,
         animationDuration: `${duration}s`,
-        width: `${size}px`,
-        height: `${size * 1.5}px`,
-        background: color,
-        transform: `rotate(${Math.random() * 360}deg)`
+        transform: `rotate(${Math.random() * 360}deg)`,
+        background: color
       }} />
     `;
   });
 
   return html`
     <div class="fade-in" style=${{
-      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-      background: 'rgba(255, 255, 255, 0.98)', zIndex: 10000,
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      padding: 30
+      position: 'fixed', inset: 0, background: BRAND.blue, color: '#fff', zIndex: 10000,
+      display: 'flex', flexDirection: 'column', overflow: 'hidden'
     }}>
       <div class="confetti-container">${pieces}</div>
-      
-      <div class="scale-in" style=${{ textAlign: 'center', maxWidth: 360, width: '100%' }}>
-        <div style=${{ fontSize: 64, marginBottom: 20, animation: 'checkmarkPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>${(newBadges && newBadges.length) ? '🎉' : actOf(workout.type || 'gym').emoji}</div>
-        <h2 style=${{ fontSize: 28, fontWeight: 600, margin: '0 0 10px', color: '#0f172a', letterSpacing: '-0.02em' }}>Tuyệt Vời!</h2>
-        <p style=${{ fontSize: 16, color: C.txt2, margin: '0 0 28px' }}>Chúc mừng ${profile.name} ${headline(workout)} 🔥</p>
 
-        <div style=${{ background: '#ffffff', borderRadius: r.lg, padding: 20, marginBottom: 24, border: `1px solid ${C.bdr}`, boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-          <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            ${summaryStats(workout).slice(0, 2).map((st, i) => html`
-              <div key=${i}>
-                <p style=${{ margin: 0, fontSize: 11, color: C.txt3, textTransform: 'uppercase' }}>${st.u || 'Chỉ số'}</p>
-                <p style=${{ margin: 0, fontSize: 20, fontWeight: 600, color: '#0f172a' }}>${st.v}${st.u ? '' : ''}</p>
-              </div>`)}
-          </div>
-          ${streak && streak.current > 0 && html`
-            <div style=${{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${C.bdr}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <span style=${{ fontSize: 20 }}>🔥</span>
-              <span style=${{ fontSize: 15, fontWeight: 600, color: ACC }}>Chuỗi ${streak.current} ngày${streak.current === streak.longest && streak.current > 1 ? ' — kỷ lục mới!' : ''}</span>
-            </div>`}
+      <div class="scale-in" style=${{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 26px', position: 'relative', textAlign: 'center', overflowY: 'auto' }}>
+        <div style=${{ width: 96, height: 96, borderRadius: '50%', background: BRAND.yellow, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 22, flexShrink: 0 }}>
+          <${SportIcon} k="check" size=${46} color=${C.txt1} sw=${2.4}/>
+        </div>
+
+        <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 46, lineHeight: 1, letterSpacing: '.02em', textTransform: 'uppercase' }}>
+          Xong buổi<br/>${actOf(workout.type || 'gym').label}!
+        </p>
+        <p style=${{ margin: '12px 0 26px', fontFamily: F.serif, fontStyle: 'italic', fontSize: 14, color: BRAND.babyBlue }}>
+          ${streak && streak.current > 1
+      ? `Chuỗi của bạn lên ${streak.current} ngày${streak.current === streak.longest ? ' — kỷ lục mới!' : ''}.`
+      : 'Buổi đầu tiên — chuỗi bắt đầu từ hôm nay.'}
+        </p>
+
+        <div style=${{ display: 'flex', gap: 9, width: '100%', maxWidth: 360, marginBottom: 14 }}>
+          ${summaryStats(workout).slice(0, 3).map((st, i) => html`
+            <div key=${i} style=${{ flex: 1, background: 'rgba(255,255,255,.14)', borderRadius: r.lg, padding: '14px 8px', textAlign: 'center', minWidth: 0 }}>
+              <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 28, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>${st.v}</p>
+              <p style=${{ margin: '4px 0 0', fontSize: 10.5, letterSpacing: '.09em', fontWeight: 600, color: BRAND.babyBlue, textTransform: 'uppercase' }}>${st.u || 'điểm'}</p>
+            </div>`)}
         </div>
 
         ${newBadges && newBadges.length > 0 && html`
-          <div style=${{ background: 'var(--accent-glow)', border: `1px solid ${ACC}`, borderRadius: r.lg, padding: 16, marginBottom: 24 }}>
-            <p style=${{ margin: '0 0 12px', fontSize: 12.5, fontWeight: 600, color: ACC }}>🏅 Mở khoá huy hiệu mới!</p>
-            <div style=${{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
-              ${newBadges.map(id => BADGES[id] && html`
-                <div key=${id} style=${{ textAlign: 'center', width: 84 }}>
-                  <div style=${{ fontSize: 34 }}>${BADGES[id].icon}</div>
-                  <p style=${{ margin: '4px 0 0', fontSize: 11, fontWeight: 500, color: C.txt1, lineHeight: 1.3 }}>${BADGES[id].label}</p>
-                </div>`)}
+          <div style=${{ display: 'flex', alignItems: 'center', gap: 12, background: BRAND.yellow, borderRadius: r.lg, padding: '13px 16px', width: '100%', maxWidth: 360, marginBottom: 12 }}>
+            <${SportIcon} k="medal" size=${26} color=${C.txt1} sw=${1.8}/>
+            <div style=${{ minWidth: 0, textAlign: 'left' }}>
+              <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 15, letterSpacing: '.06em', color: C.txt1, textTransform: 'uppercase' }}>Huy hiệu mới</p>
+              <p style=${{ margin: '1px 0 0', fontSize: 11.5, color: C.txt1, opacity: .75 }}>${newBadges.map(id => BADGES[id] && BADGES[id].label).filter(Boolean).join(' · ')}</p>
             </div>
           </div>`}
 
         ${newPRs && newPRs.length > 0 && html`
-          <div style=${{ background: '#fffbeb', border: `1px solid #fde68a`, borderRadius: r.lg, padding: 16, marginBottom: 32, textAlign: 'left' }}>
-            <p style=${{ margin: '0 0 10px', fontSize: 12, fontWeight: 600, color: '#854f0b', textTransform: 'sentence-case', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>🏆 PR mới!</p>
+          <div style=${{ background: 'rgba(255,255,255,.14)', borderRadius: r.lg, padding: '13px 16px', width: '100%', maxWidth: 360, textAlign: 'left' }}>
+            <p style=${{ margin: '0 0 8px', fontFamily: F.display, fontWeight: 700, fontSize: 13, letterSpacing: '.08em', color: BRAND.yellow, textTransform: 'uppercase' }}>PR mới</p>
             ${newPRs.map(p => html`
-              <p key=${p.exId} style=${{ margin: '0 0 4px', fontSize: 13, color: '#854f0b' }}>
-                <strong>${p.name}</strong> — ${p.weight} kg ${p.isNewE ? `(est. 1RM ${p.e1rm} kg)` : ''}
+              <p key=${p.exId} style=${{ margin: '0 0 3px', fontSize: 12.5, color: '#fff' }}>
+                <b>${p.name}</b> — ${p.weight} kg${p.isNewE ? ` (1RM ~${p.e1rm} kg)` : ''}
               </p>`)}
-          </div>
-        `}
+          </div>`}
+      </div>
 
-        <button onClick=${onClose} class="btn-action pulse-glow" style=${{
-      width: '100%', padding: '14px', borderRadius: r.md, border: 'none',
-      background: ACC, color: '#fff', fontSize: 16, fontWeight: 500,
-      cursor: 'pointer', boxShadow: `0 4px 15px var(--accent-glow)`
+      <div style=${{ padding: '0 20px 26px', flexShrink: 0 }}>
+        <button onClick=${onClose} class="btn-action" style=${{
+      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+      background: '#fff', border: 'none', borderRadius: 15, padding: 15, cursor: 'pointer',
+      fontFamily: F.display, fontWeight: 700, fontSize: 17, letterSpacing: '.09em', color: BRAND.blue, textTransform: 'uppercase'
     }}>
-          Đồng ý
+          Về bảng tin
         </button>
       </div>
     </div>
