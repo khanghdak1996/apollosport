@@ -26,6 +26,7 @@ import { SignIn } from './screens/SignIn.js';
 import { Onboarding } from './screens/Onboarding.js';
 import { PickActivity } from './screens/PickActivity.js';
 import { LogActivity } from './screens/LogActivity.js';
+import { HomeTab } from './screens/HomeTab.js';
 import { FeedTab } from './screens/FeedTab.js';
 import { LeaderboardTab } from './screens/LeaderboardTab.js';
 import { CommentsSheet } from './screens/CommentsSheet.js';
@@ -81,74 +82,6 @@ function TabBar({ tab, onTab }) {
     </nav>`;
 }
 
-function HomeTab({ profile, progs, sessions, streak, onStart, onView, onSwitch, onManagePrograms }) {
-  const last7 = sessions.filter(s => {
-    const diff = (new Date() - new Date(s.date)) / (1000 * 60 * 60 * 24);
-    return diff <= 7;
-  });
-  const last7DaysCount = last7.length;
-  const last7Min = Math.round(last7.reduce((t, s) => t + (s.activeMinutes || 0), 0));
-  const st = streak || { current: 0, atRisk: false };
-
-  return html`
-    <div class="fade-in" style=${{ padding: '22px 16px' }}>
-
-      ${st.atRisk && html`
-        <div class="pulse-glow" style=${{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: r.md, padding: '11px 14px', marginBottom: 16 }}>
-          <span style=${{ fontSize: 22 }}>🔥</span>
-          <p style=${{ margin: 0, fontSize: 13, color: '#9a3412', lineHeight: 1.4 }}><b>Chuỗi ${st.current} ngày sắp mất!</b> Tập hôm nay để giữ lửa nhé.</p>
-        </div>`}
-
-      <!-- Hero Motivational Banner -->
-      <div style=${{ position: 'relative', borderRadius: r.lg, overflow: 'hidden', marginBottom: 24, height: 160, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', border: '1px solid #e2e8f0' }}>
-        <img src="./workout_hero.png" style=${{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.65)' }} />
-        <div style=${{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 20px', background: 'linear-gradient(0deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 100%)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-          <div>
-            <p style=${{ margin: 0, color: ACC, fontSize: 11, fontWeight: 500, textTransform: 'sentence-case', letterSpacing: '0.05em' }}>Xin chào,</p>
-            <h2 style=${{ margin: 0, fontSize: 22, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.02em' }}>${profile.name}</h2>
-          </div>
-          <button onClick=${onSwitch} class="btn-action" style=${{ background: 'rgba(0,0,0,0.06)', backdropFilter: 'blur(5px)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: r.md, padding: '6px 12px', color: '#0f172a', fontSize: 12, fontWeight: 400, cursor: 'pointer' }}>Đăng xuất</button>
-        </div>
-      </div>
-
-      <!-- Quick Dashboard Stats -->
-      <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 24 }}>
-        <div style=${{ background: st.current > 0 ? 'var(--accent-glow)' : C.bg2, borderRadius: r.md, padding: '12px 8px', textAlign: 'center', border: `1px solid ${st.current > 0 ? ACC : C.bdr}` }}>
-          <div style=${{ display: 'flex', justifyContent: 'center', color: ACC, marginBottom: 4 }}><${Icons.flame} size=${18}/></div>
-          <p style=${{ margin: 0, fontSize: 9, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Chuỗi</p>
-          <p style=${{ margin: '2px 0 0', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>${st.current} ngày</p>
-        </div>
-        <div style=${{ background: C.bg2, borderRadius: r.md, padding: '12px 8px', textAlign: 'center', border: `1px solid ${C.bdr}` }}>
-          <div style=${{ display: 'flex', justifyContent: 'center', color: ACC, marginBottom: 4 }}><${Icons.calendar} size=${18}/></div>
-          <p style=${{ margin: 0, fontSize: 9, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Tuần này</p>
-          <p style=${{ margin: '2px 0 0', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>${last7DaysCount} buổi</p>
-        </div>
-        <div style=${{ background: C.bg2, borderRadius: r.md, padding: '12px 8px', textAlign: 'center', border: `1px solid ${C.bdr}` }}>
-          <div style=${{ display: 'flex', justifyContent: 'center', color: ACC, marginBottom: 4 }}><${Icons.clock} size=${18}/></div>
-          <p style=${{ margin: 0, fontSize: 9, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Phút tuần</p>
-          <p style=${{ margin: '2px 0 0', fontSize: 16, fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${last7Min}</p>
-        </div>
-      </div>
-
-      ${sessions.length > 0 && html`
-        <${Label} t="Gần đây" mt=${20}/>
-        ${sessions.slice(0, 3).map(s => html`
-          <${Card} key=${s.id} onClick=${() => onView(s)} class="card-hover" cx=${{ cursor: 'pointer', border: `1px solid ${C.bdr}` }}>
-            <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-              ${s.photoUrl && html`<img src=${s.photoUrl} loading="lazy" style=${{ width: 44, height: 44, borderRadius: r.md, objectFit: 'cover', flexShrink: 0 }}/>`}
-              <div style=${{ flex: 1, minWidth: 0 }}>
-                <p style=${{ margin: '0 0 2px', fontSize: 14, fontWeight: 500, color: '#0f172a' }}>${s.title || s.dayName}</p>
-                <p style=${{ margin: 0, color: C.txt2, fontSize: 12 }}>${s.progName} · <span style=${{ color: C.txt3 }}>${fD(s.date)}</span></p>
-              </div>
-              <div style=${{ textAlign: 'right', flexShrink: 0 }}>
-                <p style=${{ margin: '0 0 2px', fontSize: 14, fontWeight: 600, color: ACC }}>${primStat(s).v}${primStat(s).u ? ' ' + primStat(s).u : ''}</p>
-                <p style=${{ margin: 0, color: C.txt3, fontSize: 12 }}>${durS(s.endTime - s.startTime)}</p>
-              </div>
-            </div>
-          </${Card}>`)}
-      `}
-    </div>`;
-}
 
 function ProgsTab({ progs, onNew, onDel, onEdit, onStart, onBack }) {
   return html`
@@ -1830,7 +1763,7 @@ function GymPair() {
         </div>
       `}
       <div style=${{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 20, position: 'relative' }}>
-        ${tab === 'home' && html`<${HomeTab} profile=${profile} progs=${progs} sessions=${sessions} streak=${liveStreak(userDoc.streak)} onStart=${startWorkout} onView=${openSess} onSwitch=${() => signOutUser()} onManagePrograms=${() => setPg('progs')}/>`}
+        ${tab === 'home' && html`<${HomeTab} profile=${{ ...profile, photoURL: profile.img }} progs=${progs} sessions=${sessions} streak=${liveStreak(userDoc.streak)} onStart=${startWorkout} onView=${openSess} onSwitch=${() => signOutUser()} onManagePrograms=${() => setPg('progs')} weeklyGoal=${userDoc.goals?.sessionsPerWeek || 3} points=${sessions.reduce((t, s) => ((new Date() - new Date(s.date)) / 86400000 <= 7 ? t + (s.points || 0) : t), 0)}/>`}
         ${tab === 'feed' && html`<${FeedTab} me=${meAuthor()} myReactions=${myReactions} onOpenComments=${openComments} onOpenProfile=${openProfile} onManage=${openSess} moderating=${isAdmin && adminMode} onAdminDelete=${adminDeletePost} refreshKey=${feedKey}/>`}
         ${tab === 'rank' && html`<${LeaderboardTab} me=${meAuthor()} onOpenProfile=${openProfile}/>`}
         ${tab === 'me' && html`
