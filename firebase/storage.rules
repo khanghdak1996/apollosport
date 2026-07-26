@@ -1,0 +1,29 @@
+rules_version = '2';
+
+// Ảnh buổi tập. Path có tiền tố uid để diễn đạt được quyền sở hữu.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function domainOk() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.matches('.*@apollo[.]edu[.]vn$');
+    }
+    // Admin (kiểm duyệt) — tra collection admins/{uid} ở Firestore.
+    function isAdmin() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+
+    match /sessions/{uid}/{file} {
+      allow read:  if domainOk();
+      allow write: if domainOk()
+                   && uid == request.auth.uid
+                   && request.resource.size < 3 * 1024 * 1024
+                   && request.resource.contentType == 'image/jpeg';
+      // Chủ ảnh xoá được; admin gỡ ảnh bài vi phạm.
+      allow delete: if domainOk() && (uid == request.auth.uid || isAdmin());
+    }
+
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}

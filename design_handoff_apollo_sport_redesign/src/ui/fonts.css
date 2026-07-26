@@ -1,0 +1,23 @@
+/* src/ui/fonts.css — nạp trong <head> của index.html TRƯỚC thẻ <style> hiện có */
+
+/* Baskerville BT — font gốc trong brand book, dùng cho câu dẫn / ghi chú in nghiêng.
+   Copy 2 file .ttf vào /fonts/ trong repo. */
+@font-face {
+  font-family: 'Baskerville BT';
+  src: url('/fonts/Baskerville-Regular.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Baskerville BT';
+  src: url('/fonts/Baskerville-Italic.ttf') format('truetype');
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+
+/* Nếu muốn dùng Blauer Nue (font gốc brand) thay Barlow Semi Condensed cho tiêu đề,
+   bỏ comment 4 khối dưới, copy .otf vào /fonts/, rồi sửa F.display trong theme.js
+   thành "'Blauer Nue',system-ui,sans-serif".
+@font-face { font-family:'Blauer Nue'; src:url('/fonts/BlauerNue-Regular.otf')   format('opentype'); font-weight:400; font-display:swap }
+@font-face { font-family:'Blauer Nue'; src:url('/fonts/BlauerNue-Medium.otf')    format('opentype'); font-weight:500; font-display:swap }
+@font-face { font-family:'Blauer Nue'; src:url('/fonts/BlauerNue-Semibold.otf')  format('opentype'); font-weight:600; font-display:swap }
+@font-face { font-family:'Blauer Nue'; src:url('/fonts/BlauerNue-Extrabold.otf') format('opentype'); font-weight:700; font-display:swap }
+*/

@@ -1,0 +1,59 @@
+// Dịch từ vựng thể hình (từ free-exercise-db) sang tiếng Việt phổ thông.
+// Tập giá trị cố định & nhỏ (17 nhóm cơ, 12 dụng cụ, 3 trình độ...) — dịch một lần.
+
+export const MUSCLE_VI = {
+  abdominals: 'cơ bụng',
+  abductors: 'cơ dạng hông (mặt ngoài đùi)',
+  adductors: 'cơ khép hông (mặt trong đùi)',
+  biceps: 'cơ tay trước (bắp tay trước)',
+  calves: 'bắp chân',
+  chest: 'ngực',
+  forearms: 'cẳng tay',
+  glutes: 'cơ mông',
+  hamstrings: 'đùi sau',
+  lats: 'cơ xô (lưng bên)',
+  'lower back': 'lưng dưới',
+  'middle back': 'lưng giữa',
+  neck: 'cổ',
+  quadriceps: 'đùi trước',
+  shoulders: 'vai',
+  traps: 'cơ thang (vai gáy)',
+  triceps: 'cơ tay sau (bắp tay sau)',
+};
+
+export const EQUIP_VI = {
+  'body only': 'tay không (không dụng cụ)',
+  barbell: 'thanh đòn (tạ đòn)',
+  dumbbell: 'tạ đôi',
+  cable: 'máy cáp',
+  machine: 'máy tập',
+  kettlebells: 'tạ ấm',
+  bands: 'dây kháng lực',
+  'e-z curl bar': 'thanh đòn chữ W (EZ)',
+  'exercise ball': 'bóng tập',
+  'medicine ball': 'bóng tạ',
+  'foam roll': 'con lăn xốp',
+  other: 'khác',
+};
+
+export const LEVEL_VI = {
+  beginner: 'Cơ bản',
+  intermediate: 'Trung cấp',
+  expert: 'Nâng cao',
+};
+
+export const FORCE_VI = { pull: 'kéo', push: 'đẩy', static: 'tĩnh (giữ)' };
+export const MECHANIC_VI = { compound: 'đa khớp', isolation: 'cô lập (1 nhóm cơ)' };
+export const CATEGORY_VI = {
+  strength: 'sức mạnh', cardio: 'tim mạch', stretching: 'giãn cơ',
+  plyometrics: 'bật nhảy', powerlifting: 'powerlifting',
+  'olympic weightlifting': 'cử tạ Olympic', strongman: 'strongman',
+};
+
+// Helpers — luôn trả tiếng Việt, fallback về nguyên gốc nếu chưa có trong map.
+export const vMuscle = m => MUSCLE_VI[m] || m;
+export const vMuscles = (list = []) => list.map(vMuscle).join(', ');
+export const vEquip = e => EQUIP_VI[e] || e;
+export const vLevel = l => LEVEL_VI[l] || l;
+export const vForce = f => FORCE_VI[f] || f;
+export const vMechanic = m => MECHANIC_VI[m] || m;
