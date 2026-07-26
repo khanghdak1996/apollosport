@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
 import { html } from './html.js';
-import { C, r, ACC } from './ui/theme.js';
+import { C, r, ACC, F, BRAND } from './ui/theme.js';
 import { Icons } from './ui/icons.js';
+import { SportIcon } from './ui/sportIcons.js';
 import { Wrap, Card, Empty, Label, Btn } from './ui/primitives.js';
 import { beep } from './ui/sound.js';
 import { uid, p2, fT, fD, durS, restLabel, fDM, fDT } from './domain/format.js';
@@ -67,18 +68,26 @@ const primStat = s => {
 };
 
 function TabBar({ tab, onTab }) {
+  const items = [
+    { id: 'home', l: 'TRANG CHỦ', k: 'home' },
+    { id: 'feed', l: 'BẢNG TIN', k: 'journal' },
+    { id: 'rank', l: 'XẾP HẠNG', k: 'trophy' },
+    { id: 'me', l: 'CÁ NHÂN', k: 'user' },
+  ];
   return html`
-    <nav style=${{ display: 'flex', borderTop: `1px solid ${C.bdr}`, background: '#ffffff', flexShrink: 0, paddingBottom: 'env(safe-area-inset-bottom)', boxShadow: '0 -2px 10px rgba(0,0,0,0.03)' }}>
-      ${[{ id: 'home', l: 'Trang chủ', i: Icons.home }, { id: 'feed', l: 'Bảng tin', i: Icons.journal }, { id: 'rank', l: 'Xếp hạng', i: Icons.trophy }, { id: 'me', l: 'Cá nhân', i: Icons.user }].map(t => html`
-        <button key=${t.id} onClick=${() => onTab(t.id)} class="btn-action" style=${{
-      flex: 1, padding: '12px 0 10px', border: 'none', background: 'transparent', cursor: 'pointer',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-      color: tab === t.id ? ACC : C.txt3,
-      transition: 'color 0.2s'
-    }}>
-          <${t.i} size=${22} strokeWidth=${2} color=${tab === t.id ? ACC : C.txt3}/>
-          <span style=${{ fontSize: 10, fontWeight: 400 }}>${t.l}</span>
-        </button>`)}
+    <nav style=${{ display: 'flex', borderTop: `1px solid ${C.bdr}`, background: '#fff', flexShrink: 0, paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      ${items.map(t => {
+        const on = tab === t.id;
+        return html`
+          <button key=${t.id} onClick=${() => onTab(t.id)} class="btn-action" style=${{
+            flex: 1, padding: '11px 0 9px', border: 'none', background: 'transparent', cursor: 'pointer',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+            color: on ? BRAND.blue : '#9DB4C9', transition: 'color .2s',
+          }}>
+            <${SportIcon} k=${t.k} size=${22} color=${on ? BRAND.blue : '#9DB4C9'} sw=${on ? 2 : 1.7}/>
+            <span style=${{ fontFamily: F.display, fontSize: 11, fontWeight: 600, letterSpacing: '.07em' }}>${t.l}</span>
+          </button>`;
+      })}
     </nav>`;
 }
 
