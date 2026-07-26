@@ -1,129 +1,89 @@
-import { useState } from 'preact/hooks';
+// src/screens/GuideDetail.js — Hướng dẫn chi tiết, bản redesign. THAY TOÀN BỘ file cũ.
+// Khác bản cũ: nút video dùng ĐỎ APOLLO (#EB4754), không dùng đỏ YouTube.
 import { html } from '../html.js';
-import { C, r, ACC } from '../ui/theme.js';
-import { Wrap } from '../ui/primitives.js';
-import { Icons } from '../ui/icons.js';
+import { C, r, F, T, BRAND, sportColor, sportTint } from '../ui/theme.js';
+import { SportIcon } from '../ui/sportIcons.js';
 import { actOf } from '../domain/activities.js';
-import { ytSearchUrl } from '../domain/guides.js';
 
-// Bài hướng dẫn chi tiết. Render: video YouTube + nhóm cơ/dụng cụ + các bước + lỗi thường gặp
-// + đoạn văn + mẹo/an toàn. Có chỗ cho ảnh (đầu bài & từng bước) — để trống thì hiện placeholder.
-export function GuideDetail({ guide, onBack }) {
-  if (!guide) return null;
-  const a = actOf(guide.sport);
-  const media = guide.media || [];
-  const steps = guide.steps || [];
-  const mistakes = guide.mistakes || [];
-  const sections = guide.sections || [];
-  const chips = [guide.muscles && { l: '💪', v: guide.muscles }, guide.equipment && { l: '🏋️', v: guide.equipment }].filter(Boolean);
-  const ytUrl = guide.ytQuery ? ytSearchUrl(guide.ytQuery) : null;
-  const stepsEN = steps.some(s => s.lang === 'en');
-  // Các bước mặc định thu gọn — người đã biết tập không bị ép đọc phần cơ bản; ai cần thì mở.
-  const [stepsOpen, setStepsOpen] = useState(false);
-  const stepRows = steps.map((s, i) => html`
-    <div key=${i} style=${{ display: 'flex', gap: 12, marginBottom: 14 }}>
-      <div style=${{ flexShrink: 0, width: 26, height: 26, borderRadius: '50%', background: ACC, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>${i + 1}</div>
-      <div style=${{ flex: 1, minWidth: 0 }}>
-        <p style=${{ margin: 0, fontSize: 14, color: C.txt1, lineHeight: 1.55 }}>${s.text}</p>
-        ${s.media && html`<div style=${{ marginTop: 8 }}><img src=${s.media} loading="lazy" style=${{ width: '100%', borderRadius: r.md, display: 'block' }}/></div>`}
-      </div>
-    </div>`);
-
-  const imgPlaceholder = (h, label) => html`
-    <div style=${{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, height: h, borderRadius: r.md, border: `1.5px dashed ${C.bdr2}`, color: C.txt3 }}>
-      <span style=${{ fontSize: h > 90 ? 26 : 18 }}>🖼️</span>
-      ${label && html`<span style=${{ fontSize: 11 }}>${label}</span>`}
+// Khối lời khuyên — dùng cho "Lỗi thường gặp" (đỏ) và "Mẹo" (vàng).
+function TipBlock({ title, items, tone }) {
+  const t = tone === 'warn'
+    ? { bg: C.redBg, bdr: C.redBdr, head: C.redInk, body: '#8C2A34', dot: BRAND.red }
+    : { bg: C.yellowBg, bdr: 'transparent', head: C.yellowDeep, body: '#6B5510', dot: C.yellowInk };
+  return html`
+    <div style=${{ background: t.bg, border: `1px solid ${t.bdr}`, borderRadius: r.xl, padding: '14px 16px', marginBottom: 12 }}>
+      <p style=${{ margin: '0 0 9px', fontFamily: F.display, fontWeight: 700, fontSize: 14, letterSpacing: '.08em', color: t.head, textTransform: 'uppercase' }}>${title}</p>
+      ${items.map((m, i) => html`
+        <div key=${i} style=${{ display: 'flex', gap: 9, marginBottom: 6 }}>
+          <span style=${{ color: t.dot, fontWeight: 700, flexShrink: 0 }}>·</span>
+          <p style=${{ margin: 0, flex: 1, fontSize: 13.5, lineHeight: 1.55, color: t.body }}>${m}</p>
+        </div>`)}
     </div>`;
+}
+
+export function GuideDetail({ guide, onBack }) {
+  const a = actOf(guide.sport);
+  const chips = [guide.muscles, guide.equipment].filter(Boolean);
 
   return html`
-    <${Wrap}>
-      <div style=${{ padding: '14px 16px', borderBottom: `1px solid ${C.bdr}`, background: '#fff', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <button onClick=${onBack} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.txt2 }}><${Icons.back} size=${18}/></button>
-        <h2 style=${{ flex: 1, margin: 0, fontSize: 16, fontWeight: 600, color: C.txt1, letterSpacing: '-0.01em' }}>${a.emoji} ${a.label}</h2>
+    <div style=${{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <div style=${{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: C.bg2, borderBottom: `1px solid ${C.bdr}`, flexShrink: 0 }}>
+        <button onClick=${onBack} class="btn-action" style=${{ width: 36, height: 36, borderRadius: '50%', background: C.bg1, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+          <${SportIcon} k="back" size=${18} color=${C.txt2} sw=${2}/>
+        </button>
+        <span style=${{ width: 30, height: 30, borderRadius: 9, background: sportTint(a.iconKey), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <${SportIcon} k=${a.iconKey} size=${17} color=${sportColor(a.iconKey)}/>
+        </span>
+        <p style=${{ flex: 1, margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 18, letterSpacing: '.05em', color: C.txt1, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${a.label}</p>
       </div>
 
-      <div style=${{ flex: 1, overflowY: 'auto', padding: '18px 16px', WebkitOverflowScrolling: 'touch' }}>
-        <div style=${{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-          <span style=${{ fontSize: 10.5, fontWeight: 500, color: ACC, background: 'var(--accent-glow)', borderRadius: 20, padding: '3px 9px' }}>${guide.level}</span>
-        </div>
-        <h1 style=${{ margin: '0 0 8px', fontSize: 22, fontWeight: 700, color: C.txt1, letterSpacing: '-0.02em', lineHeight: 1.25 }}>${guide.title}</h1>
-        <p style=${{ margin: '0 0 14px', fontSize: 14, color: C.txt2, lineHeight: 1.55 }}>${guide.summary}</p>
+      <div style=${{ flex: 1, overflowY: 'auto', padding: '18px 16px 40px' }}>
+        ${guide.level ? html`
+          <span style=${{ display: 'inline-block', fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: BRAND.blue, background: C.bg3, borderRadius: 20, padding: '4px 11px', marginBottom: 10, whiteSpace: 'nowrap' }}>${guide.level}</span>` : ''}
+        <p style=${{ margin: '0 0 8px', fontFamily: F.display, fontWeight: 700, fontSize: 30, lineHeight: 1.1, letterSpacing: '.01em', color: C.txt1, textTransform: 'uppercase' }}>${guide.title}</p>
+        ${guide.summary ? html`<p style=${{ margin: '0 0 14px', fontFamily: F.serif, fontSize: 14, lineHeight: 1.65, color: C.txt2 }}>${guide.summary}</p>` : ''}
 
-        ${chips.length > 0 && html`
-          <div style=${{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+        ${chips.length ? html`
+          <div style=${{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
             ${chips.map((c, i) => html`
-              <span key=${i} style=${{ background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: 20, padding: '5px 12px', fontSize: 12.5, color: C.txt2 }}>${c.l} <strong style=${{ color: C.txt1, fontWeight: 500 }}>${c.v}</strong></span>`)}
-          </div>`}
+              <span key=${i} style=${{ display: 'flex', alignItems: 'center', gap: 7, background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: 22, padding: '6px 13px', fontSize: 12.5, color: C.txt3 }}>
+                <${SportIcon} k=${i ? 'target' : 'gym'} size=${15} color=${C.txt3}/>
+                <b style=${{ fontWeight: 600, color: C.txt1 }}>${c}</b>
+              </span>`)}
+          </div>` : ''}
 
-        ${ytUrl && html`
-          <a href=${ytUrl} target="_blank" rel="noopener noreferrer" class="btn-action" style=${{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', background: '#ff0000', color: '#fff', borderRadius: r.md, padding: '12px 16px', marginBottom: 18, fontWeight: 600, fontSize: 14 }}>
-            <span style=${{ fontSize: 18 }}>▶</span>
-            <span style=${{ flex: 1 }}>Xem video hướng dẫn (YouTube)</span>
-            <span style=${{ opacity: 0.85 }}>↗</span>
-          </a>`}
+        ${guide.videoUrl ? html`
+          <a href=${guide.videoUrl} target="_blank" rel="noopener" style=${{ display: 'flex', alignItems: 'center', gap: 11, background: BRAND.red, borderRadius: 15, padding: '13px 16px', marginBottom: 18, textDecoration: 'none' }}>
+            <${SportIcon} k="video" size=${22} color="#fff" sw=${1.9}/>
+            <span style=${{ flex: 1, fontFamily: F.display, fontWeight: 700, fontSize: 16, letterSpacing: '.07em', color: '#fff', textTransform: 'uppercase' }}>Xem video hướng dẫn</span>
+            <${SportIcon} k="chevronR" size=${16} color="#fff" sw=${2}/>
+          </a>` : ''}
 
-        ${media.length > 0
-      ? media.map((m, i) => m.type === 'video'
-        ? html`<video key=${i} src=${m.src} controls style=${{ width: '100%', borderRadius: r.lg, marginBottom: 8, background: '#000' }}/>`
-        : html`<img key=${i} src=${m.src} loading="lazy" style=${{ width: '100%', borderRadius: r.lg, marginBottom: 8, display: 'block' }}/>`)
-      : (!guide.auto && (steps.length > 0 || sections.length > 0)) ? html`<div style=${{ marginBottom: 18 }}>${imgPlaceholder(130, 'Hình/ video minh hoạ sắp có')}</div>` : ''}
+        ${guide.imageUrl
+          ? html`<img src=${guide.imageUrl} loading="lazy" style=${{ width: '100%', height: 150, objectFit: 'cover', borderRadius: r.xl, border: `1px solid ${C.bdr}`, marginBottom: 20, display: 'block' }}/>`
+          : html`
+            <div style=${{ height: 150, borderRadius: r.xl, background: 'repeating-linear-gradient(135deg,#E7F1FB,#E7F1FB 10px,#DDEAF7 10px,#DDEAF7 20px)', border: `1px solid ${C.bdr}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 20 }}>
+              <${SportIcon} k="photo" size=${26} color=${C.txt3} sw=${1.7}/>
+              <span style=${{ fontSize: 11, color: C.txt2 }}>ảnh minh hoạ động tác</span>
+            </div>`}
 
-        ${steps.length > 0 && html`
-          <div style=${{ marginBottom: 8 }}>
-            <button onClick=${() => setStepsOpen(o => !o)} class="btn-action" style=${{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'transparent', border: 'none', padding: '4px 0', cursor: 'pointer', textAlign: 'left' }}>
-              <h3 style=${{ margin: 0, flex: 1, fontSize: 16, fontWeight: 700, color: C.txt1 }}>Các bước thực hiện</h3>
-              ${stepsEN && html`<span style=${{ fontSize: 11, color: C.txt3, flexShrink: 0 }}>bản dịch đang cập nhật</span>`}
-              <span style=${{ fontSize: 12, color: C.txt3, flexShrink: 0 }}>${steps.length} bước</span>
-              <span style=${{ fontSize: 13, color: C.txt2, flexShrink: 0, transform: stepsOpen ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}>▾</span>
-            </button>
-            ${stepsOpen
-        ? html`<div style=${{ marginTop: 12 }}>${stepRows}</div>`
-        : html`
-              <div onClick=${() => setStepsOpen(true)} class="card-hover" style=${{ position: 'relative', marginTop: 10, cursor: 'pointer', borderRadius: r.md }}>
-                <div style=${{ maxHeight: 88, overflow: 'hidden', WebkitMaskImage: 'linear-gradient(to bottom, #000 30%, transparent 96%)', maskImage: 'linear-gradient(to bottom, #000 30%, transparent 96%)', pointerEvents: 'none' }}>
-                  ${stepRows}
-                </div>
-                <div style=${{ position: 'absolute', left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, paddingTop: 20, fontSize: 12.5, fontWeight: 600, color: ACC }}>
-                  <span>Xem ${steps.length} bước</span><span style=${{ fontSize: 13 }}>▾</span>
-                </div>
-              </div>`}
-          </div>`}
+        ${guide.steps && guide.steps.length ? html`
+          <div style=${{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 14 }}>
+            <p style=${{ margin: 0, flex: 1, fontFamily: F.display, fontWeight: 700, fontSize: 18, letterSpacing: '.05em', color: C.txt1, textTransform: 'uppercase' }}>Các bước thực hiện</p>
+            <span style=${{ fontSize: 11.5, color: C.txt4, whiteSpace: 'nowrap' }}>${guide.steps.length} bước</span>
+          </div>
+          ${guide.steps.map((s, i) => html`
+            <div key=${i} style=${{ display: 'flex', gap: 12, marginBottom: 13 }}>
+              <span style=${{ flexShrink: 0, width: 26, height: 26, borderRadius: '50%', background: BRAND.blue, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F.display, fontWeight: 700, fontSize: 14 }}>${i + 1}</span>
+              <p style=${{ margin: 0, flex: 1, fontSize: 14, lineHeight: 1.6, color: C.txt1 }}>${s}</p>
+            </div>`)}` : ''}
 
-        ${sections.map((s, i) => html`
-          <div key=${i} style=${{ marginBottom: 18 }}>
-            <h3 style=${{ margin: '0 0 6px', fontSize: 15, fontWeight: 600, color: ACC }}>${s.heading}</h3>
-            <p style=${{ margin: 0, fontSize: 14, color: C.txt1, lineHeight: 1.6 }}>${s.body}</p>
-          </div>`)}
+        ${guide.mistakes && guide.mistakes.length ? html`<div style=${{ marginTop: 18 }}><${TipBlock} title="Lỗi thường gặp" items=${guide.mistakes} tone="warn"/></div>` : ''}
+        ${guide.tips && guide.tips.length ? html`<${TipBlock} title="Mẹo" items=${guide.tips} tone="tip"/>` : ''}
 
-        ${mistakes.length > 0 && html`
-          <div style=${{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: r.lg, padding: '14px 16px', marginBottom: 14 }}>
-            <p style=${{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: '#b91c1c' }}>❌ Lỗi thường gặp</p>
-            <ul style=${{ margin: 0, paddingLeft: 18, color: '#7f1d1d', fontSize: 13.5, lineHeight: 1.6 }}>
-              ${mistakes.map((t, i) => html`<li key=${i} style=${{ marginBottom: 4 }}>${t}</li>`)}
-            </ul>
-          </div>`}
-
-        ${guide.tips && guide.tips.length > 0 && html`
-          <div style=${{ background: 'var(--accent-glow)', borderRadius: r.lg, padding: '14px 16px', marginBottom: 14 }}>
-            <p style=${{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: ACC }}>💡 Mẹo</p>
-            <ul style=${{ margin: 0, paddingLeft: 18, color: C.txt1, fontSize: 13.5, lineHeight: 1.6 }}>
-              ${guide.tips.map((t, i) => html`<li key=${i} style=${{ marginBottom: 4 }}>${t}</li>`)}
-            </ul>
-          </div>`}
-
-        ${guide.safety && guide.safety.length > 0 && html`
-          <div style=${{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: r.lg, padding: '14px 16px', marginBottom: 14 }}>
-            <p style=${{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: '#9a3412' }}>⚠️ An toàn</p>
-            <ul style=${{ margin: 0, paddingLeft: 18, color: '#7c2d12', fontSize: 13.5, lineHeight: 1.6 }}>
-              ${guide.safety.map((t, i) => html`<li key=${i} style=${{ marginBottom: 4 }}>${t}</li>`)}
-            </ul>
-          </div>`}
-
-        ${guide.auto && html`
-          <p style=${{ margin: '4px 0 0', fontSize: 12.5, color: C.txt2, lineHeight: 1.5, fontStyle: 'italic' }}>Bài hướng dẫn chi tiết cho động tác này đang được bổ sung. Bạn có thể xem video ở trên trong lúc chờ.</p>`}
-
-        ${guide.source === 'free-exercise-db' && html`<p style=${{ margin: '12px 0 0', fontSize: 11, color: C.txt3 }}>Ảnh & hướng dẫn gốc: free-exercise-db (public domain).</p>`}
-        <p style=${{ margin: '6px 0 0', fontSize: 11, color: C.txt3, lineHeight: 1.5 }}>Nội dung mang tính tham khảo, không thay thế tư vấn chuyên môn y tế/huấn luyện.</p>
+        <p style=${{ margin: '14px 2px 0', fontSize: 11, lineHeight: 1.6, color: C.txt5 }}>
+          Ảnh &amp; hướng dẫn gốc: free-exercise-db (public domain). Nội dung mang tính tham khảo, không thay thế tư vấn chuyên môn.
+        </p>
       </div>
-    </${Wrap}>`;
+    </div>`;
 }

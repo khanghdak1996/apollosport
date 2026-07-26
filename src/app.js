@@ -39,7 +39,7 @@ import { ClubsScreen } from './screens/ClubsScreen.js';
 import { ClubDetail } from './screens/ClubDetail.js';
 import { GoalsScreen } from './screens/GoalsScreen.js';
 import { myInvites, acceptInvite, dismissInvite } from './data/repo-clubs.js';
-import { guideForExercise, guidesForSport } from './domain/guides.js';
+import { guideForExercise, guidesForSport, richGuides } from './domain/guides.js';
 
 function ResumeBar({ workout, onResume }) {
   const [elapsed, setElapsed] = useState(() => Math.floor((Date.now() - workout.startTime) / 1000));
@@ -1733,7 +1733,7 @@ function GymPair() {
         onSignOut=${() => signOutUser()}
         onDeleteAccount=${deleteAccount}/>`;
   if (pg === 'user-profile') return html`<${ProfileScreen} uid=${pgCtx.uid} isSelf=${pgCtx.isSelf} onBack=${() => { setPg(null); setPgCtx(null); }} onView=${openSess}/>`;
-  if (pg === 'guides') return html`<${GuidesScreen} onBack=${() => setPg(null)} onOpen=${g => openGuide(g, () => setPg('guides'))}/>`;
+  if (pg === 'guides') return html`<${GuidesScreen} guides=${richGuides()} onBack=${() => setPg(null)} onOpen=${g => openGuide(g, () => setPg('guides'))}/>`;
   if (pg === 'guide-detail') return html`<${GuideDetail} guide=${pgCtx.guide} onBack=${pgCtx.back || (() => setPg(null))}/>`;
   if (pg === 'clubs') return html`<${ClubsScreen} me=${meAuthor()} onBack=${() => setPg(null)} onOpenClub=${cid => { setPgCtx({ clubId: cid }); setPg('club-detail'); }}/>`;
   if (pg === 'club-detail') return html`<${ClubDetail} clubId=${pgCtx.clubId} me=${meAuthor()} mySessions=${sessions} myReactions=${myReactions} isAdmin=${isAdmin} onBack=${() => setPg('clubs')} onOpenProfile=${openProfile} onOpenComments=${openComments} onDeleted=${() => setPg('clubs')}/>`;
