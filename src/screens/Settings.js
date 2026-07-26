@@ -1,117 +1,111 @@
+// src/screens/Settings.js — bản redesign. THAY TOÀN BỘ file cũ.
+// Khác bản cũ: 4 nhóm có tiêu đề in hoa, toggle 46x28, và "Xoá lịch sử" chuyển
+// từ tab Cá nhân về đây.
 import { useState } from 'preact/hooks';
 import { html } from '../html.js';
-import { C, r, ACC } from '../ui/theme.js';
-import { Wrap, Btn, Label } from '../ui/primitives.js';
-import { Icons } from '../ui/icons.js';
+import { C, r, F, T, BRAND } from '../ui/theme.js';
+import { SportIcon } from '../ui/sportIcons.js';
 
-function Toggle({ on, onChange }) {
+function Field({ label, value, onInput, placeholder, first }) {
   return html`
-    <button onClick=${() => onChange(!on)} class="btn-action" style=${{
-      width: 46, height: 28, borderRadius: 14, border: 'none', cursor: 'pointer', flexShrink: 0,
-      background: on ? ACC : C.bdr2, position: 'relative', transition: 'background 0.2s',
-    }}>
-      <span style=${{ position: 'absolute', top: 3, left: on ? 21 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }}/>
-    </button>`;
-}
-
-function Row({ title, sub, right, onClick, danger }) {
-  return html`
-    <div onClick=${onClick} style=${{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 4px', cursor: onClick ? 'pointer' : 'default' }}>
-      <div style=${{ flex: 1, minWidth: 0 }}>
-        <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 500, color: danger ? C.red : C.txt1 }}>${title}</p>
-        ${sub && html`<p style=${{ margin: '2px 0 0', fontSize: 12, color: C.txt3, lineHeight: 1.4 }}>${sub}</p>`}
-      </div>
-      ${right}
+    <div style=${{ padding: '13px 0', borderTop: first ? 'none' : `1px solid ${C.bdr2}` }}>
+      <p style=${{ margin: '0 0 4px', ...T.label }}>${label}</p>
+      <input value=${value} onInput=${onInput} placeholder=${placeholder}
+        style=${{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', outline: 'none', fontSize: 15, fontWeight: 600, color: C.txt1, fontFamily: F.body, padding: 0 }}/>
     </div>`;
 }
 
-export function Settings({ me, onBack, onSaveProfile, onToggleLeaderboard, onToggleHideWeight, onRecomputeStreak, isAdmin, adminMode, onToggleAdminMode, onSignOut, onDeleteAccount }) {
-  const [name, setName] = useState(me.name || '');
-  const [dept, setDept] = useState(me.dept || '');
-  const [center, setCenter] = useState(me.center || '');
-  const [savingP, setSavingP] = useState(false);
-  const [recomputed, setRecomputed] = useState(false);
-  const [optOut, setOptOut] = useState(!!me.prefs?.optOutLeaderboard);
-  const [hideWeight, setHideWeight] = useState(!!me.prefs?.hideWeight);
+function Toggle({ on, onToggle }) {
+  return html`
+    <button onClick=${onToggle} class="btn-action" style=${{
+      width: 46, height: 28, borderRadius: 14, border: 'none', padding: 0, position: 'relative',
+      background: on ? BRAND.blue : '#C4D3E0', cursor: 'pointer', flexShrink: 0, transition: 'background .2s',
+    }}>
+      <span style=${{ position: 'absolute', top: 3, left: on ? 21 : 3, width: 22, height: 22, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s' }}/>
+    </button>`;
+}
 
-  const inputStyle = { width: '100%', boxSizing: 'border-box', padding: '11px 13px', borderRadius: r.md, border: `1px solid ${C.bdr}`, fontSize: 14.5, color: C.txt1, background: '#fff' };
-  const section = { background: '#fff', borderRadius: r.lg, border: `1px solid ${C.bdr}`, padding: '4px 14px', marginBottom: 18 };
+function Row({ t, s, on, onToggle, first }) {
+  return html`
+    <div style=${{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderTop: first ? 'none' : `1px solid ${C.bdr2}` }}>
+      <div style=${{ flex: 1, minWidth: 0 }}>
+        <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 600, color: C.txt1 }}>${t}</p>
+        <p style=${{ margin: '2px 0 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>${s}</p>
+      </div>
+      <${Toggle} on=${on} onToggle=${onToggle}/>
+    </div>`;
+}
 
-  const saveProfile = async () => {
-    if (!name.trim() || savingP) return;
-    setSavingP(true);
-    await onSaveProfile({ name: name.trim(), dept: dept.trim(), center: center.trim() });
-    setSavingP(false);
-  };
+const GroupTitle = ({ t }) => html`<p style=${{ margin: '0 2px 9px', fontFamily: F.display, fontWeight: 700, fontSize: 13, letterSpacing: '.11em', color: C.txt3, textTransform: 'uppercase' }}>${t}</p>`;
+const Panel = ({ children, cx }) => html`<div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, padding: '0 16px', marginBottom: 20, ...cx }}>${children}</div>`;
+
+export function Settings({ profile, onSave, onBack, onSignOut, onDeleteAccount, onRecalcStreak, onClearHistory, isAdmin }) {
+  const [name, setName] = useState(profile.name || '');
+  const [dept, setDept] = useState(profile.dept || '');
+  const [center, setCenter] = useState(profile.center || '');
+  const [inRank, setInRank] = useState(profile.leaderboardOptIn !== false);
+  const [hideWeight, setHideWeight] = useState(!!profile.hideWeight);
+  const [moderating, setModerating] = useState(!!profile.moderating);
 
   return html`
-    <${Wrap}>
-      <div style=${{ padding: '14px 16px', borderBottom: `1px solid ${C.bdr}`, background: '#fff', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <button onClick=${onBack} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.txt2 }}><${Icons.back} size=${18}/></button>
-        <h2 style=${{ margin: 0, fontSize: 18, fontWeight: 600, color: C.txt1 }}>Cài đặt</h2>
+    <div style=${{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <div style=${{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: C.bg2, borderBottom: `1px solid ${C.bdr}`, flexShrink: 0 }}>
+        <button onClick=${onBack} class="btn-action" style=${{ width: 36, height: 36, borderRadius: '50%', background: C.bg1, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+          <${SportIcon} k="back" size=${18} color=${C.txt2} sw=${2}/>
+        </button>
+        <p style=${{ flex: 1, margin: 0, ...T.h2 }}>CÀI ĐẶT</p>
       </div>
 
-      <div style=${{ flex: 1, overflowY: 'auto', padding: '18px 16px', WebkitOverflowScrolling: 'touch' }}>
-        <${Label} t="Hồ sơ"/>
-        <div style=${{ ...section, padding: 14 }}>
-          <p style=${{ margin: '0 0 5px', fontSize: 11.5, color: C.txt3 }}>Tên hiển thị</p>
-          <input value=${name} onInput=${e => setName(e.target.value)} style=${{ ...inputStyle, marginBottom: 12 }}/>
-          <p style=${{ margin: '0 0 5px', fontSize: 11.5, color: C.txt3 }}>Phòng ban</p>
-          <input value=${dept} onInput=${e => setDept(e.target.value)} placeholder="VD: Kỹ thuật" style=${{ ...inputStyle, marginBottom: 12 }}/>
-          <p style=${{ margin: '0 0 5px', fontSize: 11.5, color: C.txt3 }}>Trung tâm / Cơ sở</p>
-          <input value=${center} onInput=${e => setCenter(e.target.value)} placeholder="VD: Hà Nội" style=${{ ...inputStyle, marginBottom: 14 }}/>
-          <${Btn} onClick=${saveProfile} cx=${{ width: '100%', opacity: (!name.trim() || savingP) ? 0.5 : 1, pointerEvents: (!name.trim() || savingP) ? 'none' : 'auto' }}>${savingP ? 'Đang lưu...' : 'Lưu hồ sơ'}</${Btn}>
-        </div>
+      <div style=${{ flex: 1, overflowY: 'auto', padding: '18px 16px 40px' }}>
+        <${GroupTitle} t="Hồ sơ"/>
+        <${Panel} cx=${{ padding: '4px 16px 16px' }}>
+          <${Field} first=${true} label="TÊN HIỂN THỊ" value=${name} onInput=${e => setName(e.target.value)} placeholder="Tên của bạn"/>
+          <${Field} label="PHÒNG BAN / BỘ PHẬN" value=${dept} onInput=${e => setDept(e.target.value)} placeholder="VD: TD Communications"/>
+          <${Field} label="TRUNG TÂM / CƠ SỞ" value=${center} onInput=${e => setCenter(e.target.value)} placeholder="VD: Hà Nội, HCM…"/>
+          <button onClick=${() => onSave({ name, dept, center, leaderboardOptIn: inRank, hideWeight, moderating })} class="btn-action" style=${{ width: '100%', background: BRAND.blue, border: 'none', borderRadius: 13, padding: 12, fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer', marginTop: 6 }}>Lưu hồ sơ</button>
+        </${Panel}>
 
-        <${Label} t="Quyền riêng tư"/>
-        <div style=${section}>
-          <${Row}
-            title="Tham gia bảng xếp hạng"
-            sub=${optOut ? 'Bạn đang ẩn khỏi bảng xếp hạng' : 'Điểm của bạn hiển thị trên bảng xếp hạng'}
-            right=${html`<${Toggle} on=${!optOut} onChange=${(v) => { setOptOut(!v); onToggleLeaderboard(v); }}/>`}
-          />
-          <div style=${{ borderTop: `1px solid ${C.bdr}` }}/>
-          <${Row}
-            title="Ẩn theo dõi cân nặng"
-            sub="Cân nặng luôn riêng tư; bật để ẩn hẳn tính năng này"
-            right=${html`<${Toggle} on=${hideWeight} onChange=${(v) => { setHideWeight(v); onToggleHideWeight(v); }}/>`}
-          />
-        </div>
+        <${GroupTitle} t="Quyền riêng tư"/>
+        <${Panel}>
+          <${Row} first=${true} t="Tham gia bảng xếp hạng" s="Điểm của bạn hiển thị trên bảng xếp hạng" on=${inRank} onToggle=${() => setInRank(!inRank)}/>
+          <${Row} t="Ẩn theo dõi cân nặng" s="Cân nặng luôn riêng tư; bật để ẩn hẳn tính năng này" on=${hideWeight} onToggle=${() => setHideWeight(!hideWeight)}/>
+          ${isAdmin ? html`<${Row} t="Chế độ quản trị" s="Bật để kiểm duyệt bài & bình luận vi phạm của người khác" on=${moderating} onToggle=${() => setModerating(!moderating)}/>` : ''}
+        </${Panel}>
 
-        ${isAdmin && html`
-          <${Label} t="Quản trị"/>
-          <div style=${section}>
-            <${Row}
-              title="Chế độ quản trị"
-              sub=${adminMode ? '🛡 Đang bật — bạn có thể xoá bài & bình luận của mọi người' : 'Bật để kiểm duyệt (xoá bài/bình luận vi phạm của người khác)'}
-              right=${html`<${Toggle} on=${!!adminMode} onChange=${onToggleAdminMode}/>`}
-            />
-          </div>`}
+        <${GroupTitle} t="Chuỗi tập"/>
+        <${Panel} cx=${{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style=${{ flex: 1, minWidth: 0 }}>
+            <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 600, color: C.txt1 }}>Tính lại chuỗi</p>
+            <p style=${{ margin: '2px 0 0', fontSize: 12, color: C.txt4 }}>Dùng khi bạn ghi buổi tập lùi ngày và chuỗi bị lệch</p>
+          </div>
+          <button onClick=${onRecalcStreak} class="btn-action" style=${{ background: 'transparent', border: 'none', padding: 0, fontSize: 13, fontWeight: 600, color: BRAND.blue, cursor: 'pointer', flexShrink: 0 }}>Tính lại ›</button>
+        </${Panel}>
 
-        <${Label} t="Chuỗi tập"/>
-        <div style=${section}>
-          <${Row}
-            title="Tính lại chuỗi"
-            sub="Dùng khi bạn ghi buổi tập lùi ngày và chuỗi bị lệch"
-            onClick=${async () => { await onRecomputeStreak(); setRecomputed(true); setTimeout(() => setRecomputed(false), 2000); }}
-            right=${html`<span style=${{ fontSize: 13, color: ACC, fontWeight: 500 }}>${recomputed ? '✓ Đã cập nhật' : 'Tính lại ›'}</span>`}
-          />
-        </div>
+        <${GroupTitle} t="Tài khoản"/>
+        <${Panel} cx=${{ marginBottom: 16 }}>
+          <div onClick=${onSignOut} style=${{ display: 'flex', alignItems: 'center', gap: 14, padding: '15px 0', cursor: 'pointer' }}>
+            <p style=${{ margin: 0, flex: 1, fontSize: 14.5, fontWeight: 600, color: C.txt1 }}>Đăng xuất</p>
+            <${SportIcon} k="chevronR" size=${17} color=${C.txt5} sw=${2}/>
+          </div>
+          <div onClick=${() => { if (window.confirm('Xoá toàn bộ lịch sử buổi tập? Không thể hoàn tác.')) onClearHistory && onClearHistory(); }} style=${{ display: 'flex', alignItems: 'center', gap: 14, padding: '15px 0', borderTop: `1px solid ${C.bdr2}`, cursor: 'pointer' }}>
+            <div style=${{ flex: 1, minWidth: 0 }}>
+              <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 600, color: C.txt1 }}>Xoá lịch sử buổi tập</p>
+              <p style=${{ margin: '2px 0 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>Giữ tài khoản, chỉ xoá các buổi đã ghi.</p>
+            </div>
+            <${SportIcon} k="trash" size=${18} color=${C.txt4} sw=${1.9}/>
+          </div>
+          <div onClick=${() => { if (window.confirm('Xoá tài khoản? Mọi buổi tập, điểm và hồ sơ sẽ mất vĩnh viễn.')) onDeleteAccount && onDeleteAccount(); }} style=${{ display: 'flex', alignItems: 'center', gap: 14, padding: '15px 0', borderTop: `1px solid ${C.bdr2}`, cursor: 'pointer' }}>
+            <div style=${{ flex: 1, minWidth: 0 }}>
+              <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 600, color: C.red }}>Xoá tài khoản</p>
+              <p style=${{ margin: '2px 0 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>Xoá vĩnh viễn mọi buổi tập, điểm và hồ sơ. Không thể hoàn tác.</p>
+            </div>
+            <${SportIcon} k="warn" size=${19} color=${C.red} sw=${1.9}/>
+          </div>
+        </${Panel}>
 
-        <${Label} t="Tài khoản"/>
-        <div style=${section}>
-          <${Row} title="Đăng xuất" onClick=${onSignOut} right=${html`<${Icons.back} size=${16} color=${C.txt3} style=${{ transform: 'rotate(180deg)' }}/>`}/>
-          <div style=${{ borderTop: `1px solid ${C.bdr}` }}/>
-          <${Row}
-            title="Xoá tài khoản"
-            sub="Xoá vĩnh viễn mọi buổi tập, điểm và hồ sơ. Không thể hoàn tác."
-            danger=${true}
-            onClick=${() => { if (window.confirm('Xoá vĩnh viễn tài khoản và toàn bộ dữ liệu tập luyện? Không thể hoàn tác.')) onDeleteAccount(); }}
-            right=${html`<span style=${{ fontSize: 20 }}>⚠️</span>`}
-          />
-        </div>
-
-        <p style=${{ margin: '4px 4px 24px', fontSize: 11.5, color: C.txt3, lineHeight: 1.5, textAlign: 'center' }}>Cân nặng và số đo của bạn không bao giờ hiển thị với đồng nghiệp.</p>
+        <p style=${{ margin: 0, textAlign: 'center', fontFamily: F.serif, fontSize: 11.5, lineHeight: 1.6, color: C.txt4 }}>
+          Cân nặng và số đo của bạn không bao giờ hiển thị với đồng nghiệp.
+        </p>
       </div>
-    </${Wrap}>`;
+    </div>`;
 }
