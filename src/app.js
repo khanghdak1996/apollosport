@@ -1717,15 +1717,28 @@ function GymPair() {
   const openSess = s => { setPg('sess-detail'); setPgCtx(s); };
   const openComments = p => { setPg('comments'); setPgCtx(p); };
 
-  if (pg === 'settings') return html`<${Settings} me=${userDoc}
-        onBack=${() => setPg(null)}
-        onSaveProfile=${saveProfileFields}
-        onToggleLeaderboard=${toggleLeaderboard}
-        onToggleHideWeight=${toggleHideWeight}
-        onRecomputeStreak=${recomputeStreak}
+  if (pg === 'settings') return html`<${Settings}
+        profile=${{
+      name: userDoc.name || '',
+      dept: userDoc.dept || '',
+      center: userDoc.center || '',
+      leaderboardOptIn: !(userDoc.prefs?.optOutLeaderboard),
+      hideWeight: !!userDoc.prefs?.hideWeight,
+      moderating: adminMode,
+    }}
         isAdmin=${isAdmin}
-        adminMode=${adminMode}
-        onToggleAdminMode=${setAdminMode}
+        onBack=${() => setPg(null)}
+        onSave=${async (v) => {
+      const prevOptIn = !(userDoc.prefs?.optOutLeaderboard);
+      await saveProfileFields({ name: v.name, dept: v.dept, center: v.center });
+      const prefs = { ...(userDoc.prefs || {}), optOutLeaderboard: !v.leaderboardOptIn, hideWeight: v.hideWeight };
+      await updateUserDoc(pid, { prefs });
+      setUserDoc(d => ({ ...d, prefs: { ...d.prefs, optOutLeaderboard: !v.leaderboardOptIn, hideWeight: v.hideWeight } }));
+      if (prevOptIn && !v.leaderboardOptIn) await removeMyEntries(pid);
+      if (isAdmin) setAdminMode(v.moderating);
+    }}
+        onRecalcStreak=${recomputeStreak}
+        onClearHistory=${clearHistory}
         onSignOut=${() => signOutUser()}
         onDeleteAccount=${deleteAccount}/>`;
   if (pg === 'user-profile') return html`<${ProfileScreen} uid=${pgCtx.uid} isSelf=${pgCtx.isSelf} onBack=${() => { setPg(null); setPgCtx(null); }} onView=${openSess}/>`;
