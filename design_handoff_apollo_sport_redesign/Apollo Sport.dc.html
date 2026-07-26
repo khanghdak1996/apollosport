@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics=""><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&amp;family=Barlow:wght@400;500;600;700&amp;family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet"><style>
+@font-face{font-family:'Baskerville BT';src:url('fonts/Baskerville-Regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Baskerville BT';src:url('fonts/Baskerville-Italic.ttf') format('truetype');font-weight:400;font-style:italic;font-display:swap}
+body{margin:0;background:#eceae6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+a{color:#2576B9}a:hover{color:#17457A}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a}
+.dv-opts{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)}
+.dv-card{max-width:100%;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}
+.dv-opt:target .dv-oid{background:#2576B9;color:#fff}
+.dv-next{margin:22px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}
+</style></helmet>
+
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Nốt phần còn lại — vào app, luồng gym, kho hướng dẫn, cài đặt</span></div>
+
+<div style="max-width:780px;font:13.5px/1.7 system-ui,sans-serif;color:#333;margin:0 0 24px">
+<p style="margin:0 0 10px">Cùng hệ thống với <a class="dv-oid" href="#2a">2a</a>. Ba ghi chú:</p>
+<ul style="margin:0;padding-left:20px">
+<li><b>Đăng nhập</b> mượn đúng tagline trong brand book — <i>“Where the best become better”</i> đặt Baskerville in hoa dưới đáy màn, đúng chỉ dẫn “đặt tagline nhẹ ở chân mọi ấn phẩm”.</li>
+<li><b>Đang tập gym</b> giữ nguyên cơ chế: 4 cột KG / REPS / RPE / ✓, chọn thời gian nghỉ, đồng hồ nghỉ nổi có vòng đếm ngược. Chỉ đổi lớp nhìn: header xanh đậm để lúc tập nhìn rõ ngoài nắng, ô nhập to hơn, set đã xong tô xanh lá nhạt.</li>
+<li><b>Hướng dẫn chi tiết</b>: nút video dùng đỏ Apollo <code>#EB4754</code> thay vì đỏ YouTube, ảnh minh hoạ để ô chờ — khi bạn nối lại thư viện free-exercise-db thì ảnh thật rơi vào đúng ô đó.</li>
+</ul>
+</div>
+
+
+<p class="dv-next">Thử: “gộp tất cả thành 1 file bàn giao cho dev” · “đổi màn Đăng nhập sang nền xanh đậm” · “thêm màn Bảng vinh danh + huy hiệu (F6)”</p><div class="dv-opts">
+
+<div class="dv-opt" id="3a"><div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Đăng nhập</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#fff;color:#12395E;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="position:absolute;top:-90px;right:-70px;width:280px;height:280px;border-radius:50%;background:#BCD9F2;opacity:.55"></div>
+<div style="position:absolute;top:150px;left:-110px;width:220px;height:220px;border-radius:50%;background:#E7F1FB"></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 30px;position:relative">
+<div style="width:76px;height:76px;border-radius:24px;background:#2576B9;display:flex;align-items:center;justify-content:center;margin-bottom:26px">{{ iconRunWhite }}</div>
+<p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:52px;line-height:.95;letter-spacing:.01em;color:#2576B9">APOLLO<br>SPORT</p>
+<p style="margin:16px 0 40px;font-family:'Baskerville BT','Libre Baskerville',serif;font-size:15px;line-height:1.6;color:#5B7896">Cùng đồng nghiệp xây thói quen vận động — chia sẻ thành quả, giữ chuỗi, tiếp lửa cho nhau.</p>
+<div style="display:flex;align-items:center;justify-content:center;gap:11px;background:#fff;border:1px solid #DDE8F2;border-radius:15px;padding:15px;box-shadow:0 8px 24px rgba(37,118,185,.1)">
+<svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path></svg>
+<span style="font-size:15px;font-weight:600">Đăng nhập với Google</span></div>
+<p style="margin:16px 0 0;text-align:center;font-size:12.5px;color:#94AABF">Chỉ dành cho tài khoản <b style="color:#5B7896">@apollo.edu.vn</b></p>
+</div><p style="margin: 0; padding: 0 30px 15px; text-align: center; font-family: Bebas Neue; font-size: 18px; letter-spacing: .22em; color: #2576B9; font-weight: 700">WHERE THE BEST BECOME BETTER</p>
+
+</div></div></div>
+
+<div class="dv-opt" id="3b"><div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Onboarding</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#F2F6FA;color:#12395E;overflow:hidden;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="flex:1;overflow:hidden;padding:26px 18px 0">
+<p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:34px;line-height:1.05;letter-spacing:.02em">CHÀO MỪNG<br>ĐẾN APOLLO SPORT</p>
+<p style="margin:10px 0 24px;font-family:'Baskerville BT','Libre Baskerville',serif;font-size:13.5px;line-height:1.6;color:#5B7896">Vài thông tin để bắt đầu. Đổi lại bất cứ lúc nào trong Cài đặt.</p>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:4px 16px;margin-bottom:20px">
+<sc-for list="{{ onbFields }}" as="f" hint-placeholder-count="3">
+<div style="padding:13px 0;border-top:1px solid {{ f.bd }}">
+<p style="margin:0 0 4px;font-size:11px;letter-spacing:.09em;font-weight:700;color:#94AABF">{{ f.l }}</p>
+<p style="margin:0;font-size:15px;font-weight:{{ f.fw }};color:{{ f.c }}">{{ f.v }}</p></div></sc-for>
+</div>
+<p style="margin:0 2px 10px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.11em;color:#7E9AB5">MÔN BẠN HAY TẬP <span style="font-family:'Barlow',sans-serif;font-size:11px;font-weight:500;letter-spacing:0;color:#B7C6D4">· tuỳ chọn</span></p>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px">
+<sc-for list="{{ onbSports }}" as="s" hint-placeholder-count="12"><div style="display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:22px;font-size:13px;font-weight:600;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }}">{{ s.icon }}{{ s.l }}</div></sc-for>
+</div>
+<div style="display:flex;gap:12px;background:#BCD9F2;border-radius:16px;padding:14px 16px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E5A80" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><rect x="4" y="10" width="16" height="11" rx="2.5"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+<p style="margin:0;font-family:'Baskerville BT','Libre Baskerville',serif;font-size:12.5px;line-height:1.6;color:#2E5A80"><b style="font-family:'Barlow',sans-serif">Riêng tư:</b> cân nặng và số đo <b style="font-family:'Barlow',sans-serif">không ai thấy</b>. Buổi tập hiện trên bảng tin, nhưng bạn đặt riêng tư từng buổi được.</p></div>
+</div>
+<div style="border-top:1px solid #DDE8F2;background:#fff;padding:14px 18px 20px">
+<div style="background:#2576B9;border-radius:15px;padding:15px;text-align:center;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:.1em;color:#fff">BẮT ĐẦU</div></div>
+</div></div></div>
+
+<div class="dv-opt" id="3c"><div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>Đang tập gym + đồng hồ nghỉ</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#F2F6FA;color:#12395E;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="background:#2576B9;padding:14px 16px 14px;color:#fff">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+<div style="display:flex;align-items:center;gap:11px">
+<div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></div>
+<div><p style="margin:0;font-size:11px;letter-spacing:.11em;font-weight:600;color:#BCD9F2">PPL</p><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:22px;letter-spacing:.03em">PUSH</p></div></div>
+<div style="text-align:right"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:28px;line-height:1;font-variant-numeric:tabular-nums">42:18</p><p style="margin:1px 0 0;font-size:11px;color:#BCD9F2">2.000 kg volume</p></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden"><span style="font-size:10.5px;letter-spacing:.1em;font-weight:600;color:#BCD9F2;white-space:nowrap">NGHỈ</span>
+<sc-for list="{{ restPresets }}" as="p" hint-placeholder-count="4"><span style="padding:5px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;background:{{ p.bg }};color:{{ p.fg }}">{{ p.l }}</span></sc-for></div>
+<div style="display:flex;gap:8px;flex-shrink:0"><span style="background:rgba(255,255,255,.18);border-radius:11px;padding:7px 13px;font-size:12.5px;font-weight:600;white-space:nowrap">Huỷ</span><span style="background:#FFD95C;border-radius:11px;padding:7px 15px;font-size:12.5px;font-weight:700;color:#12395E;white-space:nowrap">✓ Xong</span></div></div>
+</div>
+<div style="flex:1;overflow:hidden">
+<sc-for list="{{ gymExs }}" as="e" hint-placeholder-count="2">
+<div style="background:#fff;border-bottom:1px solid #DDE8F2;padding:16px">
+<div style="display:flex;align-items:center;gap:11px;margin-bottom:4px">
+<div style="width:34px;height:34px;border-radius:10px;background:#E7F1FB;flex-shrink:0;display:flex;align-items:center;justify-content:center">{{ e.icon }}</div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:15px;font-weight:700;color:#2576B9">{{ e.n }}</p>
+<p style="margin:1px 0 0;font-size:11.5px;color:#94AABF">Lần trước: {{ e.prev }}</p></div>
+<span style="display:flex;align-items:center;gap:5px;border:1px solid #DDE8F2;border-radius:10px;padding:6px 10px;font-size:11.5px;font-weight:600;color:#5B7896"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7E9AB5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"></path></svg>Hướng dẫn</span></div>
+<div style="display:grid;grid-template-columns:22px 1fr 1fr 54px 42px;gap:8px;margin:12px 0 7px"><sc-for list="{{ setCols }}" as="c" hint-placeholder-count="5"><span style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#B7C6D4;text-align:center">{{ c }}</span></sc-for></div>
+<sc-for list="{{ e.sets }}" as="s" hint-placeholder-count="3">
+<div style="display:grid;grid-template-columns:22px 1fr 1fr 54px 42px;gap:8px;margin-bottom:8px;align-items:center">
+<span style="font-size:12px;font-weight:600;color:#B7C6D4;text-align:center">{{ s.n }}</span>
+<div style="padding:11px 4px;border-radius:12px;text-align:center;font-size:15px;font-weight:600;background:{{ s.bg }};color:{{ s.fg }};border:1px solid {{ s.bd }}">{{ s.kg }}</div>
+<div style="padding:11px 4px;border-radius:12px;text-align:center;font-size:15px;font-weight:600;background:{{ s.bg }};color:{{ s.fg }};border:1px solid {{ s.bd }}">{{ s.reps }}</div>
+<div style="padding:11px 4px;border-radius:12px;text-align:center;font-size:15px;font-weight:600;background:{{ s.bg }};color:{{ s.fg }};border:1px solid {{ s.bd }}">{{ s.rpe }}</div>
+<div style="width:42px;height:42px;border-radius:12px;background:{{ s.ckBg }};display:flex;align-items:center;justify-content:center">{{ s.ck }}</div>
+</div></sc-for>
+<div style="display:flex;gap:8px;margin-top:12px"><span style="border:1px solid #DDE8F2;border-radius:11px;padding:8px 14px;font-size:12.5px;font-weight:600;color:#5B7896">＋ Set</span><span style="border:1px solid #DDE8F2;border-radius:11px;padding:8px 14px;font-size:12.5px;font-weight:600;color:#B7C6D4">− Set</span></div>
+</div></sc-for>
+</div>
+<div style="position:absolute;left:16px;right:16px;bottom:20px;background:rgba(255,255,255,.96);border:1px solid #DDE8F2;border-radius:18px;padding:12px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 12px 30px rgba(18,57,94,.14)">
+<div style="position:relative;width:54px;height:54px;flex-shrink:0">
+<svg width="54" height="54" viewBox="0 0 60 60" style="transform:rotate(-90deg)"><circle cx="30" cy="30" r="26" fill="none" stroke="#EDF3F9" stroke-width="5"></circle><circle cx="30" cy="30" r="26" fill="none" stroke="#2576B9" stroke-width="5" stroke-linecap="round" stroke-dasharray="163.3" stroke-dashoffset="52"></circle></svg>
+<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:17px">62s</span></div>
+<div style="flex:1"><p style="margin:0;font-size:10.5px;letter-spacing:.1em;font-weight:700;color:#94AABF">THỜI GIAN NGHỈ</p><p style="margin:1px 0 0;font-size:13.5px;font-weight:600">Tiếp tục sau 1:02</p></div>
+<div style="display:flex;gap:6px"><span style="background:#F2F6FA;border-radius:9px;padding:7px 9px;font-size:11.5px;font-weight:600;color:#5B7896">−15s</span><span style="background:#F2F6FA;border-radius:9px;padding:7px 9px;font-size:11.5px;font-weight:600;color:#5B7896">+15s</span></div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="3d"><div class="dv-olabel"><a class="dv-oid" href="#3d">3d</a>Kho hướng dẫn</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#F2F6FA;color:#12395E;overflow:hidden;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="padding:12px 16px 14px;background:#fff;border-bottom:1px solid #DDE8F2;display:flex;align-items:center;gap:12px">
+<div style="width:36px;height:36px;border-radius:50%;background:#F2F6FA;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B7896" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:21px;letter-spacing:.03em">HƯỚNG DẪN TẬP LUYỆN</p>
+<p style="margin:1px 0 0;font-family:'Baskerville BT','Libre Baskerville',serif;font-style:italic;font-size:11.5px;color:#7E9AB5;white-space:nowrap">Không biết bắt đầu từ đâu? Bắt đầu ở đây.</p></div></div>
+<div style="flex:1;padding:16px;overflow:hidden">
+<sc-for list="{{ guideGroups }}" as="g" hint-placeholder-count="3">
+<div style="margin-bottom:20px">
+<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px"><span style="width:28px;height:28px;border-radius:9px;background:{{ g.tint }};display:flex;align-items:center;justify-content:center">{{ g.icon }}</span><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:.08em">{{ g.l }}</p></div>
+<sc-for list="{{ g.items }}" as="it" hint-placeholder-count="2">
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:14px 16px;margin-bottom:9px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="flex:1;font-size:15px;font-weight:700">{{ it.t }}</span><span style="font-size:10.5px;font-weight:700;letter-spacing:.06em;color:#2576B9;background:#E7F1FB;border-radius:20px;padding:4px 10px;flex-shrink:0;white-space:nowrap">{{ it.lv }}</span></div>
+<p style="margin:0;font-size:12.5px;line-height:1.5;color:#7E9AB5">{{ it.s }}</p></div></sc-for>
+</div></sc-for>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="3e"><div class="dv-olabel"><a class="dv-oid" href="#3e">3e</a>Hướng dẫn chi tiết <span style="color:#94AABF">(khung cao)</span></div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:1290px;background:#F2F6FA;color:#12395E;overflow:hidden;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="padding:12px 16px;background:#fff;border-bottom:1px solid #DDE8F2;display:flex;align-items:center;gap:12px">
+<div style="width:36px;height:36px;border-radius:50%;background:#F2F6FA;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B7896" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg></div>
+<span style="width:30px;height:30px;border-radius:9px;background:#FBEBF3;display:flex;align-items:center;justify-content:center">{{ iconGymPink }}</span>
+<p style="flex:1;margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:18px;letter-spacing:.05em">TẬP GYM</p></div>
+<div style="flex:1;overflow:hidden;padding:18px 16px">
+<span style="display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;color:#2576B9;background:#E7F1FB;border-radius:20px;padding:4px 11px;margin-bottom:10px;white-space:nowrap">Người mới</span>
+<p style="margin:0 0 8px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:30px;line-height:1.1;letter-spacing:.01em">ĐẨY NGỰC DỐC VỚI TẠ ĐÒN</p>
+<p style="margin:0 0 14px;font-family:'Baskerville BT','Libre Baskerville',serif;font-size:14px;line-height:1.65;color:#5B7896">Bài đẩy ngực trên ghế nghiêng — tập phần ngực trên, phần mà nhiều người tập mãi vẫn thiếu.</p>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+<sc-for list="{{ guideChips }}" as="c" hint-placeholder-count="2"><span style="display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #DDE8F2;border-radius:22px;padding:6px 13px;font-size:12.5px;color:#7E9AB5">{{ c.icon }}<b style="font-weight:600;color:#12395E">{{ c.v }}</b></span></sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:11px;background:#EB4754;border-radius:15px;padding:13px 16px;margin-bottom:18px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="4"></rect><path d="M10.5 9.5l4.5 2.5-4.5 2.5z"></path></svg>
+<span style="flex: 1; font-family: 'Barlow Semi Condensed',sans-serif; font-weight: 600; font-size: 16px; letter-spacing: .07em; color: #fff">XEM VIDEO HƯỚNG DẪN (Youtube)</span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"></path></svg></div>
+<div style="height:150px;border-radius:18px;background:repeating-linear-gradient(135deg,#E7F1FB,#E7F1FB 10px,#DDEAF7 10px,#DDEAF7 20px);border:1px solid #DDE8F2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin-bottom:20px">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#7E9AB5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"></rect><circle cx="9" cy="10.5" r="1.6"></circle><path d="M21 16l-5-5-6 6"></path></svg>
+<span style="font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#5B7896">ảnh minh hoạ động tác</span></div>
+<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px"><p style="margin:0;flex:1;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:18px;letter-spacing:.05em">CÁC BƯỚC THỰC HIỆN</p><span style="font-size:11.5px;color:#94AABF">6 bước</span></div>
+<sc-for list="{{ guideSteps }}" as="s" hint-placeholder-count="4">
+<div style="display:flex;gap:12px;margin-bottom:13px">
+<span style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:#2576B9;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px">{{ s.n }}</span>
+<p style="margin:0;flex:1;font-size:14px;line-height:1.6">{{ s.t }}</p></div></sc-for>
+<div style="border: 1px solid #F8C9CE; border-radius: 18px; padding: 14px 16px; margin: 18px 0 12px; background-color: #FDECEE7F">
+<p style="margin:0 0 9px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.08em;color:#C22E3B">LỖI THƯỜNG GẶP</p>
+<sc-for list="{{ guideMistakes }}" as="m" hint-placeholder-count="3"><div style="display:flex;gap:9px;margin-bottom:6px"><span style="color:#EB4754;font-weight:700">·</span><p style="margin:0;flex:1;font-size:13.5px;line-height:1.55;color:#8C2A34">{{ m }}</p></div></sc-for>
+</div>
+<div style="border-radius: 18px; padding: 14px 16px; background-color: #FFF6DA80">
+<p style="margin:0 0 9px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.08em;color:#8A6D0F">MẸO</p>
+<sc-for list="{{ guideTips }}" as="m" hint-placeholder-count="2"><div style="display:flex;gap:9px;margin-bottom:6px"><span style="color:#C9A21B;font-weight:700">·</span><p style="margin:0;flex:1;font-size:13.5px;line-height:1.55;color:#6B5510">{{ m }}</p></div></sc-for>
+</div>
+<p style="margin:14px 2px 0;font-size:11px;line-height:1.6;color:#B7C6D4">Ảnh &amp; hướng dẫn gốc: free-exercise-db (public domain). Nội dung mang tính tham khảo, không thay thế tư vấn chuyên môn.</p>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="3f"><div class="dv-olabel"><a class="dv-oid" href="#3f">3f</a>Cài đặt <span style="color:#94AABF">(khung cao)</span></div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:1010px;background:#F2F6FA;color:#12395E;overflow:hidden;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="padding:12px 16px;background:#fff;border-bottom:1px solid #DDE8F2;display:flex;align-items:center;gap:12px">
+<div style="width:36px;height:36px;border-radius:50%;background:#F2F6FA;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B7896" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg></div>
+<p style="flex:1;margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:21px;letter-spacing:.03em">CÀI ĐẶT</p></div>
+<div style="flex:1;overflow:hidden;padding:18px 16px">
+<p style="margin:0 2px 9px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.11em;color:#7E9AB5">HỒ SƠ</p>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:4px 16px 16px;margin-bottom:20px">
+<sc-for list="{{ onbFields }}" as="f" hint-placeholder-count="3">
+<div style="padding:13px 0;border-top:1px solid {{ f.bd }}"><p style="margin:0 0 4px;font-size:11px;letter-spacing:.09em;font-weight:700;color:#94AABF">{{ f.l }}</p><p style="margin:0;font-size:15px;font-weight:{{ f.fw }};color:{{ f.c }}">{{ f.v }}</p></div></sc-for>
+<div style="background:#2576B9;border-radius:13px;padding:12px;text-align:center;font-size:14px;font-weight:600;color:#fff;margin-top:6px">Lưu hồ sơ</div></div>
+<p style="margin:0 2px 9px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.11em;color:#7E9AB5">QUYỀN RIÊNG TƯ</p>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:0 16px;margin-bottom:20px">
+<sc-for list="{{ setRows }}" as="r" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid {{ r.bd }}">
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:14.5px;font-weight:600;color:{{ r.tc }}">{{ r.t }}</p><p style="margin:2px 0 0;font-size:12px;line-height:1.45;color:#94AABF">{{ r.s }}</p></div>
+<div style="width:46px;height:28px;border-radius:14px;background:{{ r.tg }};position:relative;flex-shrink:0"><span style="position:absolute;top:3px;left:{{ r.kn }};width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)"></span></div>
+</div></sc-for>
+</div>
+<p style="margin:0 2px 9px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.11em;color:#7E9AB5">CHUỖI TẬP</p>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:14px">
+<div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:600">Tính lại chuỗi</p><p style="margin:2px 0 0;font-size:12px;color:#94AABF">Dùng khi bạn ghi buổi tập lùi ngày và chuỗi bị lệch</p></div>
+<span style="font-size:13px;font-weight:600;color:#2576B9;flex-shrink:0">Tính lại ›</span></div>
+<p style="margin:0 2px 9px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.11em;color:#7E9AB5">TÀI KHOẢN</p>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:0 16px;margin-bottom:16px">
+<div style="display:flex;align-items:center;gap:14px;padding:15px 0"><p style="margin:0;flex:1;font-size:14.5px;font-weight:600">Đăng xuất</p><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#B7C6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg></div>
+<div style="display:flex;align-items:center;gap:14px;padding:15px 0;border-top:1px solid #EDF3F9"><div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:600;color:#EB4754">Xoá tài khoản</p><p style="margin:2px 0 0;font-size:12px;line-height:1.45;color:#94AABF">Xoá vĩnh viễn mọi buổi tập, điểm và hồ sơ. Không thể hoàn tác.</p></div>
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#EB4754" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 4.3L2.5 18a1.8 1.8 0 0 0 1.6 2.7h15.8A1.8 1.8 0 0 0 21.5 18L13.7 4.3a1.8 1.8 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg></div></div>
+<p style="margin:0;text-align:center;font-family:'Baskerville BT','Libre Baskerville',serif;font-size:11.5px;line-height:1.6;color:#94AABF">Cân nặng và số đo của bạn không bao giờ hiển thị với đồng nghiệp.</p>
+</div>
+</div></div></div>
+
+</div>
+</section>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Trọn bộ — <a class="dv-oid" href="#1a">1a</a> + bảng xếp hạng bục vinh danh của <a class="dv-oid" href="#1b">1b</a></span></div>
+
+<div style="max-width:780px;font:13.5px/1.7 system-ui,sans-serif;color:#333;margin:0 0 24px">
+<p style="margin:0 0 10px"><b>Hệ thống đã chốt:</b> nền <code>#F2F6FA</code>, thẻ trắng viền <code>#DDE8F2</code> bo 18, khối nhấn Apollo Blue <code>#2576B9</code>, Baby Blue làm mảng nền phụ, Vàng <code>#FFD95C</code> chỉ dùng cho việc gấp (giữ chuỗi, hạng 1), Đỏ/Hồng chỉ cho tim &amp; nhãn môn. Tiêu đề Barlow Semi Condensed in hoa, body Barlow, câu dẫn Baskerville BT nghiêng. Icon keyline toàn bộ.</p>
+<p style="margin:0"><b>Ba thứ mình thêm vào (nói trước để bạn gật hay bỏ):</b> ① màn ghi buổi tập có <b>ô “≈ điểm” cập nhật ngay</b> — cho người ta thấy công sức quy đổi ra gì trước khi bấm Lưu; ② tab Cá nhân có <b>dải “phân bổ theo môn”</b> gộp từ 2 thẻ rời; ③ màn Chúc mừng có nút <b>“Chia sẻ lên bảng tin”</b> để đẩy tương tác. Màn dài hơn khung điện thoại thì mình để khung cao hơn cho bạn xem hết một lượt.</p>
+</div>
+
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a"><div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Trang chủ</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#F2F6FA;color:#12395E;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px">
+<p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:.14em;color:#2576B9;white-space:nowrap">APOLLO SPORT</p>
+<div style="width:34px;height:34px;border-radius:50%;background:#BCD9F2;border:2px solid #2576B9"></div></div>
+<div style="flex:1;overflow:hidden;padding:0 16px">
+<div style="background:#2576B9;border-radius:20px;padding:20px 20px 16px;color:#fff;margin-bottom:12px">
+<div style="display:flex;align-items:flex-end;justify-content:space-between">
+<div><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;font-size:12px;letter-spacing:.16em;color:#BCD9F2">CHUỖI LIÊN TIẾP</p>
+<p style="margin:-6px 0 0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:76px;line-height:1">1<span style="font-size:24px;letter-spacing:.06em;margin-left:8px">NGÀY</span></p></div>
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#FFD95C" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="stroke-width: 2px"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg></div>
+<div style="display:flex;gap:6px;margin:14px 0 0"><sc-for list="{{ week }}" as="d" hint-placeholder-count="7"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><span style="font-size:10px;letter-spacing:.08em;color:#BCD9F2">{{ d.l }}</span><span style="width:100%;height:5px;border-radius:3px;background:{{ d.c }}"></span></div></sc-for></div>
+<div style="display:flex;align-items:center;gap:9px;background:#FFD95C;border-radius:12px;padding:9px 12px;margin-top:14px">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#12395E" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+<p style="margin:0;font-size:12.5px;font-weight:600;color:#12395E">Còn 9 tiếng để giữ chuỗi — tập hôm nay nhé!</p></div>
+</div>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;display:flex;margin-bottom:12px">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="3"><div style="flex:1;padding:14px 6px;text-align:center;border-left:1px solid {{ s.bd }}"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:26px;line-height:1">{{ s.v }}</p><p style="margin:4px 0 0;font-size:10.5px;letter-spacing:.1em;font-weight:600;color:#7E9AB5">{{ s.l }}</p></div></sc-for>
+</div>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:14px 16px;margin-bottom:12px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.1em">MỤC TIÊU TUẦN</p><p style="margin:0;font-size:12px;color:#5B7896">14<span style="color:#94AABF">/3 buổi</span></p></div>
+<div style="height:7px;border-radius:4px;background:#E7F1FB;overflow:hidden"><div style="width:100%;height:100%;background:#2576B9"></div></div>
+<p style="margin:9px 0 0;font-family:'Baskerville BT','Libre Baskerville',serif;font-style:italic;font-size:12px;color:#5B7896">Vượt mục tiêu tuần này rồi. Đặt mốc cao hơn?</p></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin:16px 2px 9px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.1em">GẦN ĐÂY</p><p style="margin:0;font-size:12px;color:#2576B9;font-weight:600">Tất cả ›</p></div>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;overflow:hidden">
+<sc-for list="{{ recent }}" as="s" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid {{ s.bd }}">
+<span style="width:34px;height:34px;border-radius:10px;background:{{ s.tint }};display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ s.icon }}</span>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:14px;font-weight:600">{{ s.t }}</p><p style="margin:1px 0 0;font-size:11.5px;color:#7E9AB5">{{ s.sub }}</p></div>
+<div style="text-align:right"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:17px;color:#2576B9">{{ s.v }}</p><p style="margin:0;font-size:11px;color:#94AABF">{{ s.d }}</p></div>
+</div></sc-for></div>
+<div style="height:78px"></div>
+</div>
+<div style="position:absolute;bottom:80px;right:18px;width:58px;height:58px;border-radius:50%;background:#2576B9;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(37,118,185,.4)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+<nav style="display:flex;background:#fff;border-top:1px solid #DDE8F2;padding-bottom:4px">
+<sc-for list="{{ navHome }}" as="n" hint-placeholder-count="4"><div style="flex:1;padding:11px 0 9px;display:flex;flex-direction:column;align-items:center;gap:5px;color:{{ n.c }}">{{ n.icon }}<span style="font-family:'Barlow Semi Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.07em">{{ n.l }}</span></div></sc-for>
+</nav>
+</div></div></div>
+
+<div class="dv-opt" id="2b"><div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Chọn môn</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#F2F6FA;color:#12395E;overflow:hidden;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="padding:14px 18px 14px;background:#fff;border-bottom:1px solid #DDE8F2;display:flex;align-items:center;gap:12px">
+<div style="width:36px;height:36px;border-radius:50%;background:#F2F6FA;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B7896" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:21px;letter-spacing:.03em">BẠN VỪA TẬP GÌ?</p>
+<p style="margin:1px 0 0;font-family:'Baskerville BT','Libre Baskerville',serif;font-style:italic;font-size:11.5px;color:#7E9AB5;white-space:nowrap">Điểm quy đổi để app lo.</p></div></div>
+<div style="flex:1;padding:16px 16px 0;overflow:hidden">
+<p style="margin:0 2px 9px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.11em;color:#7E9AB5">BẠN HAY TẬP</p>
+<div style="display:flex;gap:9px;margin-bottom:22px">
+<sc-for list="{{ sportsTop }}" as="a" hint-placeholder-count="3"><div style="flex:1;background:#2576B9;border-radius:16px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center">{{ a.icon }}</span><span style="font-size:12.5px;font-weight:600;color:#fff">{{ a.l }}</span></div></sc-for>
+</div>
+<p style="margin:0 2px 9px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.11em;color:#7E9AB5">TẤT CẢ MÔN</p>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">
+<sc-for list="{{ sportsAll }}" as="a" hint-placeholder-count="12"><div style="background:#fff;border:1px solid #DDE8F2;border-radius:16px;padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:8px"><span style="width:38px;height:38px;border-radius:12px;background:{{ a.tint }};display:flex;align-items:center;justify-content:center">{{ a.icon }}</span><span style="font-size:12px;font-weight:600;text-align:center">{{ a.l }}</span></div></sc-for>
+</div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="2c"><div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Ghi buổi tập · Đạp xe <span style="color:#94AABF">(khung cao — xem hết một lượt)</span></div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:1010px;background:#F2F6FA;color:#12395E;overflow:hidden;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="padding:12px 16px;background:#fff;border-bottom:1px solid #DDE8F2;display:flex;align-items:center;gap:12px">
+<div style="width:36px;height:36px;border-radius:50%;background:#F2F6FA;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B7896" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg></div>
+<span style="width:34px;height:34px;border-radius:10px;background:#E7F1FB;display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ iconBike }}</span>
+<p style="flex:1;margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:20px;letter-spacing:.03em">ĐẠP XE</p>
+<div style="background:#2576B9;border-radius:12px;padding:10px 20px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:.08em;color:#fff">LƯU</div></div>
+<div style="flex:1;overflow:hidden;padding:16px">
+<p style="margin:0 0 16px;font-size:20px;font-weight:600;color:#B7C6D4">Đạp xe sáng</p>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:4px 16px;margin-bottom:12px">
+<sc-for list="{{ formNums }}" as="f" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-top:1px solid {{ f.bd }}">
+<div><p style="margin:0;font-size:13.5px;font-weight:600">{{ f.l }}</p><p style="margin:1px 0 0;font-size:11px;color:#94AABF">{{ f.hint }}</p></div>
+<div style="display:flex;align-items:baseline;gap:5px"><span style="font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:30px;line-height:1;color:{{ f.c }}">{{ f.v }}</span><span style="font-size:12px;color:#7E9AB5">{{ f.u }}</span></div>
+</div></sc-for>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-top:1px solid #EDF3F9">
+<p style="margin:0;font-size:13.5px;font-weight:600;color:#5B7896">Tốc độ trung bình</p>
+<div style="display:flex;align-items:center;gap:6px;background:#E7F1FB;border-radius:9px;padding:5px 10px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2576B9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 14H11l-1 8 8.5-12H12z"></path></svg><span style="font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:16px;color:#2576B9">22,5</span><span style="font-size:11px;color:#5B7896">km/h</span></div></div>
+</div>
+<p style="margin:0 2px 8px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.11em;color:#7E9AB5">ĐỊA ĐIỂM</p>
+<div style="display:flex;gap:8px;margin-bottom:16px"><div style="flex:1;padding:12px;border-radius:13px;border:1px solid #DDE8F2;background:#fff;font-size:14px;font-weight:600;color:#5B7896;text-align:center">Trong nhà</div><div style="flex:1;padding:12px;border-radius:13px;background:#2576B9;font-size:14px;font-weight:600;color:#fff;text-align:center">Ngoài trời</div></div>
+<p style="margin:0 2px 8px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.11em;color:#7E9AB5">CƯỜNG ĐỘ</p>
+<div style="display:flex;gap:8px;margin-bottom:16px"><div style="flex:1;padding:12px;border-radius:13px;border:1px solid #DDE8F2;background:#fff;font-size:14px;font-weight:600;color:#5B7896;text-align:center">Nhẹ</div><div style="flex:1;padding:12px;border-radius:13px;background:#2576B9;font-size:14px;font-weight:600;color:#fff;text-align:center">Vừa</div><div style="flex:1;padding:12px;border-radius:13px;border:1px solid #DDE8F2;background:#fff;font-size:14px;font-weight:600;color:#5B7896;text-align:center">Mạnh</div></div>
+<div style="display:flex;align-items:center;gap:12px;background:#BCD9F2;border-radius:16px;padding:14px 16px;margin-bottom:16px">
+<div style="flex:1"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.1em;color:#2E5A80">BUỔI NÀY ĐƯỢC</p><p style="margin:2px 0 0;font-family:'Baskerville BT','Libre Baskerville',serif;font-style:italic;font-size:11.5px;color:#3D6285">60 phút × cường độ vừa</p></div>
+<p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:34px;line-height:1;color:#12395E">90<span style="font-size:15px;letter-spacing:.06em;margin-left:5px">ĐIỂM</span></p></div>
+<p style="margin:0 0 14px;color:#2576B9;font-size:13.5px;font-weight:600">Thêm chi tiết ▾</p>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:14px 16px;margin-bottom:12px"><p style="margin:0 0 8px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.11em;color:#7E9AB5">GHI CHÚ</p><p style="margin:0;font-size:14px;color:#B7C6D4">Cảm giác hôm nay thế nào?</p></div>
+<div style="border:1.5px dashed #C7D8E6;border-radius:18px;padding:20px;text-align:center;margin-bottom:8px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94AABF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 6px"><rect x="3" y="5" width="18" height="14" rx="2.5"></rect><circle cx="9" cy="10.5" r="1.6"></circle><path d="M21 16l-5-5-6 6"></path></svg><p style="margin:0;font-size:13px;font-weight:600;color:#7E9AB5">Thêm ảnh</p><p style="margin:2px 0 0;font-size:11px;color:#94AABF">Ảnh sẽ hiển thị với toàn bộ đồng nghiệp</p></div>
+<div style="display:flex;gap:8px;margin-top:16px">
+<div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px;border-radius:13px;background:#2576B9;font-size:13.5px;font-weight:600;color:#fff"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18"></path></svg>Đồng nghiệp</div>
+<div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px;border-radius:13px;border:1px solid #DDE8F2;background:#fff;font-size:13.5px;font-weight:600;color:#5B7896"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7E9AB5" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>Chỉ mình tôi</div></div>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="2d"><div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>Bảng tin</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#F2F6FA;color:#12395E;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="padding:16px 18px 10px;background:#fff;border-bottom:1px solid #DDE8F2">
+<p style="margin:0 0 12px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:26px;letter-spacing:.03em">BẢNG TIN</p>
+<div style="display:flex;gap:7px;overflow:hidden">
+<sc-for list="{{ chips }}" as="c" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;font-size:12.5px;font-weight:600;white-space:nowrap;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }}">{{ c.icon }}{{ c.l }}</div></sc-for>
+</div></div>
+<div style="flex:1;overflow:hidden;padding:12px 16px">
+<sc-for list="{{ feed }}" as="p" hint-placeholder-count="3">
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:14px 16px;margin-bottom:11px">
+<div style="display:flex;gap:11px;align-items:center">
+<div style="width:40px;height:40px;border-radius:50%;background:#E7F1FB;border:2px solid {{ p.ring }};flex-shrink:0"></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:13.5px;line-height:1.35"><b style="font-weight:700">{{ p.who }}</b> <span style="color:#5B7896">{{ p.head }}</span></p><p style="margin:2px 0 0;font-size:11px;color:#94AABF">{{ p.when }}</p></div>
+<span style="flex-shrink:0">{{ p.icon }}</span></div>
+<div style="display:flex;gap:14px;margin-top:11px;padding-top:11px;border-top:1px solid #EDF3F9">
+<sc-for list="{{ p.stats }}" as="s" hint-placeholder-count="3"><span style="font-size:12.5px;color:#7E9AB5"><b style="font-family:'Barlow Semi Condensed',sans-serif;font-size:15px;color:#12395E">{{ s.v }}</b> {{ s.u }}</span></sc-for>
+<span style="margin-left:auto;display:flex;gap:12px;align-items:center">
+<span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:#7E9AB5"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#EB4754" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 0 0-7.1 7.1l8.8 8.8 8.8-8.8a5 5 0 0 0 0-7.1z"></path></svg>{{ p.likes }}</span>
+<span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:#7E9AB5"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2576B9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.9-.9L3 21l1.9-5a8.4 8.4 0 0 1-.9-3.9 8.4 8.4 0 0 1 8.4-8.4 8.4 8.4 0 0 1 8.6 8.3z"></path></svg>{{ p.cmts }}</span>
+</span></div></div></sc-for>
+</div>
+<div style="position:absolute;bottom:80px;right:18px;width:58px;height:58px;border-radius:50%;background:#2576B9;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(37,118,185,.4)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+<nav style="display:flex;background:#fff;border-top:1px solid #DDE8F2;padding-bottom:4px">
+<sc-for list="{{ navFeed }}" as="n" hint-placeholder-count="4"><div style="flex:1;padding:11px 0 9px;display:flex;flex-direction:column;align-items:center;gap:5px;color:{{ n.c }}">{{ n.icon }}<span style="font-family:'Barlow Semi Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.07em">{{ n.l }}</span></div></sc-for>
+</nav>
+</div></div></div>
+
+<div class="dv-opt" id="2e"><div class="dv-olabel"><a class="dv-oid" href="#2e">2e</a>Xếp hạng — bục vinh danh trên nền xanh</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#F2F6FA;color:#12395E;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="background:#2576B9;padding:18px 18px 0;color:#fff">
+<p style="margin:0 0 3px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:26px;letter-spacing:.03em">BẢNG XẾP HẠNG</p>
+<p style="margin:0 0 12px;font-family:'Baskerville BT','Libre Baskerville',serif;font-style:italic;font-size:12px;color:#BCD9F2">Điểm quy đổi theo cường độ — công bằng giữa mọi môn.</p>
+<div style="display:flex;background:rgba(255,255,255,.16);border-radius:12px;padding:3px;margin-bottom:10px"><div style="flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;background:#fff;color:#2576B9;border-radius:9px">Toàn công ty</div><div style="flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;color:#DCEAF7">Phòng ban</div></div>
+<div style="display:flex;gap:16px;padding:0 4px 14px"><span style="font-size:13px;font-weight:700;color:#fff;border-bottom:2px solid #FFD95C;padding-bottom:3px">Tuần này</span><span style="font-size:13px;font-weight:500;color:#BCD9F2">Tháng này</span></div>
+<div style="display:flex;align-items:flex-end;gap:10px;padding:0 4px">
+<div style="flex:1;text-align:center"><div style="width:46px;height:46px;border-radius:50%;background:#BCD9F2;border:2px solid #fff;margin:0 auto 6px"></div><p style="margin:0;font-size:11px;font-weight:600;color:#EAF3FB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">TD Comms</p><div style="background:#fff;border-radius:12px 12px 0 0;padding:9px 0 12px;margin-top:7px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:21px;color:#12395E">180</p><p style="margin:0;font-size:10px;letter-spacing:.1em;color:#94AABF">HẠNG 2</p></div></div>
+<div style="flex:1.15;text-align:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD95C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 3px"><path d="M3 6l4.5 4L12 3l4.5 7L21 6l-1.8 12H4.8z"></path></svg><div style="width:58px;height:58px;border-radius:50%;background:#BCD9F2;border:3px solid #FFD95C;margin:0 auto 6px"></div><p style="margin:0;font-size:11.5px;font-weight:700;color:#fff">Bạn</p><div style="background:#fff;border-radius:12px 12px 0 0;padding:13px 0 16px;margin-top:7px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:28px;line-height:1;color:#2576B9">1217</p><p style="margin:2px 0 0;font-size:10px;letter-spacing:.1em;color:#94AABF">HẠNG 1</p></div></div>
+<div style="flex:1;text-align:center"><div style="width:46px;height:46px;border-radius:50%;background:#BCD9F2;border:2px solid #fff;margin:0 auto 6px"></div><p style="margin:0;font-size:11px;font-weight:600;color:#EAF3FB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Minh Anh</p><div style="background:#fff;border-radius:12px 12px 0 0;padding:7px 0 10px;margin-top:7px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:20px;color:#12395E">164</p><p style="margin:0;font-size:10px;letter-spacing:.1em;color:#94AABF">HẠNG 3</p></div></div>
+</div></div>
+<div style="flex:1;padding:14px 16px 0">
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;overflow:hidden">
+<sc-for list="{{ ranks }}" as="r" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid {{ r.bd }}">
+<span style="width:26px;text-align:center;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:16px;color:{{ r.rc }}">{{ r.n }}</span>
+<div style="width:34px;height:34px;border-radius:50%;background:#E7F1FB;flex-shrink:0"></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:13.5px;font-weight:600">{{ r.name }}</p><p style="margin:1px 0 0;font-size:11px;color:#94AABF">{{ r.sub }}</p></div>
+<p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:19px">{{ r.pts }}</p>
+</div></sc-for></div>
+<p style="margin:14px 6px 0;font-family:'Baskerville BT','Libre Baskerville',serif;font-size:11.5px;line-height:1.6;color:#7E9AB5;text-align:center">Bảng làm mới mỗi tuần. Bạn có thể tắt tham gia trong Cài đặt.</p>
+</div>
+<nav style="display:flex;background:#fff;border-top:1px solid #DDE8F2;padding-bottom:4px">
+<sc-for list="{{ navRank }}" as="n" hint-placeholder-count="4"><div style="flex:1;padding:11px 0 9px;display:flex;flex-direction:column;align-items:center;gap:5px;color:{{ n.c }}">{{ n.icon }}<span style="font-family:'Barlow Semi Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.07em">{{ n.l }}</span></div></sc-for>
+</nav>
+</div></div></div>
+
+<div class="dv-opt" id="2f"><div class="dv-olabel"><a class="dv-oid" href="#2f">2f</a>Cá nhân <span style="color:#94AABF">(khung cao)</span></div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:1340px;background:#F2F6FA;color:#12395E;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="flex:1;overflow:hidden">
+<div style="background:#2576B9;padding:18px 18px 20px;color:#fff">
+<div style="display:flex;align-items:center;gap:13px">
+<div style="width:56px;height:56px;border-radius:50%;background:#BCD9F2;border:3px solid #FFD95C;flex-shrink:0"></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:17px;font-weight:700">Khang Hoàng Đặng Anh TD</p><p style="margin:1px 0 0;font-size:12px;color:#BCD9F2">TD Communications · hạng 1 tuần này</p></div>
+<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 11.5 4a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9 2 2 0 1 1 0 4z"></path></svg></div></div>
+<div style="display:flex;gap:8px;margin-top:16px">
+<sc-for list="{{ meStats }}" as="s" hint-placeholder-count="3"><div style="flex:1;background:rgba(255,255,255,.14);border-radius:14px;padding:11px 10px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:24px;line-height:1;color:#fff">{{ s.v }}</p><p style="margin:3px 0 0;font-size:10.5px;letter-spacing:.09em;font-weight:600;color:#BCD9F2">{{ s.l }}</p></div></sc-for>
+</div></div>
+<div style="padding:14px 16px 0;display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ meLinks }}" as="l" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:13px 16px">
+<span style="width:38px;height:38px;border-radius:12px;background:{{ l.tint }};display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ l.icon }}</span>
+<div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:700">{{ l.t }}</p><p style="margin:1px 0 0;font-size:11.5px;color:#7E9AB5">{{ l.sub }}</p></div>
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#B7C6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg>
+</div></sc-for>
+</div>
+<div style="padding:20px 16px 0">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.1em">THÁNG 7, 2026</p>
+<div style="display:flex;gap:6px"><div style="width:28px;height:28px;border-radius:9px;background:#fff;border:1px solid #DDE8F2;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5B7896" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></div><div style="width:28px;height:28px;border-radius:9px;background:#fff;border:1px solid #DDE8F2;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5B7896" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"></path></svg></div></div></div>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:14px 16px">
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px"><sc-for list="{{ dows }}" as="d" hint-placeholder-count="7"><span style="text-align:center;font-size:10px;font-weight:700;letter-spacing:.06em;color:#B7C6D4">{{ d }}</span></sc-for></div>
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px"><sc-for list="{{ days2 }}" as="d" hint-placeholder-count="35">
+<div style="aspect-ratio:1;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12.5px;background:{{ d.bg }};color:{{ d.fg }};border:1.5px solid {{ d.bd }};font-weight:{{ d.fw }}"><span>{{ d.n }}</span><span style="display:flex;gap:2px">{{ d.dots }}</span></div></sc-for></div>
+</div></div>
+<div style="padding:20px 16px 0">
+<p style="margin:0 2px 10px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.1em">PHÂN BỔ THEO MÔN <span style="font-family:'Barlow',sans-serif;font-size:11px;font-weight:500;letter-spacing:0;color:#94AABF">· 90 ngày</span></p>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:14px 16px">
+<sc-for list="{{ breakdown }}" as="b" hint-placeholder-count="5">
+<div style="margin-bottom:13px">
+<div style="display:flex;align-items:center;gap:9px;margin-bottom:6px">
+<span style="flex-shrink:0">{{ b.icon }}</span>
+<span style="flex:1;font-size:13px;font-weight:600">{{ b.l }}</span>
+<span style="font-size:11px;color:#94AABF;white-space:nowrap">{{ b.sub }}</span>
+<span style="font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:15px;color:#12395E;min-width:44px;text-align:right">{{ b.pts }}</span></div>
+<div style="height:6px;border-radius:4px;background:#F2F6FA;overflow:hidden"><div style="width:{{ b.w }};height:100%;border-radius:4px;background:{{ b.c }}"></div></div>
+</div></sc-for>
+</div></div>
+<div style="padding:18px 16px 20px">
+<p style="margin:0 2px 10px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.1em">CÂN NẶNG <span style="font-family:'Barlow',sans-serif;font-size:11px;font-weight:500;letter-spacing:0;color:#94AABF">· chỉ mình bạn thấy</span></p>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:16px;display:flex;align-items:center;gap:14px">
+<div><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:34px;line-height:1">77,2<span style="font-size:15px;margin-left:4px">KG</span></p><p style="margin:3px 0 0;font-size:11px;color:#94AABF">02:03 26-07 · <span style="color:#EB4754;font-weight:600">▲ 2%</span></p></div>
+<div style="flex:1;display:flex;align-items:flex-end;gap:4px;height:44px"><sc-for list="{{ spark }}" as="h" hint-placeholder-count="8"><span style="flex:1;height:{{ h }};background:#BCD9F2;border-radius:3px"></span></sc-for></div>
+<div style="background:#2576B9;border-radius:12px;padding:11px 16px;font-size:13.5px;font-weight:600;color:#fff;flex-shrink:0">Ghi</div>
+</div></div>
+</div>
+<nav style="display:flex;background:#fff;border-top:1px solid #DDE8F2;padding-bottom:4px">
+<sc-for list="{{ navMe }}" as="n" hint-placeholder-count="4"><div style="flex:1;padding:11px 0 9px;display:flex;flex-direction:column;align-items:center;gap:5px;color:{{ n.c }}">{{ n.icon }}<span style="font-family:'Barlow Semi Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.07em">{{ n.l }}</span></div></sc-for>
+</nav>
+</div></div></div>
+
+<div class="dv-opt" id="2g"><div class="dv-olabel"><a class="dv-oid" href="#2g">2g</a>Câu lạc bộ <span style="color:#94AABF">(khung cao)</span></div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:1010px;background:#F2F6FA;color:#12395E;overflow:hidden;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="background:#2576B9;padding:12px 16px 22px;color:#fff">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg></div>
+<p style="flex:1;margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:20px;letter-spacing:.04em">CÂU LẠC BỘ</p>
+<div style="background:rgba(255,255,255,.18);border-radius:11px;padding:7px 12px;font-size:12px;font-weight:600">＋ Mời</div></div>
+<div style="display:flex;align-items:center;gap:14px">
+<span style="width:56px;height:56px;border-radius:16px;background:#FFD95C;display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ iconRunDark }}</span>
+<div style="flex:1;min-width:0"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:24px;letter-spacing:.02em">CLB CHẠY BỘ</p><p style="margin:1px 0 0;font-size:12px;color:#BCD9F2">Chạy bộ · 3 thành viên · 10.000 bước/ngày</p></div>
+<div style="display:flex;flex-shrink:0"><div style="width:30px;height:30px;border-radius:50%;background:#BCD9F2;border:2px solid #2576B9"></div><div style="width:30px;height:30px;border-radius:50%;background:#EB9CC4;border:2px solid #2576B9;margin-left:-10px"></div><div style="width:30px;height:30px;border-radius:50%;background:#fff;border:2px solid #2576B9;margin-left:-10px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#2576B9">+1</div></div>
+</div></div>
+<div style="flex:1;padding:14px 16px;overflow:hidden">
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:16px;margin-bottom:12px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="flex:1;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.1em">MỤC TIÊU NHÓM</span><span style="background:#E9F7EF;color:#1F8A55;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700">Đang diễn ra</span></div>
+<p style="margin:0 0 3px;font-size:16px;font-weight:700">Cả nhóm chạy 1.000 km tháng này</p>
+<p style="margin:0 0 12px;font-family:'Baskerville BT','Libre Baskerville',serif;font-style:italic;font-size:11.5px;color:#7E9AB5">25/07 – 24/08 · 2 người đang góp</p>
+<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px"><span style="font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:34px;line-height:1;color:#2576B9">70</span><span style="font-size:13px;color:#7E9AB5">/ 1.000 km</span><span style="margin-left:auto;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:18px;color:#94AABF">7%</span></div>
+<div style="height:9px;border-radius:5px;background:#F2F6FA;overflow:hidden;margin-bottom:14px"><div style="width:7%;height:100%;border-radius:5px;background:#2576B9"></div></div>
+<div style="border-top:1px solid #EDF3F9;padding-top:12px">
+<p style="margin:0 0 9px;font-size:11px;letter-spacing:.09em;font-weight:700;color:#94AABF">GÓP NHIỀU NHẤT</p>
+<sc-for list="{{ contribs }}" as="c" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px"><div style="width:26px;height:26px;border-radius:50%;background:{{ c.av }}"></div><span style="flex:1;font-size:13px;font-weight:600">{{ c.n }}</span><div style="flex:1.4;height:6px;border-radius:4px;background:#F2F6FA;overflow:hidden"><div style="width:{{ c.w }};height:100%;border-radius:4px;background:{{ c.bar }}"></div></div><span style="font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;min-width:46px;text-align:right">{{ c.v }}</span></div></sc-for>
+</div></div>
+<div style="display:flex;align-items:center;gap:11px;background:#BCD9F2;border-radius:16px;padding:13px 16px;margin-bottom:16px">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#2E5A80" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1z"></path><path d="M16 8.5a4 4 0 0 1 0 7"></path></svg>
+<div style="flex:1"><p style="margin:0;font-size:13px;font-weight:700;color:#12395E">Chủ nhật 8h chạy Hồ Tây</p><p style="margin:1px 0 0;font-size:11.5px;color:#3D6285">Thông báo từ chủ nhóm · 2 giờ trước</p></div></div>
+<p style="margin:0 2px 10px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.1em">HOẠT ĐỘNG CỦA NHÓM</p>
+<sc-for list="{{ clubFeed }}" as="p" hint-placeholder-count="2">
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:14px 16px;margin-bottom:10px">
+<div style="display:flex;gap:11px;align-items:center">
+<div style="width:38px;height:38px;border-radius:50%;background:#E7F1FB;border:2px solid #2576B9;flex-shrink:0"></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:13.5px"><b style="font-weight:700">{{ p.who }}</b> <span style="color:#5B7896">{{ p.head }}</span></p><p style="margin:2px 0 0;font-size:11px;color:#94AABF">{{ p.when }}</p></div>
+<span style="flex-shrink:0">{{ p.icon }}</span></div>
+<div style="display:flex;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid #EDF3F9">
+<sc-for list="{{ p.stats }}" as="s" hint-placeholder-count="3"><span style="font-size:12.5px;color:#7E9AB5"><b style="font-family:'Barlow Semi Condensed',sans-serif;font-size:15px;color:#12395E">{{ s.v }}</b> {{ s.u }}</span></sc-for>
+</div></div></sc-for>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="2h"><div class="dv-olabel"><a class="dv-oid" href="#2h">2h</a>Mục tiêu chung</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#F2F6FA;color:#12395E;overflow:hidden;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="padding:12px 16px 16px;background:#fff;border-bottom:1px solid #DDE8F2;display:flex;align-items:center;gap:12px">
+<div style="width:36px;height:36px;border-radius:50%;background:#F2F6FA;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B7896" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg></div>
+<p style="flex:1;margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:21px;letter-spacing:.03em">MỤC TIÊU CHUNG</p>
+<div style="background:#2576B9;border-radius:12px;padding:9px 16px;font-size:13px;font-weight:600;color:#fff">＋ Tạo</div></div>
+<div style="flex:1;padding:16px">
+<div style="display:flex;gap:12px;background:#BCD9F2;border-radius:16px;padding:14px 16px;margin-bottom:16px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E5A80" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01M11 12h1v5h1"></path></svg>
+<p style="margin:0;font-family:'Baskerville BT','Libre Baskerville',serif;font-size:12.5px;line-height:1.6;color:#2E5A80">Phong trào toàn công ty do ban lãnh đạo phát động. Bạn <b style="font-family:'Barlow',sans-serif">tự động góp</b> khi tập đúng môn — không xếp hạng, chỉ cùng nhau về đích.</p></div>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:20px;padding:18px;box-shadow:0 4px 14px rgba(37,118,185,.06)">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="background:#E9F7EF;color:#1F8A55;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700">Đang diễn ra</span><span style="font-size:11.5px;color:#94AABF">25/07 – 24/08</span></div>
+<p style="margin:0 0 16px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:26px;line-height:1.15;letter-spacing:.01em">CÙNG NHAU ĐẠT<br>100 BUỔI TẬP</p>
+<div style="display:flex;align-items:center;gap:18px;margin-bottom:16px">
+<div style="position:relative;width:96px;height:96px;flex-shrink:0">
+<svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="41" fill="none" stroke="#EDF3F9" stroke-width="10"></circle><circle cx="48" cy="48" r="41" fill="none" stroke="#2576B9" stroke-width="10" stroke-linecap="round" stroke-dasharray="258" stroke-dashoffset="180" transform="rotate(-90 48 48)"></circle></svg>
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:30px;line-height:1;color:#2576B9">30</p><p style="margin:0;font-size:10px;font-weight:700;letter-spacing:.1em;color:#94AABF">/100</p></div></div>
+<div style="flex:1">
+<p style="margin:0;font-size:12px;color:#7E9AB5">Đóng góp của bạn</p>
+<p style="margin:1px 0 12px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:24px;line-height:1">8 buổi</p>
+<p style="margin:0;font-size:12px;color:#7E9AB5">Đang tham gia</p>
+<p style="margin:1px 0 0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:24px;line-height:1">14 người</p></div></div>
+<div style="border-top:1px solid #EDF3F9;padding-top:14px">
+<p style="margin:0 0 10px;font-size:11px;letter-spacing:.09em;font-weight:700;color:#94AABF">GÓP NHIỀU NHẤT</p>
+<sc-for list="{{ contribs2 }}" as="c" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div style="width:28px;height:28px;border-radius:50%;background:{{ c.av }}"></div><span style="flex:1;font-size:13px;font-weight:600">{{ c.n }}</span><div style="flex:1.2;height:6px;border-radius:4px;background:#F2F6FA;overflow:hidden"><div style="width:{{ c.w }};height:100%;border-radius:4px;background:{{ c.bar }}"></div></div><span style="font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;min-width:46px;text-align:right">{{ c.v }}</span></div></sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:11px;background:#F2F6FA;border-radius:14px;padding:12px 14px;margin-top:6px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B7896" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1z"></path><path d="M16 8.5a4 4 0 0 1 0 7"></path></svg>
+<p style="margin:0;flex:1;font-size:12.5px;font-weight:600;color:#5B7896">3 thông báo từ ban tổ chức</p>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B7C6D4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></div>
+</div></div>
+</div></div></div>
+
+<div class="dv-opt" id="2i"><div class="dv-olabel"><a class="dv-oid" href="#2i">2i</a>Chúc mừng sau buổi tập</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#2576B9;color:#fff;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<sc-for list="{{ confetti }}" as="c" hint-placeholder-count="14"><span style="position:absolute;top:{{ c.t }};left:{{ c.l }};width:8px;height:12px;border-radius:2px;background:{{ c.c }};transform:rotate({{ c.r }});opacity:.9"></span></sc-for>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 26px;position:relative">
+<div style="width:96px;height:96px;border-radius:50%;background:#FFD95C;display:flex;align-items:center;justify-content:center;margin-bottom:22px"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#12395E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 7"></path></svg></div>
+<p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:46px;line-height:1;letter-spacing:.02em;text-align:center">XONG BUỔI<br>ĐẠP XE!</p>
+<p style="margin:12px 0 26px;font-family:'Baskerville BT','Libre Baskerville',serif;font-style:italic;font-size:14px;color:#BCD9F2;text-align:center">Chuỗi của bạn lên 2 ngày.</p>
+<div style="display:flex;gap:9px;width:100%;margin-bottom:14px">
+<sc-for list="{{ celebStats }}" as="s" hint-placeholder-count="3"><div style="flex:1;background:rgba(255,255,255,.14);border-radius:16px;padding:14px 8px;text-align:center"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:28px;line-height:1">{{ s.v }}</p><p style="margin:4px 0 0;font-size:10.5px;letter-spacing:.09em;font-weight:600;color:#BCD9F2">{{ s.l }}</p></div></sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:12px;background:#FFD95C;border-radius:16px;padding:13px 16px;width:100%">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#12395E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"></circle><path d="M8.5 14.5L7 22l5-3 5 3-1.5-7.5"></path></svg>
+<div><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:.06em;color:#12395E">HUY HIỆU MỚI · ĐA MÔN</p><p style="margin:1px 0 0;font-size:11.5px;color:#5B6B3F;color:#4A5B2E;color:#3F4A22;color:#12395E;opacity:.7">Đã ghi 5 môn khác nhau</p></div></div>
+</div>
+<div style="padding:0 20px 26px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;justify-content:center;gap:9px;background:#fff;border-radius:15px;padding:15px"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#2576B9" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg><span style="font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:.09em;color:#2576B9">CHIA SẺ LÊN BẢNG TIN</span></div>
+<div style="text-align:center;padding:6px;font-size:13.5px;font-weight:600;color:#BCD9F2">Để sau</div>
+</div>
+</div></div></div>
+
+</div>
+<p class="dv-next">Thử: “bỏ ô ≈ điểm ở màn ghi buổi tập” · “màn Chúc mừng nhẹ hơn, bớt confetti” · “thêm màn Hướng dẫn tập luyện &amp; Cài đặt”</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Redesign theo Apollo Brand Book — 2 hướng gần nhau</span></div>
+
+<div style="max-width:780px;font:13.5px/1.7 system-ui,sans-serif;color:#333;margin:0 0 24px">
+<p style="margin:0 0 12px"><b>Hệ thống chung của cả hai:</b> Apollo Blue <code>#2576B9</code> chủ đạo (~40%), Baby Blue <code>#BCD9F2</code> làm nền mảng (~20%), trắng, và Vàng <code>#FFD95C</code> / Đỏ <code>#EB4754</code> / Hồng <code>#EB9CC4</code> chỉ dùng điểm xuyết đúng 8% mỗi màu như biểu đồ cân bằng trong brand book. Tiêu đề &amp; con số dùng <b>Barlow Semi Condensed</b> in hoa (bạn chọn thay cho Brauer Neue — cùng tinh thần cô đọng, đậm, nhưng cứng cáp và dễ đọc hơn ở cỡ nhỏ), body <b>Barlow</b>. Câu dẫn dắt dùng <b>Baskerville BT</b> nghiêng — font gốc trong brand book. Emoji đã bị thay hết bằng <b>icon keyline nét mảnh</b> đúng phong cách minh hoạ của brand.</p>
+<p style="margin:0 0 12px"><b>Hai thứ được sửa triệt để ở cả hai:</b> (1) <b>streak thành nhân vật chính</b> — chiếm hẳn khối đầu màn, gộp luôn cảnh báo sắp mất chuỗi vào trong nó thay vì một banner cam riêng; (2) <b>gom mật độ</b> — 3 thẻ trắng rời rạc gộp thành 1 dải số liệu có vách ngăn, danh sách "gần đây" thành 1 thẻ nhiều dòng thay vì 3 thẻ.</p>
+<p style="margin:0"><b>Khác nhau:</b> <a class="dv-oid" href="#1a">1a</a> nền xanh đậm — quyết đoán, "bảng điều khiển", nút ＋ tròn giữ nguyên. <a class="dv-oid" href="#1b">1b</a> nền Baby Blue — nhẹ và thân thiện hơn, streak vẽ thành vòng tiến độ, nút ghi buổi tập thành thanh dài có chữ. Mình dựng 3 màn xương sống trước (Trang chủ · Bảng tin · Xếp hạng); chốt hướng xong mình trải nốt Ghi buổi tập, Cá nhân, CLB, Mục tiêu, Chúc mừng.</p>
+</div>
+
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a"><div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Xanh đậm — “bảng điều khiển”</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#F2F6FA;color:#12395E;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px">
+<p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:.14em;color:#2576B9;white-space:nowrap">APOLLO SPORT</p>
+<div style="width:34px;height:34px;border-radius:50%;background:#BCD9F2;border:2px solid #2576B9"></div></div>
+
+<div style="flex:1;overflow:hidden;padding:0 16px">
+<div style="background:#2576B9;border-radius:20px;padding:20px 20px 16px;color:#fff;margin-bottom:12px">
+<div style="display:flex;align-items:flex-end;justify-content:space-between">
+<div><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;font-size:12px;letter-spacing:.16em;color:#BCD9F2">CHUỖI LIÊN TIẾP</p>
+<p style="margin:-6px 0 0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:76px;line-height:1;letter-spacing:-.01em">1<span style="font-size:24px;letter-spacing:.06em;margin-left:8px">NGÀY</span></p></div>
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#FFD95C" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg></div>
+<div style="display:flex;gap:6px;margin:14px 0 0">
+<sc-for list="{{ week }}" as="d" hint-placeholder-count="7"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><span style="font-size:10px;letter-spacing:.08em;color:#BCD9F2">{{ d.l }}</span><span style="width:100%;height:5px;border-radius:3px;background:{{ d.c }}"></span></div></sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:9px;background:#FFD95C;border-radius:12px;padding:9px 12px;margin-top:14px">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#12395E" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+<p style="margin:0;font-size:12.5px;font-weight:600;color:#12395E">Còn 9 tiếng để giữ chuỗi — tập hôm nay nhé!</p></div>
+</div>
+
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;display:flex;margin-bottom:12px">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="3"><div style="flex:1;padding:14px 6px;text-align:center;border-left:1px solid {{ s.bd }}"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:26px;line-height:1;color:#12395E">{{ s.v }}</p><p style="margin:4px 0 0;font-size:10.5px;letter-spacing:.1em;font-weight:600;color:#7E9AB5">{{ s.l }}</p></div></sc-for>
+</div>
+
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:14px 16px;margin-bottom:12px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.1em">MỤC TIÊU TUẦN</p><p style="margin:0;font-size:12px;color:#5B7896">14<span style="color:#94AABF">/3 buổi</span></p></div>
+<div style="height:7px;border-radius:4px;background:#E7F1FB;overflow:hidden"><div style="width:100%;height:100%;background:#2576B9"></div></div>
+<p style="margin:9px 0 0;font-family:'Baskerville BT','Libre Baskerville',serif;font-style:italic;font-size:12px;color:#5B7896">Vượt mục tiêu tuần này rồi. Đặt mốc cao hơn?</p>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin:16px 2px 9px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.1em">GẦN ĐÂY</p><p style="margin:0;font-size:12px;color:#2576B9;font-weight:600">Tất cả ›</p></div>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;overflow:hidden">
+<sc-for list="{{ recent }}" as="s" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid {{ s.bd }}">
+<span style="width:34px;height:34px;border-radius:10px;background:{{ s.tint }};display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ s.icon }}</span>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:14px;font-weight:600">{{ s.t }}</p><p style="margin:1px 0 0;font-size:11.5px;color:#7E9AB5">{{ s.sub }}</p></div>
+<div style="text-align:right"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:17px;color:#2576B9">{{ s.v }}</p><p style="margin:0;font-size:11px;color:#94AABF">{{ s.d }}</p></div>
+</div></sc-for>
+</div>
+</div>
+
+<div style="position:absolute;bottom:80px;right:18px;width:58px;height:58px;border-radius:50%;background:#2576B9;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(37,118,185,.4)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+<nav style="display:flex;background:#fff;border-top:1px solid #DDE8F2;padding-bottom:4px">
+<sc-for list="{{ navHome }}" as="n" hint-placeholder-count="4"><div style="flex:1;padding:11px 0 9px;display:flex;flex-direction:column;align-items:center;gap:5px;color:{{ n.c }}">{{ n.icon }}<span style="font-family:'Barlow Semi Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.07em">{{ n.l }}</span></div></sc-for>
+</nav>
+</div></div></div>
+
+<div class="dv-opt" id="1a2"><div class="dv-olabel"><a class="dv-oid" href="#1a2">1a</a>Bảng tin</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#F2F6FA;color:#12395E;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="padding:16px 18px 10px;background:#fff;border-bottom:1px solid #DDE8F2">
+<p style="margin:0 0 12px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:26px;letter-spacing:.03em">BẢNG TIN</p>
+<div style="display:flex;gap:7px;overflow:hidden">
+<sc-for list="{{ chips }}" as="c" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;font-size:12.5px;font-weight:600;white-space:nowrap;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }}">{{ c.icon }}{{ c.l }}</div></sc-for>
+</div></div>
+<div style="flex:1;overflow:hidden;padding:12px 16px">
+<sc-for list="{{ feed }}" as="p" hint-placeholder-count="3">
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;padding:14px 16px;margin-bottom:11px">
+<div style="display:flex;gap:11px;align-items:center">
+<div style="width:40px;height:40px;border-radius:50%;background:#E7F1FB;border:2px solid {{ p.ring }};flex-shrink:0"></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:13.5px;line-height:1.35"><b style="font-weight:700">{{ p.who }}</b> <span style="color:#5B7896">{{ p.head }}</span></p><p style="margin:2px 0 0;font-size:11px;color:#94AABF">{{ p.when }}</p></div>
+<span style="flex-shrink:0">{{ p.icon }}</span></div>
+<div style="display:flex;gap:14px;margin-top:11px;padding-top:11px;border-top:1px solid #EDF3F9">
+<sc-for list="{{ p.stats }}" as="s" hint-placeholder-count="3"><span style="font-size:12.5px;color:#7E9AB5"><b style="font-family:'Barlow Semi Condensed',sans-serif;font-size:15px;color:#12395E">{{ s.v }}</b> {{ s.u }}</span></sc-for>
+<span style="margin-left:auto;display:flex;gap:12px;align-items:center">
+<span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:#7E9AB5"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#EB4754" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 0 0-7.1 7.1l8.8 8.8 8.8-8.8a5 5 0 0 0 0-7.1z"></path></svg>{{ p.likes }}</span>
+<span style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:#7E9AB5"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2576B9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.9-.9L3 21l1.9-5a8.4 8.4 0 0 1-.9-3.9 8.4 8.4 0 0 1 8.4-8.4 8.4 8.4 0 0 1 8.6 8.3z"></path></svg>{{ p.cmts }}</span>
+</span></div>
+</div></sc-for>
+</div>
+<div style="position:absolute;bottom:80px;right:18px;width:58px;height:58px;border-radius:50%;background:#2576B9;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(37,118,185,.4)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+<nav style="display:flex;background:#fff;border-top:1px solid #DDE8F2;padding-bottom:4px">
+<sc-for list="{{ navFeed }}" as="n" hint-placeholder-count="4"><div style="flex:1;padding:11px 0 9px;display:flex;flex-direction:column;align-items:center;gap:5px;color:{{ n.c }}">{{ n.icon }}<span style="font-family:'Barlow Semi Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.07em">{{ n.l }}</span></div></sc-for>
+</nav>
+</div></div></div>
+
+<div class="dv-opt" id="1a3"><div class="dv-olabel"><a class="dv-oid" href="#1a3">1a</a>Xếp hạng</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#F2F6FA;color:#12395E;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="background:#2576B9;padding:18px 18px 22px;color:#fff">
+<p style="margin:0 0 4px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:26px;letter-spacing:.03em">BẢNG XẾP HẠNG</p>
+<p style="margin:0 0 14px;font-family:'Baskerville BT','Libre Baskerville',serif;font-style:italic;font-size:12px;color:#BCD9F2">Điểm quy đổi theo cường độ — công bằng giữa mọi môn.</p>
+<div style="display:flex;background:rgba(255,255,255,.16);border-radius:12px;padding:3px;margin-bottom:8px"><div style="flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;background:#fff;color:#2576B9;border-radius:9px">Toàn công ty</div><div style="flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;color:#DCEAF7">Phòng ban</div></div>
+<div style="display:flex;gap:16px;padding-left:4px"><span style="font-size:13px;font-weight:700;color:#fff;border-bottom:2px solid #FFD95C;padding-bottom:3px">Tuần này</span><span style="font-size:13px;font-weight:500;color:#BCD9F2">Tháng này</span></div>
+</div>
+<div style="flex:1;padding:14px 16px">
+<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#fff;border:2px solid #2576B9;border-radius:18px;margin-bottom:10px;box-shadow:0 4px 14px rgba(37,118,185,.12)">
+<span style="width:30px;height:30px;border-radius:9px;background:#FFD95C;display:flex;align-items:center;justify-content:center;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:17px;color:#12395E">1</span>
+<div style="width:40px;height:40px;border-radius:50%;background:#BCD9F2;border:2px solid #2576B9;flex-shrink:0"></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Khang Hoàng Đặng Anh TD</p><p style="margin:1px 0 0;font-size:11.5px;color:#7E9AB5">TD · 3 buổi · 359 phút</p></div>
+<div style="text-align:right"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:24px;line-height:1;color:#2576B9">1217</p><p style="margin:0;font-size:10px;letter-spacing:.1em;color:#94AABF">ĐIỂM</p></div></div>
+<div style="background:#fff;border:1px solid #DDE8F2;border-radius:18px;overflow:hidden">
+<sc-for list="{{ ranks }}" as="r" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid {{ r.bd }}">
+<span style="width:30px;text-align:center;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:16px;color:{{ r.rc }}">{{ r.n }}</span>
+<div style="width:34px;height:34px;border-radius:50%;background:#E7F1FB;flex-shrink:0"></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:13.5px;font-weight:600">{{ r.name }}</p><p style="margin:1px 0 0;font-size:11px;color:#94AABF">{{ r.sub }}</p></div>
+<p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:19px;color:#12395E">{{ r.pts }}</p>
+</div></sc-for>
+</div>
+<p style="margin:14px 6px 0;font-family:'Baskerville BT','Libre Baskerville',serif;font-size:11.5px;line-height:1.6;color:#7E9AB5;text-align:center">Bảng làm mới mỗi tuần. Bạn có thể tắt tham gia trong Cài đặt.</p>
+</div>
+<nav style="display:flex;background:#fff;border-top:1px solid #DDE8F2;padding-bottom:4px">
+<sc-for list="{{ navRank }}" as="n" hint-placeholder-count="4"><div style="flex:1;padding:11px 0 9px;display:flex;flex-direction:column;align-items:center;gap:5px;color:{{ n.c }}">{{ n.icon }}<span style="font-family:'Barlow Semi Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.07em">{{ n.l }}</span></div></sc-for>
+</nav>
+</div></div></div>
+
+<div class="dv-opt" id="1b"><div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Baby Blue — nhẹ &amp; thân thiện</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#fff;color:#12395E;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="background:#BCD9F2;padding:16px 18px 20px">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+<p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:.14em;color:#2576B9;white-space:nowrap">APOLLO SPORT</p>
+<div style="width:34px;height:34px;border-radius:50%;background:#fff;border:2px solid #2576B9"></div></div>
+<div style="display:flex;align-items:center;gap:18px">
+<div style="position:relative;width:104px;height:104px;flex-shrink:0">
+<svg width="104" height="104" viewBox="0 0 104 104"><circle cx="52" cy="52" r="45" fill="none" stroke="#DCEAF7" stroke-width="9"></circle><circle cx="52" cy="52" r="45" fill="none" stroke="#2576B9" stroke-width="9" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="242" transform="rotate(-90 52 52)"></circle></svg>
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:42px;line-height:1;color:#2576B9">1</p><p style="margin:0;font-size:10px;font-weight:600;letter-spacing:.12em;color:#5B7896">NGÀY</p></div></div>
+<div style="flex:1;min-width:0">
+<p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:20px;letter-spacing:.04em">CHUỖI CỦA BẠN</p>
+<p style="margin:3px 0 10px;font-family:'Baskerville BT','Libre Baskerville',serif;font-style:italic;font-size:12px;line-height:1.5;color:#3D6285">Kỷ lục 6 ngày. Thêm 5 hôm nữa là phá kỷ lục.</p>
+<div style="display:flex;gap:5px"><sc-for list="{{ week }}" as="d" hint-placeholder-count="7"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:9.5px;color:#5B7896">{{ d.l }}</span><span style="width:100%;height:5px;border-radius:3px;background:{{ d.c2 }}"></span></div></sc-for></div>
+</div></div>
+<div style="display:flex;align-items:center;gap:9px;background:#FFD95C;border-radius:12px;padding:9px 12px;margin-top:14px">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#12395E" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+<p style="margin:0;font-size:12.5px;font-weight:600;color:#12395E">Còn 9 tiếng để giữ chuỗi — tập hôm nay nhé!</p></div>
+</div>
+
+<div style="flex:1;overflow:hidden;padding:14px 16px 0">
+<div style="display:flex;gap:8px;margin-bottom:16px">
+<sc-for list="{{ stats2 }}" as="s" hint-placeholder-count="3"><div style="flex:1;background:#F2F6FA;border-radius:14px;padding:12px 10px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:24px;line-height:1;color:{{ s.c }}">{{ s.v }}</p><p style="margin:3px 0 0;font-size:10.5px;letter-spacing:.08em;font-weight:600;color:#7E9AB5">{{ s.l }}</p></div></sc-for>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin:0 2px 4px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.1em">MỤC TIÊU TUẦN</p><p style="margin:0;font-size:12px;color:#5B7896">852<span style="color:#94AABF">/180 phút</span></p></div>
+<div style="height:7px;border-radius:4px;background:#E7F1FB;overflow:hidden;margin-bottom:20px"><div style="width:100%;height:100%;background:#EB9CC4"></div></div>
+
+<p style="margin:0 2px 4px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.1em">GẦN ĐÂY</p>
+<sc-for list="{{ recent }}" as="s" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:12px;padding:13px 2px;border-bottom:1px solid #EDF3F9">
+<span style="width:34px;height:34px;border-radius:50%;background:{{ s.tint }};display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ s.icon }}</span>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:14px;font-weight:600">{{ s.t }}</p><p style="margin:1px 0 0;font-size:11.5px;color:#7E9AB5">{{ s.sub }}</p></div>
+<div style="text-align:right"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:17px;color:#2576B9">{{ s.v }}</p><p style="margin:0;font-size:11px;color:#94AABF">{{ s.d }}</p></div>
+</div></sc-for>
+</div>
+
+<div style="padding:12px 16px 4px;background:#fff"><div style="display:flex;align-items:center;justify-content:center;gap:9px;background:#2576B9;border-radius:14px;padding:14px;box-shadow:0 6px 16px rgba(37,118,185,.28)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg><span style="font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:.1em;color:#fff">GHI BUỔI TẬP</span></div></div>
+<nav style="display:flex;background:#fff;padding-bottom:4px">
+<sc-for list="{{ navHome }}" as="n" hint-placeholder-count="4"><div style="flex:1;padding:9px 0;display:flex;flex-direction:column;align-items:center;gap:5px;color:{{ n.c }}">{{ n.icon }}<span style="font-family:'Barlow Semi Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.07em">{{ n.l }}</span></div></sc-for>
+</nav>
+</div></div></div>
+
+<div class="dv-opt" id="1b2"><div class="dv-olabel"><a class="dv-oid" href="#1b2">1b</a>Bảng tin</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#fff;color:#12395E;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="padding:16px 18px 10px;background:#BCD9F2">
+<p style="margin:0 0 12px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:26px;letter-spacing:.03em">BẢNG TIN</p>
+<div style="display:flex;gap:7px;overflow:hidden">
+<sc-for list="{{ chips2 }}" as="c" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;font-size:12.5px;font-weight:600;white-space:nowrap;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }}">{{ c.icon }}{{ c.l }}</div></sc-for>
+</div></div>
+<div style="flex:1;overflow:hidden">
+<sc-for list="{{ feed }}" as="p" hint-placeholder-count="3">
+<div style="padding:15px 18px;border-bottom:8px solid #F2F6FA">
+<div style="display:flex;gap:11px;align-items:center">
+<div style="width:40px;height:40px;border-radius:50%;background:#E7F1FB;border:2px solid {{ p.ring }};flex-shrink:0"></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:13.5px;line-height:1.35"><b style="font-weight:700">{{ p.who }}</b> <span style="color:#5B7896">{{ p.head }}</span></p><p style="margin:2px 0 0;font-size:11px;color:#94AABF">{{ p.when }}</p></div>
+<span style="flex-shrink:0">{{ p.icon }}</span></div>
+<div style="display:flex;gap:8px;margin-top:11px">
+<sc-for list="{{ p.stats }}" as="s" hint-placeholder-count="3"><span style="background:#F2F6FA;border-radius:9px;padding:6px 10px;font-size:12px;color:#7E9AB5"><b style="font-family:'Barlow Semi Condensed',sans-serif;font-size:15px;color:#12395E">{{ s.v }}</b> {{ s.u }}</span></sc-for>
+</div>
+<div style="display:flex;gap:10px;margin-top:11px">
+<span style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #DDE8F2;border-radius:11px;padding:8px;font-size:12.5px;font-weight:600;color:#5B7896"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#EB4754" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 5.6a5 5 0 0 0-7.1 0L12 7.3l-1.7-1.7a5 5 0 0 0-7.1 7.1l8.8 8.8 8.8-8.8a5 5 0 0 0 0-7.1z"></path></svg>Thích {{ p.likes }}</span>
+<span style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #DDE8F2;border-radius:11px;padding:8px;font-size:12.5px;font-weight:600;color:#5B7896"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2576B9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.9-.9L3 21l1.9-5a8.4 8.4 0 0 1-.9-3.9 8.4 8.4 0 0 1 8.4-8.4 8.4 8.4 0 0 1 8.6 8.3z"></path></svg>Bình luận {{ p.cmts }}</span>
+</div>
+</div></sc-for>
+</div>
+<div style="padding:12px 16px 4px;background:#fff"><div style="display:flex;align-items:center;justify-content:center;gap:9px;background:#2576B9;border-radius:14px;padding:14px;box-shadow:0 6px 16px rgba(37,118,185,.28)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg><span style="font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:.1em;color:#fff">GHI BUỔI TẬP</span></div></div>
+<nav style="display:flex;background:#fff;padding-bottom:4px">
+<sc-for list="{{ navFeed }}" as="n" hint-placeholder-count="4"><div style="flex:1;padding:9px 0;display:flex;flex-direction:column;align-items:center;gap:5px;color:{{ n.c }}">{{ n.icon }}<span style="font-family:'Barlow Semi Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.07em">{{ n.l }}</span></div></sc-for>
+</nav>
+</div></div></div>
+
+<div class="dv-opt" id="1b3"><div class="dv-olabel"><a class="dv-oid" href="#1b3">1b</a>Xếp hạng — bục vinh danh</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#fff;color:#12395E;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:'Barlow',sans-serif">
+<div style="background:#BCD9F2;padding:16px 18px 0">
+<p style="margin:0 0 3px;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:26px;letter-spacing:.03em">BẢNG XẾP HẠNG</p>
+<p style="margin:0 0 12px;font-family:'Baskerville BT','Libre Baskerville',serif;font-style:italic;font-size:12px;color:#3D6285">Điểm quy đổi theo cường độ — công bằng giữa mọi môn.</p>
+<div style="display:flex;background:rgba(255,255,255,.55);border-radius:12px;padding:3px;margin-bottom:10px"><div style="flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;background:#2576B9;color:#fff;border-radius:9px">Toàn công ty</div><div style="flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;color:#3D6285">Phòng ban</div></div>
+<div style="display:flex;align-items:flex-end;gap:10px;padding:0 6px">
+<div style="flex:1;text-align:center"><div style="width:46px;height:46px;border-radius:50%;background:#fff;border:2px solid #94AABF;margin:0 auto 6px"></div><p style="margin:0;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">TD Comms</p><div style="background:#fff;border-radius:10px 10px 0 0;padding:8px 0 10px;margin-top:6px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:20px">180</p><p style="margin:0;font-size:10px;color:#7E9AB5">2</p></div></div>
+<div style="flex:1.15;text-align:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFD95C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 2px"><path d="M3 6l4.5 4L12 3l4.5 7L21 6l-1.8 12H4.8z"></path></svg><div style="width:56px;height:56px;border-radius:50%;background:#fff;border:3px solid #FFD95C;margin:0 auto 6px"></div><p style="margin:0;font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Bạn</p><div style="background:#fff;border-radius:10px 10px 0 0;padding:12px 0 14px;margin-top:6px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:26px;color:#2576B9">1217</p><p style="margin:0;font-size:10px;color:#7E9AB5">1</p></div></div>
+<div style="flex:1;text-align:center"><div style="width:46px;height:46px;border-radius:50%;background:#fff;border:2px solid #EB9CC4;margin:0 auto 6px"></div><p style="margin:0;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Minh Anh</p><div style="background:#fff;border-radius:10px 10px 0 0;padding:6px 0 8px;margin-top:6px"><p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:19px">164</p><p style="margin:0;font-size:10px;color:#7E9AB5">3</p></div></div>
+</div></div>
+<div style="flex:1;padding:6px 18px 0">
+<sc-for list="{{ ranks }}" as="r" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #EDF3F9">
+<span style="width:26px;text-align:center;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:16px;color:{{ r.rc }}">{{ r.n }}</span>
+<div style="width:34px;height:34px;border-radius:50%;background:#E7F1FB;flex-shrink:0"></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:13.5px;font-weight:600">{{ r.name }}</p><p style="margin:1px 0 0;font-size:11px;color:#94AABF">{{ r.sub }}</p></div>
+<p style="margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:19px;color:#12395E">{{ r.pts }}</p>
+</div></sc-for>
+<p style="margin:14px 6px 0;font-family:'Baskerville BT','Libre Baskerville',serif;font-size:11.5px;line-height:1.6;color:#7E9AB5;text-align:center">Bảng làm mới mỗi tuần. Bạn có thể tắt tham gia trong Cài đặt.</p>
+</div>
+<nav style="display:flex;background:#fff;border-top:1px solid #DDE8F2;padding-bottom:4px">
+<sc-for list="{{ navRank }}" as="n" hint-placeholder-count="4"><div style="flex:1;padding:11px 0 9px;display:flex;flex-direction:column;align-items:center;gap:5px;color:{{ n.c }}">{{ n.icon }}<span style="font-family:'Barlow Semi Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.07em">{{ n.l }}</span></div></sc-for>
+</nav>
+</div></div></div>
+
+</div>
+<p class="dv-next">Thử: “chốt <a class="dv-oid" href="#1a">1a</a>, trải nốt các màn còn lại” · “lấy streak của <a class="dv-oid" href="#1b">1b</a> ghép vào <a class="dv-oid" href="#1a">1a</a>” · “bảng xếp hạng bục vinh danh nhưng nền xanh đậm”</p>
+</section>
+
+<section class="dv-turn" id="t0">
+<div class="dv-thd"><a class="dv-tid" href="#t0">0</a><span class="dv-tname">Hiện trạng — dựng lại từ code (chưa đổi gì)</span></div>
+
+<div style="max-width:780px;font:13.5px/1.7 system-ui,sans-serif;color:#333;margin:0 0 26px">
+<p style="margin:0 0 14px"><b>Đã đọc:</b> <code>index.html</code>, <code>ui/theme.js</code>, <code>ui/primitives.js</code>, <code>ui/icons.js</code>, <code>domain/activities.js</code>, <code>app.js</code> (HomeTab · CalendarTab · shell + FAB + TabBar), <code>screens/PickActivity.js · LogActivity.js · FeedTab.js · PostCard.js · LeaderboardTab.js</code>, <code>HANDOFF.md</code>, và Apollo Brand Book V9. Sáu màn dưới dựng lại đúng token trong code: nền <code>#f8fafc</code>, thẻ <code>#fff</code>, viền <code>#e2e8f0</code>, chữ <code>#0f172a / #475569 / #94a3b8</code>, bo góc 8/12/16/20, accent theo ảnh bạn gửi (<code>#e11d63</code>).</p>
+<p style="margin:0 0 8px"><b>Chẩn đoán — 5 điểm mình sẽ sửa:</b></p>
+<ol style="margin:0 0 14px;padding-left:20px">
+<li><b>Mọi thứ là thẻ trắng cùng cỡ.</b> Streak, buổi tuần, phút tuần, bài gần đây — cùng viền, cùng bo góc, cùng nền. Không có thứ bậc, mắt không biết nhìn đâu trước. Đây chính là "nhiều thẻ trắng, rời rạc" bạn nói.</li>
+<li><b>Streak bị chôn.</b> Nó là động lực số 1 của app nhưng chỉ là 1/3 ô nhỏ, chữ 16px. Cảnh báo mất streak thì lại là banner cam — màu duy nhất báo động, đặt trên cùng, nhưng lại nói bằng giọng nhẹ.</li>
+<li><b>Emoji hệ điều hành ở khắp nơi</b> (🏋️🏃🥒🔥⭐) — mỗi máy render một kiểu, không phải brand, và trông như prototype chứ không như sản phẩm công ty.</li>
+<li><b>Màu chưa phải màu Apollo.</b> Hiện là hồng/đỏ #e11d63 + slate. Brand book quy định Apollo Blue #2576B9 làm chủ đạo (40%), Baby Blue #BCD9F2 (20%), và Vàng/Đỏ/Hồng chỉ 8% mỗi màu.</li>
+<li><b>Chữ hệ thống, không có giọng.</b> Brand có cặp Brauer Neue (đậm, cô đọng, in hoa) + Baskerville (serif, body) — chưa dùng gì trong app.</li>
+</ol>
+<p style="margin:0"><b>Nguyên tắc cho bản mới:</b> giữ nguyên 4 tab, giữ FAB, giữ luồng ghi buổi tập theo môn (đúng như code) — chỉ nâng lớp visual + gom mật độ thông tin + làm streak thành nhân vật chính. Chữ: <b>Barlow Semi Condensed</b> (tiêu đề) + <b>Baskerville BT</b> (câu dẫn).</p>
+</div>
+
+<div class="dv-opts">
+
+<div class="dv-opt" id="0a"><div class="dv-olabel"><a class="dv-oid" href="#0a">0a</a>Trang chủ</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#f8fafc;color:#0f172a;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+<div style="flex:1;overflow:hidden;padding:22px 16px">
+<div style="display:flex;align-items:center;gap:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:11px 14px;margin-bottom:16px"><span style="font-size:22px">🔥</span><p style="margin:0;font-size:13px;color:#9a3412;line-height:1.4"><b>Chuỗi 1 ngày sắp mất!</b> Tập hôm nay để giữ lửa nhé.</p></div>
+
+<div style="position:relative;border-radius:16px;overflow:hidden;margin-bottom:24px;height:160px;box-shadow:0 8px 24px rgba(0,0,0,.15);border:1px solid #e2e8f0">
+<img src="assets/workout_hero.png" style="width:100%;height:100%;object-fit:cover;filter:brightness(.65);display:block">
+<div style="position:absolute;bottom:0;left:0;right:0;padding:16px 20px;background:linear-gradient(0deg,rgba(255,255,255,.95) 0%,rgba(255,255,255,0) 100%);display:flex;justify-content:space-between;align-items:flex-end">
+<div><p style="margin:0;color:#e11d63;font-size:11px;font-weight:500;letter-spacing:.05em">Xin chào,</p><h2 style="margin:0;font-size:22px;font-weight:600;color:#0f172a;letter-spacing:-.02em">Khang Hoàng Đặng Anh TD</h2></div>
+<button style="background:rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:6px 12px;color:#0f172a;font-size:12px;font-family:inherit">Đăng xuất</button>
+</div></div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:24px">
+<div style="background:rgba(225,29,99,.08);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid #e11d63"><div style="display:flex;justify-content:center;color:#e11d63;margin-bottom:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg></div><p style="margin:0;font-size:9px;color:#94a3b8">Chuỗi</p><p style="margin:2px 0 0;font-size:16px;font-weight:600">1 ngày</p></div>
+<div style="background:#fff;border-radius:12px;padding:12px 8px;text-align:center;border:1px solid #e2e8f0"><div style="display:flex;justify-content:center;color:#e11d63;margin-bottom:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div><p style="margin:0;font-size:9px;color:#94a3b8">Tuần này</p><p style="margin:2px 0 0;font-size:16px;font-weight:600">14 buổi</p></div>
+<div style="background:#fff;border-radius:12px;padding:12px 8px;text-align:center;border:1px solid #e2e8f0"><div style="display:flex;justify-content:center;color:#e11d63;margin-bottom:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div><p style="margin:0;font-size:9px;color:#94a3b8">Phút tuần</p><p style="margin:2px 0 0;font-size:16px;font-weight:600">852</p></div>
+</div>
+
+<p style="margin:20px 0 10px;font-size:11px;font-weight:500;color:#94a3b8;letter-spacing:.09em;display:flex;align-items:center;gap:6px"><span style="width:4px;height:12px;background:#e11d63;border-radius:2px"></span>Gần đây</p>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="background:#fff;border-radius:16px;padding:16px 18px;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.02);display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="flex:1;min-width:0"><p style="margin:0 0 2px;font-size:14px;font-weight:500">Chạy bộ</p><p style="margin:0;color:#475569;font-size:12px">Chạy bộ · <span style="color:#94a3b8">Thứ 7, 25/07</span></p></div><div style="text-align:right"><p style="margin:0 0 2px;font-size:14px;font-weight:600;color:#e11d63">10 km</p><p style="margin:0;color:#94a3b8;font-size:12px">1h</p></div></div>
+<div style="background:#fff;border-radius:16px;padding:16px 18px;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.02);display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="flex:1;min-width:0"><p style="margin:0 0 2px;font-size:14px;font-weight:500">Push</p><p style="margin:0;color:#475569;font-size:12px">PPL · <span style="color:#94a3b8">Thứ 7, 25/07</span></p></div><div style="text-align:right"><p style="margin:0 0 2px;font-size:14px;font-weight:600;color:#e11d63">2000 kg</p><p style="margin:0;color:#94a3b8;font-size:12px">0 phút</p></div></div>
+<div style="background:#fff;border-radius:16px;padding:16px 18px;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,.02);display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="flex:1;min-width:0"><p style="margin:0 0 2px;font-size:14px;font-weight:500">Chạy bộ</p><p style="margin:0;color:#475569;font-size:12px">Chạy bộ · <span style="color:#94a3b8">Thứ 4, 22/07</span></p></div><div style="text-align:right"><p style="margin:0 0 2px;font-size:14px;font-weight:600;color:#e11d63">10 km</p><p style="margin:0;color:#94a3b8;font-size:12px">1h</p></div></div>
+</div>
+<div style="height:80px"></div>
+</div>
+<div style="position:absolute;bottom:78px;right:18px;width:56px;height:56px;border-radius:50%;background:#e11d63;color:#fff;font-size:30px;font-weight:300;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(225,29,99,.35)">＋</div>
+<nav style="display:flex;border-top:1px solid #e2e8f0;background:#fff;box-shadow:0 -2px 10px rgba(0,0,0,.03)">
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#e11d63"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg><span style="font-size:10px">Trang chủ</span></div>
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg><span style="font-size:10px">Bảng tin</span></div>
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"></path><path d="M12 2a6 6 0 0 0-6 6v3.58a6 6 0 0 0 6 6 6 6 0 0 0 6-6V8a6 6 0 0 0-6-6z"></path></svg><span style="font-size:10px">Xếp hạng</span></div>
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span style="font-size:10px">Cá nhân</span></div>
+</nav>
+</div></div></div>
+
+<div class="dv-opt" id="0b"><div class="dv-olabel"><a class="dv-oid" href="#0b">0b</a>Chọn môn</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#f8fafc;color:#0f172a;overflow:hidden;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+<div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;background:#fff;display:flex;align-items:center;gap:12px"><div style="background:#f1f5f9;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#475569"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></div><h2 style="margin:0;font-size:18px;font-weight:600;letter-spacing:-.01em">Bạn vừa tập gì?</h2></div>
+<div style="flex:1;padding:16px"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+<sc-for list="{{ acts }}" as="a" hint-placeholder-count="13"><div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 6px;border-radius:16px;border:1px solid #e2e8f0;background:#fff"><span style="font-size:30px;line-height:1">{{ a.e }}</span><span style="font-size:12.5px;font-weight:500;text-align:center">{{ a.l }}</span></div></sc-for>
+</div></div>
+</div></div></div>
+
+<div class="dv-opt" id="0c"><div class="dv-olabel"><a class="dv-oid" href="#0c">0c</a>Ghi buổi tập · Đạp xe</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#f8fafc;color:#0f172a;overflow:hidden;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+<div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;background:#fff;display:flex;align-items:center;gap:12px"><div style="background:#f1f5f9;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:#475569"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></div><h2 style="flex:1;margin:0;font-size:17px;font-weight:600">🚴 Đạp xe</h2><button style="background:rgba(225,29,99,.5);color:#fff;border:none;border-radius:12px;padding:10px 18px;font-size:14px;font-family:inherit">Lưu</button></div>
+<div style="flex:1;overflow:hidden;padding:18px 16px">
+<p style="margin:0 0 18px;font-size:22px;font-weight:600;color:#94a3b8;letter-spacing:-.02em">Tiêu đề (VD: Đạp xe sáng)</p>
+<p style="margin:0 0 10px;font-size:11px;font-weight:500;color:#94a3b8;letter-spacing:.09em;display:flex;align-items:center;gap:6px"><span style="width:4px;height:12px;background:#e11d63;border-radius:2px"></span>Thời lượng (phút)</p>
+<div style="padding:12px 14px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;font-size:15px;color:#94a3b8;margin-bottom:16px">Bắt buộc</div>
+<p style="margin:0 0 10px;font-size:11px;font-weight:500;color:#94a3b8;letter-spacing:.09em;display:flex;align-items:center;gap:6px"><span style="width:4px;height:12px;background:#e11d63;border-radius:2px"></span>Quãng đường (km)</p>
+<div style="padding:12px 14px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;font-size:15px;color:#94a3b8;margin-bottom:16px">km</div>
+<p style="margin:0 0 10px;font-size:11px;font-weight:500;color:#94a3b8;letter-spacing:.09em;display:flex;align-items:center;gap:6px"><span style="width:4px;height:12px;background:#e11d63;border-radius:2px"></span>Tốc độ TB</p>
+<div style="padding:12px 14px;border-radius:12px;border:1px solid #e2e8f0;background:#f1f5f9;font-size:15px;color:#475569;margin-bottom:16px;display:flex;gap:6px;align-items:center"><span style="font-size:13px">⚡ tự tính:</span><strong style="color:#e11d63">—</strong></div>
+<p style="margin:0 0 10px;font-size:11px;font-weight:500;color:#94a3b8;letter-spacing:.09em;display:flex;align-items:center;gap:6px"><span style="width:4px;height:12px;background:#e11d63;border-radius:2px"></span>Địa điểm</p>
+<div style="display:flex;gap:8px;margin-bottom:16px"><div style="flex:1;padding:10px 14px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;font-size:14px;font-weight:500;color:#475569;text-align:center">Trong nhà</div><div style="flex:1;padding:10px 14px;border-radius:12px;border:1px solid #e11d63;background:rgba(225,29,99,.08);font-size:14px;font-weight:500;color:#e11d63;text-align:center">Ngoài trời</div></div>
+<p style="margin:0 0 10px;font-size:11px;font-weight:500;color:#94a3b8;letter-spacing:.09em;display:flex;align-items:center;gap:6px"><span style="width:4px;height:12px;background:#e11d63;border-radius:2px"></span>Cường độ</p>
+<div style="display:flex;gap:8px;margin-bottom:16px"><div style="flex:1;padding:10px 14px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;font-size:14px;font-weight:500;color:#475569;text-align:center">nhẹ</div><div style="flex:1;padding:10px 14px;border-radius:12px;border:1px solid #e11d63;background:rgba(225,29,99,.08);font-size:14px;font-weight:500;color:#e11d63;text-align:center">vừa</div><div style="flex:1;padding:10px 14px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;font-size:14px;font-weight:500;color:#475569;text-align:center">mạnh</div></div>
+<p style="margin:0 0 12px;color:#e11d63;font-size:13.5px;font-weight:500">Thêm chi tiết ▾</p>
+<p style="margin:0 0 10px;font-size:11px;font-weight:500;color:#94a3b8;letter-spacing:.09em;display:flex;align-items:center;gap:6px"><span style="width:4px;height:12px;background:#e11d63;border-radius:2px"></span>Ghi chú</p>
+<div style="padding:12px 14px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;font-size:15px;color:#94a3b8;height:62px">Cảm giác hôm nay thế nào?</div>
+<div style="padding:18px;border-radius:16px;border:1.5px dashed #cbd5e1;text-align:center;color:#94a3b8;font-size:13px;margin:16px 0">＋ Thêm ảnh (tuỳ chọn)</div>
+<p style="margin:0 0 16px;font-size:11.5px;color:#94a3b8">Ảnh sẽ hiển thị với toàn bộ đồng nghiệp.</p>
+</div>
+</div></div></div>
+
+<div class="dv-opt" id="0d"><div class="dv-olabel"><a class="dv-oid" href="#0d">0d</a>Bảng tin</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#f8fafc;color:#0f172a;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+<div style="flex:1;overflow:hidden">
+<div style="background:#f8fafc;padding:14px 16px 10px"><h2 style="margin:0 0 12px;font-size:24px;font-weight:600;letter-spacing:-.02em">Bảng tin</h2>
+<div style="display:flex;gap:8px;overflow:hidden"><div style="padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:500;white-space:nowrap;border:1px solid #e11d63;background:rgba(225,29,99,.08);color:#e11d63">Tất cả</div><div style="padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:500;white-space:nowrap;border:1px solid #e2e8f0;background:#fff;color:#475569">🏋️ Tập gym</div><div style="padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:500;white-space:nowrap;border:1px solid #e2e8f0;background:#fff;color:#475569">🏃 Chạy bộ</div><div style="padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:500;white-space:nowrap;border:1px solid #e2e8f0;background:#fff;color:#475569">🚶 Đi bộ</div><div style="padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:500;white-space:nowrap;border:1px solid #e2e8f0;background:#fff;color:#475569">🚴 Đạp</div></div></div>
+<div style="padding:0 16px">
+<sc-for list="{{ posts }}" as="p" hint-placeholder-count="3">
+<div style="background:#fff;border-radius:16px;margin-bottom:14px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.02)">
+<div style="display:flex;gap:10px;align-items:center;padding:14px 16px 10px">
+<div style="width:40px;height:40px;border-radius:50%;border:2px solid #f97316;background:#f1f5f9;flex-shrink:0"></div>
+<div style="flex:1;min-width:0"><p style="margin:0;font-size:13.5px"><b style="font-weight:600">{{ p.who }}</b><span style="color:#475569"> {{ p.head }}</span></p><p style="margin:1px 0 0;font-size:11px;color:#94a3b8">TD · {{ p.when }}</p></div>
+<span style="font-size:20px">{{ p.e }}</span>
+</div>
+<div style="display:flex;gap:18px;padding:12px 16px;border-top:1px solid #e2e8f0;font-size:12.5px;color:#475569"><span>📏 <strong style="color:#0f172a">{{ p.s1 }}</strong> {{ p.u1 }}</span><span>⏱ <strong style="color:#0f172a">{{ p.s2 }}</strong> {{ p.u2 }}</span><span>⚡ <strong style="color:#0f172a">{{ p.s3 }}</strong> {{ p.u3 }}</span></div>
+<div style="display:flex;border-top:1px solid #e2e8f0"><div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;color:#475569;font-size:13.5px;font-weight:500">🤍 <span style="font-weight:400">Thích</span></div><div style="width:1px;background:#e2e8f0"></div><div style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;color:#475569;font-size:13.5px;font-weight:500">💬 <span style="font-weight:400">Bình luận</span></div></div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="position:absolute;bottom:78px;right:18px;width:56px;height:56px;border-radius:50%;background:#e11d63;color:#fff;font-size:30px;font-weight:300;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(225,29,99,.35)">＋</div>
+<nav style="display:flex;border-top:1px solid #e2e8f0;background:#fff;box-shadow:0 -2px 10px rgba(0,0,0,.03)">
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg><span style="font-size:10px">Trang chủ</span></div>
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#e11d63"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg><span style="font-size:10px">Bảng tin</span></div>
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"></path><path d="M12 2a6 6 0 0 0-6 6v3.58a6 6 0 0 0 6 6 6 6 0 0 0 6-6V8a6 6 0 0 0-6-6z"></path></svg><span style="font-size:10px">Xếp hạng</span></div>
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span style="font-size:10px">Cá nhân</span></div>
+</nav>
+</div></div></div>
+
+<div class="dv-opt" id="0e"><div class="dv-olabel"><a class="dv-oid" href="#0e">0e</a>Xếp hạng</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#f8fafc;color:#0f172a;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+<div style="flex:1;padding:18px 16px">
+<h2 style="margin:0 0 14px;font-size:24px;font-weight:600;letter-spacing:-.02em">Bảng xếp hạng</h2>
+<div style="display:flex;gap:6px;background:#f1f5f9;border-radius:12px;padding:4px;margin-bottom:8px"><div style="flex:1;padding:9px;border-radius:12px;text-align:center;font-size:13px;font-weight:500;background:#fff;color:#e11d63;box-shadow:0 1px 4px rgba(0,0,0,.08)">🏢 Toàn công ty</div><div style="flex:1;padding:9px;border-radius:12px;text-align:center;font-size:13px;font-weight:500;color:#475569">👥 Phòng ban</div></div>
+<div style="display:flex;gap:6px;background:#f1f5f9;border-radius:12px;padding:4px;margin-bottom:18px"><div style="flex:1;padding:9px;border-radius:12px;text-align:center;font-size:13px;font-weight:500;background:#fff;color:#e11d63;box-shadow:0 1px 4px rgba(0,0,0,.08)">Tuần này</div><div style="flex:1;padding:9px;border-radius:12px;text-align:center;font-size:13px;font-weight:500;color:#475569">Tháng này</div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(225,29,99,.08);border-radius:12px;border:1px solid #e11d63;margin-bottom:8px"><span style="width:26px;text-align:center;font-size:18px">🥇</span><div style="width:34px;height:34px;border-radius:50%;background:#f1f5f9;flex-shrink:0"></div><div style="flex:1;min-width:0"><p style="margin:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Khang Hoàng Đặng Anh TD (bạn)</p><p style="margin:0;font-size:11px;color:#94a3b8">TD · 3 buổi · 359 phút</p></div><div style="text-align:right"><p style="margin:0;font-size:16px;font-weight:700;color:#e11d63">1217</p><p style="margin:0;font-size:10px;color:#94a3b8">điểm</p></div></div>
+<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:8px"><span style="width:26px;text-align:center;font-size:18px">🥈</span><div style="width:34px;height:34px;border-radius:50%;background:#f1f5f9;flex-shrink:0"></div><div style="flex:1;min-width:0"><p style="margin:0;font-size:14px;font-weight:600">TD Communications</p><p style="margin:0;font-size:11px;color:#94a3b8">TD · 1 buổi · 100 phút</p></div><div style="text-align:right"><p style="margin:0;font-size:16px;font-weight:700;color:#e11d63">180</p><p style="margin:0;font-size:10px;color:#94a3b8">điểm</p></div></div>
+<p style="margin:16px 4px 0;font-size:11.5px;color:#94a3b8;line-height:1.5;text-align:center">Điểm quy đổi theo cường độ vận động, công bằng giữa các môn. Bảng làm mới mỗi tuần. Bạn có thể tắt tham gia trong Cài đặt.</p>
+</div>
+<div style="position:absolute;bottom:78px;right:18px;width:56px;height:56px;border-radius:50%;background:#e11d63;color:#fff;font-size:30px;font-weight:300;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(225,29,99,.35)">＋</div>
+<nav style="display:flex;border-top:1px solid #e2e8f0;background:#fff;box-shadow:0 -2px 10px rgba(0,0,0,.03)">
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg><span style="font-size:10px">Trang chủ</span></div>
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg><span style="font-size:10px">Bảng tin</span></div>
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#e11d63"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"></path><path d="M12 2a6 6 0 0 0-6 6v3.58a6 6 0 0 0 6 6 6 6 0 0 0 6-6V8a6 6 0 0 0-6-6z"></path></svg><span style="font-size:10px">Xếp hạng</span></div>
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span style="font-size:10px">Cá nhân</span></div>
+</nav>
+</div></div></div>
+
+<div class="dv-opt" id="0f"><div class="dv-olabel"><a class="dv-oid" href="#0f">0f</a>Cá nhân</div>
+<div class="dv-card" style="width:402px">
+<div style="width:402px;height:812px;background:#f8fafc;color:#0f172a;overflow:hidden;position:relative;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+<div style="flex:1;overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 16px 0">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:50%;background:#f1f5f9;border:2px solid #e11d63"></div><div><p style="margin:0;font-size:16px;font-weight:600">Khang Hoàng Đặng Anh TD</p><p style="margin:0;font-size:12px;color:#e11d63">Xem hồ sơ ›</p></div></div>
+<div style="background:#f1f5f9;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px">⚙️</div></div>
+<div style="padding:14px 16px 0;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px 16px"><span style="font-size:26px;line-height:1">👥</span><div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:600">Câu lạc bộ</p><p style="margin:2px 0 0;font-size:12px;color:#475569">Nhóm theo môn — kết nối đồng nghiệp cùng đam mê</p></div><span style="color:#94a3b8;font-size:18px">›</span></div>
+<div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px 16px"><span style="font-size:26px;line-height:1">🎯</span><div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:600">Mục tiêu chung</p><p style="margin:2px 0 0;font-size:12px;color:#475569">Cả công ty cùng góp để về đích chung</p></div><span style="color:#94a3b8;font-size:18px">›</span></div>
+<div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px 16px"><span style="font-size:26px;line-height:1">📖</span><div style="flex:1"><p style="margin:0;font-size:14.5px;font-weight:600">Hướng dẫn tập luyện</p><p style="margin:2px 0 0;font-size:12px;color:#475569">Kiến thức nhập môn cho từng bộ môn &amp; bài tập</p></div><span style="color:#94a3b8;font-size:18px">›</span></div>
+</div>
+<div style="padding:22px 16px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="background:#f1f5f9;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#475569">‹</div><p style="margin:0;font-size:17px;font-weight:600">Tháng 7, 2026</p><div style="background:#f1f5f9;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#475569">›</div></div>
+<div style="background:#fff;border-radius:16px;padding:16px 18px;border:1px solid #e2e8f0">
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px"><sc-for list="{{ dows }}" as="d" hint-placeholder-count="7"><span style="text-align:center;font-size:10px;font-weight:500;color:#94a3b8">{{ d }}</span></sc-for></div>
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px"><sc-for list="{{ days }}" as="d" hint-placeholder-count="35"><div style="aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:13px;background:{{ d.bg }};color:{{ d.fg }};border:1px solid {{ d.bd }};font-weight:{{ d.fw }}">{{ d.n }}</div></sc-for></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+<div style="background:#fff;border-radius:16px;padding:16px 18px;border:1px solid #e2e8f0;text-align:center"><div style="display:flex;justify-content:center;color:#e11d63;margin-bottom:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg></div><p style="margin:0;font-size:9px;color:#94a3b8">Chuỗi liên tiếp</p><p style="margin:2px 0 0;font-size:16px;font-weight:600">1 ngày</p></div>
+<div style="background:#fff;border-radius:16px;padding:16px 18px;border:1px solid #e2e8f0;text-align:center"><div style="display:flex;justify-content:center;color:#e11d63;margin-bottom:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"></path><path d="M12 2a6 6 0 0 0-6 6v3.58a6 6 0 0 0 6 6 6 6 0 0 0 6-6V8a6 6 0 0 0-6-6z"></path></svg></div><p style="margin:0;font-size:9px;color:#94a3b8">Trong tháng</p><p style="margin:2px 0 0;font-size:16px;font-weight:600">14 buổi · 852 phút</p></div>
+</div>
+<div style="display:flex;justify-content:center;margin-top:20px"><div style="display:flex;align-items:center;gap:5px;background:#fee2e2;border-radius:12px;padding:6px 12px;color:#ef4444;font-size:12px;font-weight:500">🗑 Xoá lịch sử</div></div>
+<div style="height:80px"></div>
+</div>
+</div>
+<div style="position:absolute;bottom:78px;right:18px;width:56px;height:56px;border-radius:50%;background:#e11d63;color:#fff;font-size:30px;font-weight:300;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(225,29,99,.35)">＋</div>
+<nav style="display:flex;border-top:1px solid #e2e8f0;background:#fff;box-shadow:0 -2px 10px rgba(0,0,0,.03)">
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg><span style="font-size:10px">Trang chủ</span></div>
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg><span style="font-size:10px">Bảng tin</span></div>
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#94a3b8"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"></path><path d="M12 2a6 6 0 0 0-6 6v3.58a6 6 0 0 0 6 6 6 6 0 0 0 6-6V8a6 6 0 0 0-6-6z"></path></svg><span style="font-size:10px">Xếp hạng</span></div>
+<div style="flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#e11d63"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span style="font-size:10px">Cá nhân</span></div>
+</nav>
+</div></div></div>
+
+</div>
+<p class="dv-next">Tiếp theo mình dựng 2 phương án redesign theo Apollo Brand Book (Apollo Blue chủ đạo, Barlow Semi Condensed + Baskerville, icon keyline thay emoji).</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const acts = [['🏋️','Tập gym'],['🏃','Chạy bộ'],['🚶','Đi bộ'],['🚴','Đạp xe'],['🏊','Bơi'],['🥾','Leo núi'],['🧘','Yoga'],['⚽','Bóng đá'],['🏀','Bóng rổ'],['🏸','Cầu lông'],['🎾','Tennis'],['🥒','Pickleball'],['✨','Khác']].map(([e,l])=>({e,l}));
+    const posts = [
+      {who:'TD Communications',head:'đã chạy 60 km',when:'03:26 26-07',e:'🏃',s1:'60',u1:'km',s2:'100',u2:'phút',s3:'1:40',u3:'/km'},
+      {who:'Khang Hoàng Đặng Anh TD',head:'đã chạy 10 km',when:'03:25 26-07',e:'🏃',s1:'10',u1:'km',s2:'60',u2:'phút',s3:'6:00',u3:'/km'},
+      {who:'TD Communications',head:'đã chơi bóng rổ 8 phút',when:'10:46 23-07',e:'🏀',s1:'8',u1:'phút',s2:'vừa',u2:'',s3:'10',u3:'điểm'},
+    ];
+    const marked = {20:1,21:1,22:1,25:1};
+    const days = [];
+    for (let i=0;i<2;i++) days.push({n:'',bg:'transparent',fg:'#475569',bd:'transparent',fw:400});
+    for (let d=1;d<=31;d++) {
+      const has = !!marked[d], today = d===26;
+      days.push({n:String(d),bg:has?'rgba(225,29,99,.08)':'transparent',fg:has?'#e11d63':'#475569',bd:today?'#e11d63':'transparent',fw:has?600:400});
+    }
+    const sv = (p, c, s = 20, w = 1.8) => React.createElement('svg', { width: s, height: s, viewBox: '0 0 24 24', fill: 'none', stroke: c, strokeWidth: w, strokeLinecap: 'round', strokeLinejoin: 'round', dangerouslySetInnerHTML: { __html: p } });
+    const P = {
+      run: '<circle cx="15.5" cy="4.5" r="2"/><path d="M13.5 21l1.5-5.5-3.5-3 1-4.5 3.5 2.5 3 .5"/><path d="M11 8L7 9l-1 3"/>',
+      gym: '<path d="M4 9v6M8 7v10M16 7v10M20 9v6M8 12h8"/>',
+      bike: '<circle cx="5.5" cy="17" r="3.2"/><circle cx="18.5" cy="17" r="3.2"/><path d="M5.5 17l4-8h4l3 8M9 9h5"/><circle cx="14.5" cy="4.5" r="1.5"/>',
+      walk: '<circle cx="13" cy="4.5" r="2"/><path d="M11 21l1-6-3-3 1-4 3 2.5 2.5 1"/><path d="M14 15l2 6"/>',
+      ball: '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18"/><path d="M12 3a9 9 0 0 1 0 18"/>',
+      grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+      home: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+      journal: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+      trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/><path d="M12 2a6 6 0 0 0-6 6v3.58a6 6 0 0 0 6 6 6 6 0 0 0 6-6V8a6 6 0 0 0-6-6z"/>',
+      user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+      swim: '<circle cx="17" cy="7.5" r="1.9"/><path d="M5 10.5l5-2.5 4 2.5"/><path d="M3 15c1.8-1.4 3.2-1.4 5 0 1.8 1.4 3.2 1.4 5 0 1.8-1.4 3.2-1.4 5 0"/><path d="M3 19c1.8-1.4 3.2-1.4 5 0 1.8 1.4 3.2 1.4 5 0 1.8-1.4 3.2-1.4 5 0"/>',
+      mountain: '<path d="M2 20l6.5-11 3.5 5.5 2-3L21 20z"/><circle cx="17" cy="5.5" r="2"/>',
+      yoga: '<circle cx="12" cy="4.5" r="2"/><path d="M12 8v6M6 21l6-7 6 7"/><path d="M5 12h14"/>',
+      racket: '<ellipse cx="9" cy="8" rx="5.5" ry="6.5" transform="rotate(-30 9 8)"/><path d="M12.5 13.5L20 21"/>',
+      spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+      people: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1.5A4.5 4.5 0 0 1 7.5 14h3A4.5 4.5 0 0 1 15 18.5V20"/><path d="M16 5.5a3.2 3.2 0 0 1 0 6M18 14h.5A4.5 4.5 0 0 1 23 18.5V20"/>',
+      target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>',
+      book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5"/>',
+    };
+    const BLUE = '#2576B9', DIM = '#9DB4C9';
+    const nav = (active) => [['home', 'TRANG CHỦ', P.home], ['feed', 'BẢNG TIN', P.journal], ['rank', 'XẾP HẠNG', P.trophy], ['me', 'CÁ NHÂN', P.user]]
+      .map(([id, l, p]) => ({ l, c: id === active ? BLUE : DIM, icon: sv(p, id === active ? BLUE : DIM, 22, id === active ? 2 : 1.7) }));
+
+    const on = [1, 1, 1, 0, 0, 1, 0];
+    const week = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((l, i) => ({
+      l, c: on[i] ? '#FFD95C' : 'rgba(255,255,255,.28)', c2: on[i] ? BLUE : '#FFFFFF',
+    }));
+
+    const stats = [
+      { v: '14', l: 'BUỔI TUẦN', bd: 'transparent' },
+      { v: '852', l: 'PHÚT', bd: '#EDF3F9' },
+      { v: '1217', l: 'ĐIỂM', bd: '#EDF3F9' },
+    ];
+    const stats2 = [
+      { v: '14', l: 'BUỔI TUẦN', c: BLUE },
+      { v: '852', l: 'PHÚT', c: '#12395E' },
+      { v: '1217', l: 'ĐIỂM', c: '#12395E' },
+    ];
+
+    const recent = [
+      { icon: sv(P.run, BLUE, 19), tint: '#E7F1FB', t: 'Chạy bộ', sub: 'Thứ 7, 25/07 · cường độ vừa', v: '10 km', d: '1h', bd: 'transparent' },
+      { icon: sv(P.gym, '#EB9CC4', 19), tint: '#FBEBF3', t: 'Push', sub: 'PPL · Thứ 7, 25/07', v: '2000 kg', d: '2 sets', bd: '#EDF3F9' },
+      { icon: sv(P.run, BLUE, 19), tint: '#E7F1FB', t: 'Chạy bộ', sub: 'Thứ 4, 22/07 · cường độ mạnh', v: '10 km', d: '1h', bd: '#EDF3F9' },
+    ];
+
+    const mkChips = (activeBg, activeFg, activeBd) => [
+      { l: 'Tất cả', icon: sv(P.grid, activeFg, 15, 1.9), bg: activeBg, fg: activeFg, bd: activeBd },
+      { l: 'Tập gym', icon: sv(P.gym, '#7E9AB5', 15), bg: '#fff', fg: '#5B7896', bd: '#DDE8F2' },
+      { l: 'Chạy bộ', icon: sv(P.run, '#7E9AB5', 15), bg: '#fff', fg: '#5B7896', bd: '#DDE8F2' },
+      { l: 'Đi bộ', icon: sv(P.walk, '#7E9AB5', 15), bg: '#fff', fg: '#5B7896', bd: '#DDE8F2' },
+      { l: 'Đạp xe', icon: sv(P.bike, '#7E9AB5', 15), bg: '#fff', fg: '#5B7896', bd: '#DDE8F2' },
+    ];
+
+    const feed = [
+      { who: 'TD Communications', head: 'đã chạy 60 km', when: 'TD · 03:26 26-07', ring: BLUE, icon: sv(P.run, BLUE, 20), likes: '4', cmts: '1', stats: [{ v: '60', u: 'km' }, { v: '100', u: 'phút' }, { v: '1:40', u: '/km' }] },
+      { who: 'Khang Hoàng Đặng Anh TD', head: 'đã chạy 10 km', when: 'TD · 03:25 26-07 · chuỗi 3 ngày', ring: BLUE, icon: sv(P.run, BLUE, 20), likes: '2', cmts: '0', stats: [{ v: '10', u: 'km' }, { v: '60', u: 'phút' }, { v: '6:00', u: '/km' }] },
+      { who: 'TD Communications', head: 'đã chơi bóng rổ', when: 'TD · 10:46 23-07', ring: '#EB4754', icon: sv(P.ball, '#EB4754', 20), likes: '7', cmts: '3', stats: [{ v: '90', u: 'phút' }, { v: 'vừa', u: '' }, { v: '140', u: 'điểm' }] },
+    ];
+
+    const ranks = [
+      { n: '2', rc: '#5B7896', name: 'TD Communications', sub: 'TD · 1 buổi · 100 phút', pts: '180', bd: 'transparent' },
+      { n: '3', rc: '#5B7896', name: 'Nguyễn Minh Anh', sub: 'Academic · 2 buổi · 95 phút', pts: '164', bd: '#EDF3F9' },
+      { n: '4', rc: '#94AABF', name: 'Trần Quốc Bảo', sub: 'Sales · 2 buổi · 80 phút', pts: '132', bd: '#EDF3F9' },
+      { n: '5', rc: '#94AABF', name: 'Lê Thu Hà', sub: 'HR · 1 buổi · 60 phút', pts: '96', bd: '#EDF3F9' },
+    ];
+
+    const SPORTS = [
+      ['Tập gym', P.gym, '#FBEBF3', '#EB9CC4'], ['Chạy bộ', P.run, '#E7F1FB', BLUE], ['Đi bộ', P.walk, '#E7F1FB', BLUE],
+      ['Đạp xe', P.bike, '#E7F1FB', BLUE], ['Bơi', P.swim, '#E7F1FB', BLUE], ['Leo núi', P.mountain, '#F2F6FA', '#5B7896'],
+      ['Yoga', P.yoga, '#FBEBF3', '#EB9CC4'], ['Bóng đá', P.ball, '#FDECEE', '#EB4754'], ['Bóng rổ', P.ball, '#FDECEE', '#EB4754'],
+      ['Cầu lông', P.racket, '#FFF6DA', '#C9A21B'], ['Tennis', P.racket, '#FFF6DA', '#C9A21B'], ['Pickleball', P.racket, '#FFF6DA', '#C9A21B'],
+      ['Khác', P.spark, '#F2F6FA', '#5B7896'],
+    ];
+    const mkSport = ([l, p, tint, c], white) => ({ l, tint, icon: sv(p, white ? '#FFFFFF' : c, white ? 22 : 20) });
+    const sportsTop = [SPORTS[1], SPORTS[0], SPORTS[3]].map(s => mkSport(s, true));
+    const sportsAll = SPORTS.map(s => mkSport(s, false));
+
+    const meStats = [{ v: '1217', l: 'ĐIỂM TUẦN' }, { v: '852', l: 'PHÚT TUẦN' }, { v: '14', l: 'BUỔI TUẦN' }];
+    const meLinks = [
+      { t: 'Câu lạc bộ', sub: 'Gặp đồng nghiệp cùng đam mê một môn', tint: '#E7F1FB', icon: sv(P.people, BLUE, 20) },
+      { t: 'Mục tiêu chung', sub: 'Cả công ty cùng góp để về đích chung', tint: '#FFF6DA', icon: sv(P.target, '#C9A21B', 20) },
+      { t: 'Hướng dẫn tập luyện', sub: 'Kiến thức nhập môn cho từng bài tập', tint: '#FBEBF3', icon: sv(P.book, '#EB9CC4', 20) },
+    ];
+    const dotC = { r: BLUE, g: '#EB9CC4', b: '#EB4754' };
+    const marks = { 20: ['r', 'g'], 21: ['r'], 22: ['r', 'b'], 25: ['r', 'g'] };
+    const days2 = [];
+    for (let i = 0; i < 2; i++) days2.push({ n: '', bg: 'transparent', fg: '#5B7896', bd: 'transparent', fw: 400, dots: null });
+    for (let d = 1; d <= 31; d++) {
+      const m = marks[d], today = d === 26;
+      days2.push({
+        n: String(d), bg: m ? '#E7F1FB' : 'transparent', fg: m ? '#12395E' : '#7E9AB5',
+        bd: today ? BLUE : 'transparent', fw: m ? 700 : 400,
+        dots: m ? m.map((k, i) => React.createElement('span', { key: i, style: { width: 4, height: 4, borderRadius: '50%', background: dotC[k], display: 'block' } })) : null,
+      });
+    }
+    const breakdown = [
+      { l: 'Bơi', sub: '3 buổi · 300 phút', pts: '420 đ', w: '100%', c: BLUE, icon: sv(P.swim, BLUE, 17) },
+      { l: 'Chạy bộ', sub: '3 buổi · 210 phút', pts: '378 đ', w: '90%', c: '#4A93CE', icon: sv(P.run, '#4A93CE', 17) },
+      { l: 'Bóng rổ', sub: '1 buổi · 90 phút', pts: '140 đ', w: '33%', c: '#EB4754', icon: sv(P.ball, '#EB4754', 17) },
+      { l: 'Đạp xe', sub: '1 buổi · 60 phút', pts: '90 đ', w: '21%', c: '#7FB4DC', icon: sv(P.bike, '#7FB4DC', 17) },
+      { l: 'Cầu lông', sub: '1 buổi · 60 phút', pts: '66 đ', w: '16%', c: '#E7C24A', icon: sv(P.racket, '#E7C24A', 17) },
+      { l: 'Tập gym', sub: '2 buổi · 45 phút', pts: '48 đ', w: '11%', c: '#EB9CC4', icon: sv(P.gym, '#EB9CC4', 17) },
+    ];
+    const formNums = [
+      { l: 'Thời lượng', hint: 'Bắt buộc', v: '60', u: 'phút', c: '#12395E', bd: 'transparent' },
+      { l: 'Quãng đường', hint: 'Tuỳ chọn', v: '22,5', u: 'km', c: '#12395E', bd: '#EDF3F9' },
+    ];
+    const contribs = [
+      { n: 'TD Communications', v: '60 km', w: '100%', bar: BLUE, av: '#BCD9F2' },
+      { n: 'Bạn', v: '10 km', w: '17%', bar: '#FFD95C', av: '#EB9CC4' },
+    ];
+    const contribs2 = [
+      { n: 'Bạn', v: '8 buổi', w: '100%', bar: '#FFD95C', av: '#BCD9F2' },
+      { n: 'Nguyễn Minh Anh', v: '6 buổi', w: '75%', bar: BLUE, av: '#EB9CC4' },
+      { n: 'TD Communications', v: '4 buổi', w: '50%', bar: BLUE, av: '#BCD9F2' },
+    ];
+    const clubFeed = [
+      { who: 'TD Communications', head: 'đã chạy 60 km', when: 'TD · 03:26 26-07', icon: sv(P.run, BLUE, 19), stats: [{ v: '60', u: 'km' }, { v: '100', u: 'phút' }, { v: '1:40', u: '/km' }] },
+      { who: 'Khang Hoàng Đặng Anh TD', head: 'đã chạy 10 km', when: 'TD · 03:25 26-07', icon: sv(P.run, BLUE, 19), stats: [{ v: '10', u: 'km' }, { v: '60', u: 'phút' }, { v: '6:00', u: '/km' }] },
+    ];
+    const celebStats = [{ v: '22,5', l: 'KM' }, { v: '60', l: 'PHÚT' }, { v: '90', l: 'ĐIỂM' }];
+    const cc = ['#FFD95C', '#BCD9F2', '#EB9CC4', '#FFFFFF', '#EB4754'];
+    const confetti = Array.from({ length: 14 }, (_, i) => ({
+      t: [3, 7, 12, 5, 16, 9, 20, 2, 14, 22, 6, 18, 10, 24][i] + '%',
+      l: [8, 22, 40, 62, 78, 90, 15, 48, 70, 34, 86, 55, 28, 74][i] + '%',
+      c: cc[i % 5], r: (i * 37 % 90 - 45) + 'deg',
+    }));
+    const spark = ['40%', '52%', '46%', '64%', '58%', '72%', '66%', '82%'];
+
+    const onbFields = [
+      { l: 'TÊN HIỂN THỊ', v: 'Khang Hoàng Đặng Anh', fw: 600, c: '#12395E', bd: 'transparent' },
+      { l: 'PHÒNG BAN / BỘ PHẬN', v: 'TD Communications', fw: 600, c: '#12395E', bd: '#EDF3F9' },
+      { l: 'TRUNG TÂM / CƠ SỞ', v: 'VD: Hà Nội, HCM…', fw: 400, c: '#B7C6D4', bd: '#EDF3F9' },
+    ];
+    const onbPick = { 'Chạy bộ': 1, 'Tập gym': 1, 'Bơi': 1 };
+    const onbSports = SPORTS.filter(s => s[0] !== 'Khác').map(([l, p, tint, c]) => {
+      const on = !!onbPick[l];
+      return { l, icon: sv(p, on ? '#FFFFFF' : '#7E9AB5', 15), bg: on ? BLUE : '#fff', fg: on ? '#fff' : '#5B7896', bd: on ? BLUE : '#DDE8F2' };
+    });
+    const restPresets = ['60s', '90s', '2:00', '3:00'].map((l, i) => ({
+      l, bg: i === 1 ? '#fff' : 'rgba(255,255,255,.18)', fg: i === 1 ? BLUE : '#EAF3FB',
+    }));
+    const mkSet = (n, kg, reps, rpe, done) => ({
+      n, kg, reps, rpe,
+      bg: done ? '#E9F7EF' : '#F8FBFD', fg: done ? '#1F8A55' : '#12395E', bd: done ? '#BCE7D2' : '#DDE8F2',
+      ckBg: done ? '#E9F7EF' : '#F2F6FA',
+      ck: sv('<path d="M4 12.5l5.5 5.5L20 7"/>', done ? '#1F8A55' : '#C4D3E0', 17, 2.6),
+    });
+    const gymExs = [
+      { n: 'Đẩy ngực dốc (tạ đòn)', prev: '60kg×8 · 60kg×8 · 55kg×9', icon: sv(P.gym, BLUE, 18), sets: [mkSet(1, '60', '8', '7', true), mkSet(2, '60', '8', '8', true), mkSet(3, '—', '—', '—', false)] },
+      { n: 'Đẩy vai (tạ tay)', prev: '22kg×10 · 22kg×9', icon: sv(P.gym, BLUE, 18), sets: [mkSet(1, '22', '10', '7', true), mkSet(2, '—', '—', '—', false)] },
+    ];
+    const guideGroups = [
+      { l: 'CHẠY BỘ', tint: '#E7F1FB', icon: sv(P.run, BLUE, 17), items: [{ t: 'Chạy bộ cho người mới bắt đầu', lv: 'Người mới', s: 'Bắt đầu từ đâu, chạy bao lâu, thở thế nào — 10 phút đọc là chạy được buổi đầu.' }] },
+      { l: 'TẬP GYM', tint: '#FBEBF3', icon: sv(P.gym, '#EB9CC4', 17), items: [
+        { t: 'Nhập môn phòng gym', lv: 'Người mới', s: 'Đi gym lần đầu cần biết gì: dụng cụ, thứ tự bài, khởi động, và phép lịch sự trong phòng tập.' },
+        { t: 'Đẩy ngực dốc với tạ đòn', lv: 'Người mới', s: 'Bài đẩy ngực trên ghế nghiêng — tập phần ngực trên mà nhiều người tập mãi vẫn thiếu.' },
+      ] },
+      { l: 'BƠI', tint: '#E7F1FB', icon: sv(P.swim, BLUE, 17), items: [{ t: 'Bơi ếch đúng cách', lv: 'Người mới', s: 'Nhịp tay – chân – thở của bơi ếch, và cách bơi 200m không hụt hơi.' }] },
+    ];
+    const guideChips = [
+      { v: 'Ngực trên, vai trước, tay sau', icon: sv(P.gym, '#7E9AB5', 15) },
+      { v: 'Tạ đòn, ghế nghiêng', icon: sv(P.target, '#7E9AB5', 15) },
+    ];
+    const guideSteps = [
+      { n: 1, t: 'Chỉnh ghế nghiêng khoảng 30 độ. Dốc hơn nữa thì vai gánh nhiều hơn ngực.' },
+      { n: 2, t: 'Nằm xuống, hai bàn chân đạp chắc sàn, lưng dưới hơi cong tự nhiên, hai bả vai ép xuống ghế.' },
+      { n: 3, t: 'Nắm đòn rộng hơn vai một chút. Nhấc đòn ra khỏi giá, giữ thẳng trên ngực trên.' },
+      { n: 4, t: 'Hạ đòn từ từ xuống phần ngực trên, khuỷu tay hơi chếch vào trong — đếm 2 nhịp.' },
+      { n: 5, t: 'Đẩy đòn lên, thở ra. Không khoá cứng khuỷu tay ở đỉnh.' },
+      { n: 6, t: 'Xong hiệp, đặt đòn về giá cẩn thận. Nghỉ 90 giây rồi làm hiệp tiếp.' },
+    ];
+    const guideMistakes = [
+      'Dốc ghế quá cao (trên 45 độ) — thành bài đẩy vai, ngực gần như không làm gì.',
+      'Nảy đòn vào ngực để lấy đà — dễ chấn thương xương ức, mà cơ cũng không được kích thích.',
+      'Nhấc mông khỏi ghế khi đẩy nặng — mất hết tác dụng lên ngực trên.',
+    ];
+    const guideTips = [
+      'Nặng bao nhiêu không quan trọng bằng hạ chậm và kiểm soát.',
+      'Buổi đầu tập nhẹ 50% sức để quen đường đi của đòn.',
+    ];
+    const setRows = [
+      { t: 'Tham gia bảng xếp hạng', s: 'Điểm của bạn hiển thị trên bảng xếp hạng', tc: '#12395E', tg: BLUE, kn: '21px', bd: 'transparent' },
+      { t: 'Ẩn theo dõi cân nặng', s: 'Cân nặng luôn riêng tư; bật để ẩn hẳn tính năng này', tc: '#12395E', tg: '#C4D3E0', kn: '3px', bd: '#EDF3F9' },
+      { t: 'Chế độ quản trị', s: 'Bật để kiểm duyệt bài & bình luận vi phạm của người khác', tc: '#12395E', tg: '#C4D3E0', kn: '3px', bd: '#EDF3F9' },
+    ];
+
+    return {
+      acts, posts, days, dows: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+      onbFields, onbSports, restPresets, gymExs, guideGroups, guideChips, guideSteps, guideMistakes, guideTips, setRows,
+      setCols: ['#', 'KG', 'REPS', 'RPE', ''],
+      iconRunWhite: sv(P.run, '#FFFFFF', 38, 1.7), iconGymPink: sv(P.gym, '#EB9CC4', 17),
+      sportsTop, sportsAll, meStats, meLinks, days2, breakdown, formNums,
+      contribs, contribs2, clubFeed, celebStats, confetti, spark,
+      navMe: nav('me'), iconBike: sv(P.bike, BLUE, 20), iconRunDark: sv(P.run, '#12395E', 28, 1.9),
+      week, stats, stats2, recent, feed, ranks,
+      chips: mkChips('#E7F1FB', BLUE, BLUE),
+      chips2: mkChips(BLUE, '#FFFFFF', BLUE),
+      navHome: nav('home'), navFeed: nav('feed'), navRank: nav('rank'),
+    };
+  }
+}
+</script>
+</body>
+</html>

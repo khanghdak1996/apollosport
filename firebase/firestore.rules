@@ -1,0 +1,259 @@
+rules_version = '2';
+
+// Mạng xã hội tập luyện nội bộ. Hàng rào thật nằm ở đây (client chỉ là gợi ý UI).
+// Khoá theo domain công ty + xác thực quyền sở hữu + bất biến field tác giả + riêng tư cân nặng.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function domainOk() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.matches('.*@apollo[.]edu[.]vn$');
+    }
+    function me() { return request.auth.uid; }
+
+    // Quyền admin là CỘNG THÊM (không thay thế vai trò user): người trong
+    // admins/{uid} vẫn tham gia bình thường như mọi user. Chỉ set tay qua
+    // Firebase Console — client không bao giờ ghi được (chống tự phong quyền).
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // ---------------- admins (danh sách quản trị) ----------------
+    match /admins/{uid} {
+      allow read:  if domainOk();   // ai cũng biết được ai là admin
+      allow write: if false;        // chỉ set qua Console/server, không từ client
+    }
+
+    // ---------------- users ----------------
+    match /users/{uid} {
+      allow read: if domainOk();
+
+      allow create: if domainOk() && uid == me()
+        && request.resource.data.uid == me()
+        && request.resource.data.email == request.auth.token.email;
+
+      allow update: if domainOk() && uid == me()
+        // uid + email bất biến
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        // chặn bịa streak vô lý
+        && request.resource.data.streak.current is int
+        && request.resource.data.streak.current >= 0
+        && request.resource.data.streak.current <= 3650;
+
+      allow delete: if domainOk() && uid == me(); // tự xoá tài khoản của mình
+
+      // Dữ liệu tuyệt mật: cân nặng, số đo, programs, PRs, custom exercises.
+      match /private/{docId} {
+        allow read, write: if domainOk() && uid == me();
+      }
+      // Mirror reaction của chính mình (để feed biết đã thả tim chưa).
+      match /reacted/{sid} {
+        allow read, write: if domainOk() && uid == me();
+      }
+    }
+
+    // ---------------- sessions ----------------
+    match /sessions/{sid} {
+      function ownsId() { return sid.split('_')[0] == me(); }
+
+      function authorFieldsIntact() {
+        return request.resource.data.authorUid == resource.data.authorUid
+            && request.resource.data.loggedAt  == resource.data.loggedAt
+            && request.resource.data.date       == resource.data.date;
+      }
+
+      // Người khác chỉ được đụng vào 2 bộ đếm xã hội, lệch tối đa ±1.
+      function onlyCounters() {
+        return request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['reactionCount', 'commentCount'])
+            && request.resource.data.reactionCount >= 0
+            && request.resource.data.commentCount  >= 0
+            && (request.resource.data.reactionCount - resource.data.reactionCount) >= -1
+            && (request.resource.data.reactionCount - resource.data.reactionCount) <= 1
+            && (request.resource.data.commentCount  - resource.data.commentCount)  >= -1
+            && (request.resource.data.commentCount  - resource.data.commentCount)  <= 1;
+      }
+
+      allow read: if domainOk()
+        && (resource.data.visibility == 'company' || resource.data.authorUid == me() || isAdmin());
+
+      allow create: if domainOk() && ownsId()
+        && request.resource.data.authorUid == me()
+        && request.resource.data.visibility in ['company', 'private']
+        && request.resource.data.reactionCount == 0
+        && request.resource.data.commentCount == 0
+        && request.resource.data.durationMin is number
+        && request.resource.data.durationMin <= 1440
+        && request.resource.data.activeMinutes is number
+        && request.resource.data.activeMinutes <= 180;
+
+      allow update: if domainOk() && (
+           (ownsId() && request.resource.data.authorUid == me() && authorFieldsIntact()
+              && request.resource.data.reactionCount == resource.data.reactionCount
+              && request.resource.data.commentCount  == resource.data.commentCount)
+        || onlyCounters()
+        || isAdmin()   // admin kiểm duyệt: ẩn/sửa bài vi phạm (F5, UI làm sau)
+      );
+
+      allow delete: if domainOk() && (ownsId() || isAdmin()); // admin gỡ bài vi phạm
+
+      match /reactions/{ruid} {
+        allow read:   if domainOk();
+        allow create, update: if domainOk() && ruid == me()
+                      && request.resource.data.uid == me()
+                      && request.resource.data.kind in ['heart', 'fire', 'clap', 'muscle'];
+        allow delete: if domainOk() && ruid == me();
+      }
+
+      match /comments/{cid} {
+        allow read:   if domainOk();
+        allow create: if domainOk()
+                      && request.resource.data.uid == me()
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() > 0
+                      && request.resource.data.text.size() <= 500
+                      && request.resource.data.createdAt == request.time;
+        // Chủ bình luận sửa được text của mình; uid + createdAt bất biến.
+        allow update: if domainOk()
+                      && resource.data.uid == me()
+                      && request.resource.data.uid == resource.data.uid
+                      && request.resource.data.createdAt == resource.data.createdAt
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() > 0
+                      && request.resource.data.text.size() <= 500;
+        allow delete: if domainOk() && (
+                           resource.data.uid == me()
+                        || get(/databases/$(database)/documents/sessions/$(sid)).data.authorUid == me()
+                        || isAdmin()   // admin kiểm duyệt bình luận vi phạm
+                      );
+      }
+    }
+
+    // ---------------- leaderboard ----------------
+    match /leaderboard/{periodId}/entries/{uid} {
+      allow read: if domainOk();
+      allow write: if domainOk() && uid == me()
+        && request.resource.data.uid == me()
+        && request.resource.data.minutes  is int && request.resource.data.minutes  <= 20000
+        && request.resource.data.sessions is int && request.resource.data.sessions <= 200;
+      allow delete: if domainOk() && uid == me(); // cho phép opt-out
+    }
+
+    // ---------------- clubs (Câu lạc bộ theo môn) ----------------
+    // Đọc members / invites ở phạm vi collection-group (nhóm của tôi + lời mời của tôi).
+    match /{path=**}/members/{memberId} {
+      allow read: if domainOk();
+    }
+    match /{path=**}/invites/{inviteId} {
+      allow read: if domainOk();
+    }
+
+    match /clubs/{clubId} {
+      function club() { return get(/databases/$(database)/documents/clubs/$(clubId)).data; }
+      function isOwner() { return club().ownerUid == me(); }
+      // Chỉ đổi bộ đếm thành viên ±1 (join/leave), không đụng field khác.
+      function onlyMemberCountDelta() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberCount'])
+          && request.resource.data.memberCount >= 0
+          && (request.resource.data.memberCount - resource.data.memberCount) >= -1
+          && (request.resource.data.memberCount - resource.data.memberCount) <= 1;
+      }
+
+      allow read: if domainOk();
+      allow create: if domainOk()
+        && request.resource.data.ownerUid == me()
+        && request.resource.data.memberCount == 1
+        && request.resource.data.visibility in ['public', 'invite']
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 60;
+      allow update: if domainOk() && (isOwner() || isAdmin() || onlyMemberCountDelta());
+      allow delete: if domainOk() && (isOwner() || isAdmin());
+
+      // Thành viên: public → tự tham gia; invite → chỉ chủ thêm (sau khi duyệt).
+      match /members/{uid} {
+        allow read: if domainOk();
+        allow create: if domainOk() && (
+             (uid == me() && request.resource.data.uid == me()
+                && club().visibility == 'public'
+                && request.resource.data.role == 'member')
+          || club().ownerUid == me()
+             // Được mời → tự vào (kể cả nhóm invite-only) nếu có lời mời hợp lệ.
+          || (uid == me() && request.resource.data.uid == me()
+                && request.resource.data.role == 'member'
+                && exists(/databases/$(database)/documents/clubs/$(clubId)/invites/$(me())))
+        );
+        allow delete: if domainOk() && (uid == me() || club().ownerUid == me() || isAdmin());
+      }
+
+      // Lời mời vào nhóm (chủ mời theo tên/email). Người được mời tự vào hoặc bỏ qua.
+      match /invites/{toUid} {
+        allow read:   if domainOk();
+        allow create: if domainOk() && club().ownerUid == me()
+                      && request.resource.data.fromUid == me()
+                      && request.resource.data.toUid == toUid;
+        allow delete: if domainOk() && (toUid == me() || club().ownerUid == me() || isAdmin());
+      }
+
+      // Yêu cầu tham gia (chỉ dùng cho nhóm invite-only).
+      match /joinRequests/{uid} {
+        allow read:   if domainOk();
+        allow create: if domainOk() && uid == me() && request.resource.data.uid == me();
+        allow delete: if domainOk() && (uid == me() || club().ownerUid == me() || isAdmin());
+      }
+
+      // Feed thông báo nhóm: chỉ chủ nhóm / app-admin đăng, thành viên đọc.
+      match /posts/{postId} {
+        allow read:   if domainOk();
+        allow create: if domainOk() && request.resource.data.authorUid == me()
+                      && (club().ownerUid == me() || isAdmin())
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() > 0
+                      && request.resource.data.text.size() <= 2000;
+        allow delete: if domainOk() && (resource.data.authorUid == me() || club().ownerUid == me() || isAdmin());
+      }
+    }
+
+    // ---------------- goals (Mục tiêu chung — hợp tác) ----------------
+    // Gắn nhóm (scope=club) hoặc toàn công ty (scope=company). Ai cũng tạo. Không xếp hạng group.
+    match /goals/{goalId} {
+      function goal() { return get(/databases/$(database)/documents/goals/$(goalId)).data; }
+      allow read: if domainOk();
+      allow create: if domainOk()
+        && request.resource.data.creatorUid == me()
+        && request.resource.data.scope in ['club', 'company']
+        && request.resource.data.metric in ['sessions', 'minutes', 'distanceKm']
+        && request.resource.data.target is number && request.resource.data.target > 0
+        // Mục tiêu công ty: CHỈ app-admin mở (dành CEO/COO phát động phong trào).
+        && (request.resource.data.scope == 'club' || isAdmin());
+      allow update, delete: if domainOk() && (goal().creatorUid == me() || isAdmin());
+
+      // Đóng góp cá nhân: mỗi user chỉ ghi bản của mình, cap thô chống bịa số.
+      match /progress/{uid} {
+        allow read: if domainOk();
+        allow write: if domainOk() && uid == me()
+          && request.resource.data.uid == me()
+          && request.resource.data.value is number
+          && request.resource.data.value >= 0
+          && request.resource.data.value <= 100000;
+        allow delete: if domainOk() && (uid == me() || isAdmin());
+      }
+
+      // Feed thông báo: chỉ người tạo mục tiêu / app-admin đăng text, mọi người đọc.
+      match /posts/{postId} {
+        allow read:   if domainOk();
+        allow create: if domainOk() && request.resource.data.authorUid == me()
+                      && (goal().creatorUid == me() || isAdmin())
+                      && request.resource.data.text is string
+                      && request.resource.data.text.size() > 0
+                      && request.resource.data.text.size() <= 2000;
+        allow delete: if domainOk() && (resource.data.authorUid == me() || goal().creatorUid == me() || isAdmin());
+      }
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}
