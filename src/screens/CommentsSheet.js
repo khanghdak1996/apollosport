@@ -50,7 +50,7 @@ export function CommentsSheet({ post, me, canModerate, onClose }) {
 
       <div style=${{ flex: 1, overflowY: 'auto', padding: '14px 16px', WebkitOverflowScrolling: 'touch' }}>
         ${comments.length === 0
-          ? html`<${Empty} icon="💬" msg="Chưa có bình luận" sub="Hãy động viên đồng nghiệp một câu!"/>`
+          ? html`<${Empty} icon="comment" msg="Chưa có bình luận" sub="Hãy động viên đồng nghiệp một câu!"/>`
           : comments.map(c => html`
             <div key=${c.id} style=${{ display: 'flex', gap: 10, marginBottom: 14 }}>
               ${c.photoURL

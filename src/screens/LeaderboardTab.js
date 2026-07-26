@@ -63,11 +63,11 @@ export function LeaderboardTab({ me, onOpenProfile }) {
       </div>
 
       ${scope === 'dept' && !me.dept
-        ? html`<${Empty} icon="👥" msg="Bạn chưa có phòng ban" sub="Cập nhật phòng ban trong Cài đặt để xem bảng này"/>`
+        ? html`<${Empty} icon="people" msg="Bạn chưa có phòng ban" sub="Cập nhật phòng ban trong Cài đặt để xem bảng này"/>`
         : loading
           ? html`<p style=${{ textAlign: 'center', color: C.txt3, fontSize: 13, padding: 30 }}>Đang tải...</p>`
           : rows.length === 0
-            ? html`<${Empty} icon="🏆" msg="Chưa có ai trong kỳ này" sub="Ghi buổi tập đầu tiên để dẫn đầu!"/>`
+            ? html`<${Empty} icon="trophy" msg="Chưa có ai trong kỳ này" sub="Ghi buổi tập đầu tiên để dẫn đầu!"/>`
             : html`
               ${top.map(r => rowView(r, r.uid === me.uid))}
               ${mine && !meInTop && html`

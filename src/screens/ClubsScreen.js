@@ -72,7 +72,7 @@ export function ClubsScreen({ me, onBack, onOpenClub }) {
               <div style=${{ height: 12 }}/>`}
             <p style=${{ margin: '0 0 8px', fontSize: 12, fontWeight: 600, color: C.txt2 }}>${otherClubs.length > 0 ? 'Khám phá nhóm' : ''}</p>
             ${otherClubs.map(clubCard)}
-            ${clubs.length === 0 && html`<${Empty} icon="👥" msg="Chưa có câu lạc bộ nào" sub="Tạo nhóm đầu tiên để rủ đồng nghiệp cùng môn!"/>`}`}
+            ${clubs.length === 0 && html`<${Empty} icon="people" msg="Chưa có câu lạc bộ nào" sub="Tạo nhóm đầu tiên để rủ đồng nghiệp cùng môn!"/>`}`}
       </div>
 
       ${creating && html`

@@ -64,7 +64,7 @@ export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
         ${loading
           ? html`<p style=${{ textAlign: 'center', color: C.txt3, fontSize: 13, padding: 40 }}>Đang tải...</p>`
           : !doc
-            ? html`<${Empty} icon="🤔" msg="Không tìm thấy hồ sơ"/>`
+            ? html`<${Empty} icon="other" msg="Không tìm thấy hồ sơ"/>`
             : html`
               <div style=${{ padding: '24px 16px 18px', textAlign: 'center' }}>
                 ${doc.photoURL
@@ -136,7 +136,7 @@ export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
               <div style=${{ padding: '0 16px 24px' }}>
                 <p style=${{ margin: '0 0 10px', fontSize: 13, fontWeight: 600, color: C.txt2 }}>Buổi tập gần đây</p>
                 ${items.length === 0
-                  ? html`<${Empty} icon="🌱" msg="Chưa có buổi tập công khai"/>`
+                  ? html`<${Empty} icon="other" msg="Chưa có buổi tập công khai"/>`
                   : items.map(s => {
                     const a = actOf(s.type);
                     return html`

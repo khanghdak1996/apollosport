@@ -88,7 +88,7 @@ export function FeedTab({ me, myReactions, onReacted, onOpenComments, onOpenProf
         ${loading && items.length === 0
           ? html`<p style=${{ textAlign: 'center', color: C.txt3, fontSize: 13, padding: 30 }}>Đang tải...</p>`
           : items.length === 0
-            ? html`<${Empty} icon="🌱" msg="Chưa có bài nào" sub="Hãy là người đầu tiên chia sẻ buổi tập!"/>`
+            ? html`<${Empty} icon="other" msg="Chưa có bài nào" sub="Hãy là người đầu tiên chia sẻ buổi tập!"/>`
             : items.map(p => html`<${PostCard}
                 key=${`${p.authorUid}_${p.id}`}
                 post=${p}

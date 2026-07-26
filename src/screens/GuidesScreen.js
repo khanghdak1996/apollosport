@@ -25,7 +25,7 @@ export function GuidesScreen({ onBack, onOpen }) {
 
       <div style=${{ flex: 1, overflowY: 'auto', padding: 16, WebkitOverflowScrolling: 'touch' }}>
         ${guides.length === 0
-      ? html`<${Empty} icon="📖" msg="Chưa có bài hướng dẫn" sub="Nội dung sẽ được bổ sung"/>`
+      ? html`<${Empty} icon="book" msg="Chưa có bài hướng dẫn" sub="Nội dung sẽ được bổ sung"/>`
       : groups.map(grp => {
         const a = actOf(grp.sport);
         return html`

@@ -5,15 +5,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport"
     content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-  <title>GymPair</title>
+  <title>Apollo Sport</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link href="./src/ui/fonts.css" rel="stylesheet" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="GymPair" />
-  <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-title" content="Apollo Sport" />
+  <meta name="theme-color" content="#2576B9" />
   <style>
     :root {
-      --accent: #0084ff;
-      --accent-glow: rgba(0, 132, 255, 0.08);
+      --accent: #2576B9;
+      --accent-glow: rgba(37, 118, 185, 0.10);
     }
 
     * {
@@ -28,15 +33,23 @@
     #root {
       height: 100%;
       width: 100%;
-      background: #f1f5f9;
+      background: #F2F6FA;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      color: #0f172a;
+      font-family: 'Barlow', system-ui, sans-serif;
+      color: #12395E;
       overflow: hidden;
       user-select: none;
       -webkit-user-select: none;
+    }
+
+    a {
+      color: #2576B9;
+    }
+
+    a:hover {
+      color: #17457A;
     }
 
     input,
@@ -199,6 +212,7 @@
       position: absolute;
       width: 8px;
       height: 12px;
+      border-radius: 2px;
       opacity: 0.85;
       animation: confettiFall 2.8s linear forwards;
     }
@@ -222,9 +236,13 @@
 
     /* Custom styled inputs */
     .workout-input {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      color: #0f172a;
+      background: #F8FBFD;
+      border: 1px solid #DDE8F2;
+      color: #12395E;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      text-align: center;
       transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s, color 0.2s;
     }
 
@@ -235,9 +253,9 @@
     }
 
     .workout-input-done {
-      background: #e6f9f3 !important;
-      color: #10b981 !important;
-      border-color: #a7f3d0 !important;
+      background: #E9F7EF !important;
+      color: #1F8A55 !important;
+      border-color: #BCE7D2 !important;
     }
   </style>
 </head>
