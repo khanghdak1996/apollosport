@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { html } from '../html.js';
-import { C, r, ACC } from '../ui/theme.js';
+import { C, r, ACC, F, BRAND } from '../ui/theme.js';
 import { Wrap, Empty } from '../ui/primitives.js';
 import { Icons } from '../ui/icons.js';
+import { SportIcon } from '../ui/sportIcons.js';
 import { actOf } from '../domain/activities.js';
 import { toggleReaction } from '../data/repo-social.js';
 import { listAllUsers } from '../data/repo-users.js';
@@ -140,13 +141,19 @@ export function ClubDetail({ clubId, me, mySessions, myReactions, isAdmin, onBac
           : !club
             ? html`<${Empty} icon="other" msg="Nhóm không tồn tại"/>`
             : html`
-              <div style=${{ padding: '20px 16px', textAlign: 'center', borderBottom: `1px solid ${C.bdr}`, background: '#fff' }}>
-                <div style=${{ width: 64, height: 64, borderRadius: 18, margin: '0 auto 10px', background: a.color + '1A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 34 }}>${club.coverEmoji || a.emoji}</div>
-                <h1 style=${{ margin: '0 0 4px', fontSize: 21, fontWeight: 600, color: C.txt1 }}>${club.name}</h1>
-                <p style=${{ margin: '0 0 4px', fontSize: 12.5, color: C.txt3 }}>${a.label} · ${club.memberCount || 0} thành viên${club.visibility === 'invite' ? ' · 🔒 Cần duyệt' : ''}</p>
-                ${club.desc && html`<p style=${{ margin: '8px auto 0', fontSize: 13, color: C.txt2, lineHeight: 1.5, maxWidth: 360 }}>${club.desc}</p>`}
-                <div style=${{ marginTop: 14 }}>${actionBtn()}</div>
+              <div style=${{ background: BRAND.blue, color: '#fff', padding: '18px 16px 20px' }}>
+                <div style=${{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <span style=${{ width: 56, height: 56, borderRadius: 16, background: BRAND.yellow, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <${SportIcon} k=${a.iconKey} size=${28} color=${C.txt1} sw=${1.9}/>
+                  </span>
+                  <div style=${{ flex: 1, minWidth: 0 }}>
+                    <h1 style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 24, letterSpacing: '.02em', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${club.name}</h1>
+                    <p style=${{ margin: '1px 0 0', fontSize: 12, color: BRAND.babyBlue }}>${a.label} · ${club.memberCount || 0} thành viên${club.visibility === 'invite' ? ' · cần duyệt' : ''}</p>
+                  </div>
+                </div>
+                ${club.desc ? html`<p style=${{ margin: '12px 0 0', fontSize: 13, color: 'rgba(255,255,255,.9)', lineHeight: 1.5 }}>${club.desc}</p>` : ''}
               </div>
+              <div style=${{ padding: '12px 16px', borderBottom: `1px solid ${C.bdr}`, background: '#fff', display: 'flex', justifyContent: 'center' }}>${actionBtn()}</div>
 
               ${isOwner && html`
                 <div style=${{ padding: '14px 16px', borderBottom: `1px solid ${C.bdr}` }}>
