@@ -28,6 +28,7 @@ import { Onboarding } from './screens/Onboarding.js';
 import { PickActivity } from './screens/PickActivity.js';
 import { LogActivity } from './screens/LogActivity.js';
 import { HomeTab } from './screens/HomeTab.js';
+import { CalendarTab } from './screens/CalendarTab.js';
 import { FeedTab } from './screens/FeedTab.js';
 import { LeaderboardTab } from './screens/LeaderboardTab.js';
 import { CommentsSheet } from './screens/CommentsSheet.js';
@@ -122,117 +123,6 @@ function ProgsTab({ progs, onNew, onDel, onEdit, onStart, onBack }) {
         }}>${d.name} <span style=${{ color: C.txt3, fontSize: 11, fontWeight: 500 }}>(${d.exercises.length})</span></button>`)}
             </div>
           </${Card}>`)}
-    </div>`;
-}
-
-function CalendarTab({ sessions, onView, onClearHistory }) {
-  const [cursor, setCursor] = useState(() => { const d = new Date(); d.setDate(1); return d; });
-  const [selDate, setSelDate] = useState(null);
-
-  const byDate = {};
-  sessions.forEach(s => { if (!s.date) return; (byDate[s.date] = byDate[s.date] || []).push(s); });
-
-  const y = cursor.getFullYear(), m = cursor.getMonth();
-  const dateStr = (yy, mm, dd) => `${yy}-${p2(mm + 1)}-${p2(dd)}`;
-  const first = new Date(y, m, 1);
-  const startOffset = (first.getDay() + 6) % 7;
-  const daysInMonth = new Date(y, m + 1, 0).getDate();
-  const cells = [];
-  for (let i = 0; i < startOffset; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-
-  const today = new Date();
-  const todayStr = dateStr(today.getFullYear(), today.getMonth(), today.getDate());
-
-  const streak = (() => {
-    const set = new Set(Object.keys(byDate));
-    let n = 0;
-    const cur = new Date();
-    const fmt = x => dateStr(x.getFullYear(), x.getMonth(), x.getDate());
-    if (!set.has(fmt(cur))) cur.setDate(cur.getDate() - 1);
-    while (set.has(fmt(cur))) { n++; cur.setDate(cur.getDate() - 1); }
-    return n;
-  })();
-
-  const monthPrefix = `${y}-${p2(m + 1)}`;
-  const monthSessions = sessions.filter(s => s.date && s.date.startsWith(monthPrefix));
-  const monthMin = Math.round(monthSessions.reduce((t, s) => t + (s.activeMinutes || s.durationMin || 0), 0));
-
-  const selSessions = selDate ? (byDate[selDate] || []) : [];
-  const MONTH_NAMES = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
-
-  return html`
-    <div class="fade-in" style=${{ padding: '22px 16px' }}>
-      <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <button onClick=${() => { setCursor(new Date(y, m - 1, 1)); setSelDate(null); }} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.txt2, fontSize: 16 }}>‹</button>
-        <p style=${{ margin: 0, fontSize: 17, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em' }}>${MONTH_NAMES[m]}, ${y}</p>
-        <button onClick=${() => { setCursor(new Date(y, m + 1, 1)); setSelDate(null); }} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.txt2, fontSize: 16 }}>›</button>
-      </div>
-
-      <${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
-        <div style=${{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 8 }}>
-          ${['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => html`<span key=${d} style=${{ textAlign: 'center', fontSize: 10, fontWeight: 500, color: C.txt3 }}>${d}</span>`)}
-        </div>
-        <div style=${{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-          ${cells.map((d, i) => {
-    if (d === null) return html`<div key=${i}/>`;
-    const ds = dateStr(y, m, d);
-    const daySess = byDate[ds] || [];
-    const has = daySess.length > 0;
-    const dayTypes = [...new Set(daySess.map(s => s.type || 'gym'))].slice(0, 3);
-    const isToday = ds === todayStr;
-    const isSel = ds === selDate;
-    return html`
-              <button key=${ds} onClick=${() => has && setSelDate(isSel ? null : ds)} class="btn-action" style=${{
-        aspectRatio: '1', border: isToday ? `1.5px solid ${ACC}` : '1px solid transparent', borderRadius: r.md,
-        background: isSel ? ACC : (has ? 'var(--accent-glow)' : 'transparent'),
-        color: isSel ? '#fff' : (has ? ACC : C.txt2),
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
-        cursor: has ? 'pointer' : 'default', fontSize: 13, fontWeight: has ? 600 : 400
-      }}>
-                <span>${d}</span>
-                ${has && html`<span style=${{ display: 'flex', gap: 2 }}>${dayTypes.map(t => html`<span key=${t} style=${{ width: 4, height: 4, borderRadius: '50%', background: isSel ? '#fff' : (ACT[t]?.color || ACC) }}/>`)}</span>`}
-              </button>`;
-  })}
-        </div>
-      </${Card}>
-
-      <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
-        <${Card} cx=${{ border: `1px solid ${C.bdr}`, textAlign: 'center' }}>
-          <div style=${{ display: 'flex', justifyContent: 'center', color: ACC, marginBottom: 4 }}><${Icons.flame} size=${18}/></div>
-          <p style=${{ margin: 0, fontSize: 9, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Chuỗi liên tiếp</p>
-          <p style=${{ margin: '2px 0 0', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>${streak} ngày</p>
-        </${Card}>
-        <${Card} cx=${{ border: `1px solid ${C.bdr}`, textAlign: 'center' }}>
-          <div style=${{ display: 'flex', justifyContent: 'center', color: ACC, marginBottom: 4 }}><${Icons.trophy} size=${18}/></div>
-          <p style=${{ margin: 0, fontSize: 9, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Trong tháng</p>
-          <p style=${{ margin: '2px 0 0', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>${monthSessions.length} buổi · ${monthMin} phút</p>
-        </${Card}>
-      </div>
-
-      ${selDate && html`
-        <${Label} t=${fD(selDate)} mt=${20}/>
-        ${selSessions.map(s => html`
-          <${Card} key=${s.id} onClick=${() => onView(s)} class="card-hover" cx=${{ cursor: 'pointer', border: `1px solid ${C.bdr}` }}>
-            <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-              ${s.photoUrl && html`<img src=${s.photoUrl} loading="lazy" style=${{ width: 44, height: 44, borderRadius: r.md, objectFit: 'cover', flexShrink: 0 }}/>`}
-              <div style=${{ flex: 1, minWidth: 0 }}>
-                <p style=${{ margin: '0 0 2px', fontSize: 14, fontWeight: 500, color: '#0f172a' }}>${s.title || s.dayName}</p>
-                <p style=${{ margin: 0, color: C.txt2, fontSize: 12 }}>${s.progName}</p>
-              </div>
-              <div style=${{ textAlign: 'right', flexShrink: 0 }}>
-                <p style=${{ margin: '0 0 2px', fontSize: 14, fontWeight: 600, color: ACC }}>${primStat(s).v}${primStat(s).u ? ' ' + primStat(s).u : ''}</p>
-                <p style=${{ margin: 0, color: C.txt3, fontSize: 12 }}>${durS(s.endTime - s.startTime)}</p>
-              </div>
-            </div>
-          </${Card}>`)}
-      `}
-
-      ${sessions.length > 0 && html`
-        <div style=${{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
-          <button onClick=${() => { if (window.confirm(`Xoá toàn bộ ${sessions.length} buổi tập trong lịch sử? Không thể hoàn tác.`)) onClearHistory(); }} class="btn-action" style=${{ display: 'flex', alignItems: 'center', gap: 5, background: C.redBg, border: 'none', borderRadius: r.md, padding: '6px 12px', color: C.red, fontSize: 12, fontWeight: 500, cursor: 'pointer' }}><${Icons.trash} size=${13}/> Xoá lịch sử</button>
-        </div>
-      `}
     </div>`;
 }
 
@@ -919,7 +809,7 @@ function SegToggle({ mode, setMode, opts }) {
     </div>`;
 }
 
-function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goals, onSaveGoals }) {
+function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goals, onSaveGoals, slim = false }) {
   const [view, setView] = useState('overview');   // 'overview' | id môn (gym/run/swim/...)
   const [mode, setMode] = useState('exercise');
   // Mục tiêu tuần (Cục B): số buổi/tuần + số phút/tuần.
@@ -1088,18 +978,18 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
   // Phần TỔNG QUAN chung cho mọi người.
   const maxPts = Math.max(1, ...breakdown.map(b => b.points));
   const overview = html`
-      <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+      ${!slim ? html`<div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
         ${[{ l: 'Điểm tuần', v: wkNow.points, icon: Icons.flame }, { l: 'Phút tuần', v: wkNow.minutes, icon: Icons.clock }, { l: 'Buổi tuần', v: wkNow.count, icon: Icons.calendar }].map(t => html`
           <div key=${t.l} style=${{ background: C.bg2, borderRadius: r.md, padding: '12px 8px', textAlign: 'center', border: `1px solid ${C.bdr}` }}>
             <div style=${{ display: 'flex', justifyContent: 'center', color: ACC, marginBottom: 4 }}><${t.icon} size=${18}/></div>
             <p style=${{ margin: 0, fontSize: 9, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>${t.l}</p>
             <p style=${{ margin: '2px 0 0', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>${t.v}</p>
           </div>`)}
-      </div>
+      </div>` : ''}
 
       ${goalCard}
 
-      ${breakdown.length > 0 && html`
+      ${!slim && breakdown.length > 0 && html`
         <${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
           <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <p style=${{ margin: 0, fontSize: 14, fontWeight: 600, color: ACC }}>Phân bổ theo môn</p>
@@ -1119,7 +1009,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
             </div>`; })}
         </${Card}>`}
 
-      ${weekly.length > 1 && html`
+      ${!slim && weekly.length > 1 && html`
         <${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
           <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <p style=${{ margin: 0, fontSize: 14, fontWeight: 600, color: ACC }}>Điểm theo tuần</p>
@@ -1128,7 +1018,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
           <${BarChart} items=${weekly.map(w => ({ label: fWeek(w.wk).split('–')[0], val: w.points }))}/>
         </${Card}>`}
 
-      ${!hideWeight && weightCard}`;
+      ${!slim && !hideWeight && weightCard}`;
 
   // Drill-down môn distance (chạy/đi/đạp/bơi/leo).
   const distanceBlock = t => {
@@ -1786,46 +1676,20 @@ function GymPair() {
         ${tab === 'rank' && html`<${LeaderboardTab} me=${meAuthor()} onOpenProfile=${openProfile}/>`}
         ${tab === 'me' && html`
           <div class="fade-in">
-            <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 16px 0' }}>
-              <button onClick=${() => openProfile(pid)} class="btn-action" style=${{ display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                ${profile.img
-        ? html`<img src=${profile.img} style=${{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${profile.c}` }}/>`
-        : html`<div style=${{ width: 40, height: 40, borderRadius: '50%', background: profile.c + '22', color: profile.c, border: `2px solid ${profile.c}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>${(profile.name || '?').charAt(0).toUpperCase()}</div>`}
-                <div style=${{ textAlign: 'left' }}>
-                  <p style=${{ margin: 0, fontSize: 16, fontWeight: 600, color: C.txt1 }}>${profile.name}</p>
-                  <p style=${{ margin: 0, fontSize: 12, color: ACC }}>Xem hồ sơ ›</p>
-                </div>
-              </button>
-              <button onClick=${() => setPg('settings')} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.txt2, fontSize: 18 }}>⚙️</button>
-            </div>
-            <div style=${{ padding: '14px 16px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button onClick=${() => setPg('clubs')} class="btn-action card-hover" style=${{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', cursor: 'pointer', background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.lg, padding: '14px 16px' }}>
-                <span style=${{ fontSize: 26, lineHeight: 1 }}>👥</span>
-                <div style=${{ flex: 1 }}>
-                  <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 600, color: C.txt1 }}>Câu lạc bộ</p>
-                  <p style=${{ margin: '2px 0 0', fontSize: 12, color: C.txt2 }}>Nhóm theo môn — kết nối đồng nghiệp cùng đam mê</p>
-                </div>
-                <span style=${{ color: C.txt3, fontSize: 18 }}>›</span>
-              </button>
-              <button onClick=${() => setPg('goals')} class="btn-action card-hover" style=${{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', cursor: 'pointer', background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.lg, padding: '14px 16px' }}>
-                <span style=${{ fontSize: 26, lineHeight: 1 }}>🎯</span>
-                <div style=${{ flex: 1 }}>
-                  <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 600, color: C.txt1 }}>Mục tiêu chung</p>
-                  <p style=${{ margin: '2px 0 0', fontSize: 12, color: C.txt2 }}>Cả công ty cùng góp để về đích chung</p>
-                </div>
-                <span style=${{ color: C.txt3, fontSize: 18 }}>›</span>
-              </button>
-              <button onClick=${() => setPg('guides')} class="btn-action card-hover" style=${{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', cursor: 'pointer', background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.lg, padding: '14px 16px' }}>
-                <span style=${{ fontSize: 26, lineHeight: 1 }}>📖</span>
-                <div style=${{ flex: 1 }}>
-                  <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 600, color: C.txt1 }}>Hướng dẫn tập luyện</p>
-                  <p style=${{ margin: '2px 0 0', fontSize: 12, color: C.txt2 }}>Kiến thức nhập môn cho từng bộ môn & bài tập</p>
-                </div>
-                <span style=${{ color: C.txt3, fontSize: 18 }}>›</span>
-              </button>
-            </div>
-            <${CalendarTab} sessions=${sessions} onView=${openSess} onClearHistory=${clearHistory}/>
-            <${ProgressTab} sessions=${sessions} profile=${profile} weights=${weights} onAddWeight=${addWeight} hideWeight=${!!userDoc.prefs?.hideWeight} goals=${userDoc.goals} onSaveGoals=${saveGoals}/>
+            <${CalendarTab}
+              profile=${{ ...profile, photoURL: profile.img, dept: userDoc.dept }}
+              sessions=${sessions}
+              streak=${liveStreak(userDoc.streak)}
+              points=${sessions.reduce((t, s) => ((new Date() - new Date(s.date)) / 86400000 <= 7 ? t + (s.points || 0) : t), 0)}
+              weights=${weights}
+              onView=${openSess}
+              onOpenClubs=${() => setPg('clubs')}
+              onOpenGoals=${() => setPg('goals')}
+              onOpenGuides=${() => setPg('guides')}
+              onSettings=${() => setPg('settings')}
+              onLogWeight=${() => { const v = window.prompt('Cân nặng hôm nay (kg):'); const kg = parseFloat((v || '').replace(',', '.')); if (kg > 0) addWeight(kg); }}
+            />
+            <${ProgressTab} slim=${true} sessions=${sessions} profile=${profile} weights=${weights} onAddWeight=${addWeight} hideWeight=${!!userDoc.prefs?.hideWeight} goals=${userDoc.goals} onSaveGoals=${saveGoals}/>
           </div>`}
       </div>
 
