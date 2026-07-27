@@ -1,9 +1,9 @@
 import { useState } from 'preact/hooks';
 import { html } from '../html.js';
-import { C, r, ACC } from '../ui/theme.js';
-import { Wrap, Btn, Label } from '../ui/primitives.js';
-import { Icons } from '../ui/icons.js';
+import { C, r, F, T, BRAND, sportColor, sportTint } from '../ui/theme.js';
+import { SportIcon } from '../ui/sportIcons.js';
 import { actOf, fieldsOf } from '../domain/activities.js';
+import { computePoints } from '../domain/session.js';
 
 const mmss = minutes => {
   const m = Math.floor(minutes);
@@ -24,9 +24,12 @@ const paceDisplay = (mode, vals) => {
 };
 
 // Form ghi buổi tập cho môn ngoài gym (theo fields riêng của môn — "mức Vừa").
+// Bản redesign: header xanh + ô icon môn, các ô số gộp trong 1 thẻ, có ô QUY ĐỔI ĐIỂM live.
+// GIỮ NGUYÊN registry fieldsOf → mọi môn vẫn có ô nhập riêng.
 // onSave(input) -> parent lo build + upload ảnh + lưu.
 export function LogActivity({ type, defaultVisibility = 'company', onBack, onSave, hasGuide = false, onOpenGuide }) {
   const a = actOf(type);
+  const key = a.iconKey;
   const fields = fieldsOf(type);
   const primary = fields.filter(f => !f.adv);
   const advanced = fields.filter(f => f.adv);
@@ -54,7 +57,11 @@ export function LogActivity({ type, defaultVisibility = 'company', onBack, onSav
     const next = Math.max(0, Math.min(f.max ?? 99, (parseFloat(o[k]) || 0) + d));
     return { ...o, [k]: next };
   });
-  const durOk = parseFloat(vals.durationMin) > 0;
+  const durMin = parseFloat(vals.durationMin) || 0;
+  const durOk = durMin > 0;
+
+  // Điểm quy đổi live — dùng đúng công thức computePoints (MET × phút × hệ số cường độ / 5).
+  const livePoints = computePoints({ type, durationMin: durMin, detail: { intensity: vals.intensity } });
 
   const pickPhoto = e => {
     const f = e.target.files[0];
@@ -77,7 +84,7 @@ export function LogActivity({ type, defaultVisibility = 'company', onBack, onSav
         type,
         title: title.trim() || a.label,
         note: note.trim(),
-        durationMin: parseFloat(vals.durationMin) || 0,
+        durationMin: durMin,
         vals,
         laps: cleanLaps,
         visibility,
@@ -86,100 +93,130 @@ export function LogActivity({ type, defaultVisibility = 'company', onBack, onSav
     } finally { setSaving(false); }
   };
 
+  // ── Một dòng trong thẻ nhập ─────────────────────────────────────────────
+  const numInput = { border: 'none', background: 'transparent', textAlign: 'right', fontFamily: F.display, fontWeight: 700, fontSize: 24, color: C.txt1, width: 130, padding: 0, letterSpacing: '.01em' };
+  const rowWrap = (i, children) => html`<div style=${{ padding: '12px 0', borderTop: i ? `1px solid ${C.bdr2}` : 'none' }}>${children}</div>`;
+
+  const renderRow = (f, i) => {
+    if (f.type === 'pace') {
+      return rowWrap(i, html`
+        <div style=${{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style=${{ flex: 1, minWidth: 0 }}><p style=${{ margin: 0, ...T.label }}>${f.label}</p></div>
+          <span style=${{ display: 'inline-flex', alignItems: 'center', gap: 5, background: C.bg3, borderRadius: 9, padding: '6px 10px', color: BRAND.blue, fontWeight: 700, fontSize: 13.5, whiteSpace: 'nowrap' }}>
+            <${SportIcon} k="bolt" size=${14} color=${BRAND.blue}/>${paceDisplay(f.mode, vals)}
+          </span>
+        </div>`);
+    }
+    if (f.type === 'seg' || f.type === 'select') {
+      return rowWrap(i, html`
+        <p style=${{ margin: '0 0 8px', ...T.label }}>${f.label}</p>
+        <div style=${{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          ${f.opts.map(o => {
+            const on = vals[f.k] === o;
+            return html`<button key=${o} onClick=${() => set(f.k, o)} class="btn-action" style=${{
+              flex: f.type === 'seg' ? 1 : '0 0 auto', padding: '9px 14px', borderRadius: r.md, cursor: 'pointer', fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap',
+              border: on ? 'none' : `1px solid ${C.bdr}`, background: on ? BRAND.blue : '#fff', color: on ? '#fff' : C.txt2,
+            }}>${o}</button>`;
+          })}
+        </div>`);
+    }
+    if (f.type === 'counter') {
+      return rowWrap(i, html`
+        <div style=${{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <p style=${{ margin: 0, flex: 1, ...T.label }}>${f.label}</p>
+          <button onClick=${() => bump(f.k, -1, f)} class="btn-action" style=${{ width: 38, height: 38, borderRadius: r.md, border: `1px solid ${C.bdr}`, background: '#fff', fontSize: 20, color: C.txt2, cursor: 'pointer' }}>−</button>
+          <span style=${{ minWidth: 30, textAlign: 'center', fontFamily: F.display, fontWeight: 700, fontSize: 22, color: C.txt1 }}>${vals[f.k] || 0}</span>
+          <button onClick=${() => bump(f.k, 1, f)} class="btn-action" style=${{ width: 38, height: 38, borderRadius: r.md, border: 'none', background: BRAND.blue, fontSize: 20, color: '#fff', cursor: 'pointer' }}>＋</button>
+        </div>`);
+    }
+    // number | time — nhãn + hint trái, số condensed phải
+    return rowWrap(i, html`
+      <div style=${{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style=${{ flex: 1, minWidth: 0 }}>
+          <p style=${{ margin: 0, ...T.label }}>${f.label}</p>
+          ${f.required ? html`<p style=${{ margin: '2px 0 0', fontSize: 11, color: C.txt5 }}>Bắt buộc</p>` : ''}
+        </div>
+        ${f.type === 'time'
+          ? html`<input inputMode="numeric" value=${vals[f.k]} onInput=${e => set(f.k, e.target.value)} placeholder="0:00" style=${numInput}/>`
+          : html`<input type="number" inputMode="decimal" value=${vals[f.k]} onInput=${e => set(f.k, e.target.value)} placeholder="0" style=${numInput}/>`}
+        ${f.unit ? html`<span style=${{ fontSize: 12.5, color: C.txt3, flexShrink: 0, width: 28 }}>${f.unit}</span>` : ''}
+      </div>`);
+  };
+
+  const card = children => html`<div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, padding: '2px 16px', marginBottom: 14 }}>${children}</div>`;
   const inputStyle = { width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: r.md, border: `1px solid ${C.bdr}`, fontSize: 15, color: C.txt1, background: '#fff' };
 
-  const renderField = f => html`
-    <div key=${f.k} style=${{ marginBottom: 16 }}>
-      <${Label} t=${f.label}/>
-      ${f.type === 'pace'
-        ? html`<div style=${{ ...inputStyle, background: C.bg3, color: C.txt2, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style=${{ fontSize: 13 }}>⚡ tự tính:</span>
-            <strong style=${{ color: ACC }}>${paceDisplay(f.mode, vals)}</strong>
-          </div>`
-        : (f.type === 'seg' || f.type === 'select')
-          ? html`<div style=${{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              ${f.opts.map(o => html`
-                <button key=${o} onClick=${() => set(f.k, o)} class="btn-action" style=${{
-                  flex: f.type === 'seg' ? 1 : '0 0 auto', padding: '10px 14px', borderRadius: r.md, cursor: 'pointer', fontSize: 14, fontWeight: 500,
-                  border: `1px solid ${vals[f.k] === o ? ACC : C.bdr}`,
-                  background: vals[f.k] === o ? 'var(--accent-glow)' : '#fff',
-                  color: vals[f.k] === o ? ACC : C.txt2,
-                }}>${o}</button>`)}
-            </div>`
-          : f.type === 'counter'
-            ? html`<div style=${{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <button onClick=${() => bump(f.k, -1, f)} class="btn-action" style=${{ width: 44, height: 44, borderRadius: r.md, border: `1px solid ${C.bdr}`, background: '#fff', fontSize: 22, color: C.txt2, cursor: 'pointer' }}>−</button>
-                <span style=${{ minWidth: 40, textAlign: 'center', fontSize: 22, fontWeight: 600, color: C.txt1 }}>${vals[f.k] || 0}</span>
-                <button onClick=${() => bump(f.k, 1, f)} class="btn-action" style=${{ width: 44, height: 44, borderRadius: r.md, border: `1px solid ${ACC}`, background: 'var(--accent-glow)', fontSize: 22, color: ACC, cursor: 'pointer' }}>＋</button>
-              </div>`
-            : f.type === 'time'
-              ? html`<input inputMode="numeric" value=${vals[f.k]} onInput=${e => set(f.k, e.target.value)} placeholder="mm:ss" style=${inputStyle}/>`
-              : html`<input type="number" inputMode="decimal" value=${vals[f.k]} onInput=${e => set(f.k, e.target.value)} placeholder=${f.required ? 'Bắt buộc' : (f.unit || 'Tuỳ chọn')} style=${inputStyle}/>`}
-    </div>`;
-
   return html`
-    <${Wrap}>
-      <div style=${{ padding: '14px 16px', borderBottom: `1px solid ${C.bdr}`, background: '#fff', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <button onClick=${onBack} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.txt2 }}><${Icons.back} size=${18}/></button>
-        <h2 style=${{ flex: 1, margin: 0, fontSize: 17, fontWeight: 600, color: C.txt1 }}>${a.emoji} ${a.label}</h2>
-        <${Btn} onClick=${submit} cx=${{ opacity: (!durOk || saving) ? 0.5 : 1, pointerEvents: (!durOk || saving) ? 'none' : 'auto' }}>${saving ? 'Đang lưu...' : 'Lưu'}</${Btn}>
+    <div style=${{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <div style=${{ padding: '12px 16px', borderBottom: `1px solid ${C.bdr}`, background: C.bg2, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <button onClick=${onBack} class="btn-action" style=${{ background: C.bg1, border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}><${SportIcon} k="back" size=${18} color=${C.txt2} sw=${2}/></button>
+        <span style=${{ width: 34, height: 34, borderRadius: 10, background: sportTint(key), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><${SportIcon} k=${key} size=${19} color=${sportColor(key)}/></span>
+        <p style=${{ flex: 1, margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 20, letterSpacing: '.03em', color: C.txt1, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${a.label}</p>
+        <button onClick=${submit} class="btn-action" style=${{ background: BRAND.blue, border: 'none', borderRadius: r.md, padding: '10px 18px', fontFamily: F.display, fontWeight: 700, fontSize: 15, letterSpacing: '.08em', color: '#fff', cursor: 'pointer', textTransform: 'uppercase', flexShrink: 0, opacity: (!durOk || saving) ? 0.5 : 1, pointerEvents: (!durOk || saving) ? 'none' : 'auto' }}>${saving ? '…' : 'Lưu'}</button>
       </div>
 
-      <div style=${{ flex: 1, overflowY: 'auto', padding: '18px 16px', WebkitOverflowScrolling: 'touch' }}>
-        <input value=${title} onInput=${e => setTitle(e.target.value)} placeholder=${'Tiêu đề (VD: ' + a.label + ' sáng)'} style=${{ width: '100%', boxSizing: 'border-box', border: 'none', background: 'transparent', fontSize: 22, fontWeight: 600, color: C.txt1, letterSpacing: '-0.02em', marginBottom: 18, padding: 0 }}/>
+      <div style=${{ flex: 1, overflowY: 'auto', padding: '16px 16px 40px', WebkitOverflowScrolling: 'touch' }}>
+        <input value=${title} onInput=${e => setTitle(e.target.value)} placeholder=${'Tiêu đề (VD: ' + a.label + ' sáng)'} style=${{ width: '100%', boxSizing: 'border-box', border: 'none', background: 'transparent', fontSize: 20, fontWeight: 600, color: C.txt1, marginBottom: 14, padding: 0 }}/>
 
         ${hasGuide && onOpenGuide && html`
-          <button onClick=${onOpenGuide} class="btn-action" style=${{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', cursor: 'pointer', background: 'var(--accent-glow)', border: 'none', borderRadius: r.md, padding: '10px 14px', marginBottom: 18 }}>
-            <span style=${{ fontSize: 18 }}>📖</span>
-            <span style=${{ flex: 1, fontSize: 13, fontWeight: 500, color: ACC }}>Hướng dẫn ${a.label.toLowerCase()} cho người mới</span>
-            <span style=${{ color: ACC, fontSize: 16 }}>›</span>
+          <button onClick=${onOpenGuide} class="btn-action" style=${{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', cursor: 'pointer', background: C.bg3, border: 'none', borderRadius: r.md, padding: '11px 14px', marginBottom: 14 }}>
+            <${SportIcon} k="book" size=${17} color=${BRAND.blue}/>
+            <span style=${{ flex: 1, fontSize: 13, fontWeight: 600, color: BRAND.blue }}>Hướng dẫn ${a.label.toLowerCase()} cho người mới</span>
+            <${SportIcon} k="chevronR" size=${15} color=${BRAND.blue} sw=${2}/>
           </button>`}
 
-        ${primary.map(renderField)}
+        ${card(primary.map(renderRow))}
 
         ${hasMore && html`
-          <button onClick=${() => setShowMore(s => !s)} class="btn-action" style=${{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: ACC, fontSize: 13.5, fontWeight: 500, cursor: 'pointer', padding: '4px 0', marginBottom: 8 }}>
+          <button onClick=${() => setShowMore(s => !s)} class="btn-action" style=${{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: BRAND.blue, fontSize: 13.5, fontWeight: 600, cursor: 'pointer', padding: '0 0 12px' }}>
             ${showMore ? 'Ẩn bớt ▴' : 'Thêm chi tiết ▾'}
           </button>`}
 
         ${showMore && html`
-          <div>
-            ${advanced.map(renderField)}
-            ${a.laps && html`
-              <div style=${{ marginBottom: 16 }}>
-                <${Label} t="Chia chặng / lap (tuỳ chọn)"/>
-                ${laps.map((lp, i) => html`
-                  <div key=${i} style=${{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <span style=${{ width: 24, fontSize: 12, color: C.txt3, flexShrink: 0 }}>#${i + 1}</span>
-                    <input type="number" inputMode="decimal" value=${lp.dist} onInput=${e => setLap(i, 'dist', e.target.value)} placeholder=${type === 'swim' ? 'm' : 'km'} style=${{ ...inputStyle, flex: 1 }}/>
-                    <input inputMode="numeric" value=${lp.time} onInput=${e => setLap(i, 'time', e.target.value)} placeholder="mm:ss" style=${{ ...inputStyle, flex: 1 }}/>
-                    <button onClick=${() => delLap(i)} class="btn-action" style=${{ width: 36, height: 36, borderRadius: r.md, border: `1px solid ${C.bdr}`, background: '#fff', color: C.txt3, cursor: 'pointer', flexShrink: 0 }}>✕</button>
-                  </div>`)}
-                <button onClick=${addLap} class="btn-action" style=${{ width: '100%', padding: '10px', borderRadius: r.md, border: `1.5px dashed ${C.bdr2}`, background: 'transparent', color: C.txt2, fontSize: 13.5, cursor: 'pointer' }}>＋ Thêm chặng</button>
-              </div>`}
-          </div>`}
+          ${advanced.length ? card(advanced.map(renderRow)) : ''}
+          ${a.laps && html`
+            <div style=${{ marginBottom: 14 }}>
+              <p style=${{ margin: '0 0 8px 2px', ...T.label }}>Chia chặng / lap (tuỳ chọn)</p>
+              ${laps.map((lp, i) => html`
+                <div key=${i} style=${{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style=${{ width: 22, fontSize: 12, color: C.txt4, flexShrink: 0 }}>#${i + 1}</span>
+                  <input type="number" inputMode="decimal" value=${lp.dist} onInput=${e => setLap(i, 'dist', e.target.value)} placeholder=${type === 'swim' ? 'm' : 'km'} style=${{ ...inputStyle, flex: 1 }}/>
+                  <input inputMode="numeric" value=${lp.time} onInput=${e => setLap(i, 'time', e.target.value)} placeholder="mm:ss" style=${{ ...inputStyle, flex: 1 }}/>
+                  <button onClick=${() => delLap(i)} class="btn-action" style=${{ width: 36, height: 36, borderRadius: r.md, border: `1px solid ${C.bdr}`, background: '#fff', color: C.txt4, cursor: 'pointer', flexShrink: 0 }}>✕</button>
+                </div>`)}
+              <button onClick=${addLap} class="btn-action" style=${{ width: '100%', padding: '10px', borderRadius: r.md, border: `1.5px dashed ${C.bdr2}`, background: 'transparent', color: C.txt2, fontSize: 13.5, cursor: 'pointer' }}>＋ Thêm chặng</button>
+            </div>`}`}
 
-        <${Label} t="Ghi chú" mt=${4}/>
-        <textarea value=${note} onInput=${e => setNote(e.target.value)} placeholder="Cảm giác hôm nay thế nào?" rows=${2} style=${{ ...inputStyle, resize: 'none' }}/>
+        <!-- Ô QUY ĐỔI ĐIỂM — live theo phút × cường độ -->
+        <div style=${{ display: 'flex', alignItems: 'center', gap: 12, background: BRAND.babyBlue, borderRadius: r.lg, padding: '14px 16px', marginBottom: 14 }}>
+          <div style=${{ flex: 1, minWidth: 0 }}>
+            <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 12, letterSpacing: '.1em', color: '#2E5A80', textTransform: 'uppercase' }}>Buổi này được</p>
+            <p style=${{ margin: '2px 0 0', fontFamily: F.serif, fontStyle: 'italic', fontSize: 12, color: '#3D6285' }}>${durOk ? `${Math.round(durMin)} phút · cường độ ${vals.intensity || 'vừa'}` : 'Nhập thời lượng để tính điểm'}</p>
+          </div>
+          <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 34, lineHeight: 1, color: BRAND.blue, flexShrink: 0 }}>${livePoints}<span style=${{ fontSize: 14, marginLeft: 4 }}>đ</span></p>
+        </div>
 
-        <label style=${{ display: 'block', cursor: 'pointer', margin: '16px 0' }}>
+        <p style=${{ margin: '0 0 6px 2px', ...T.label }}>Ghi chú</p>
+        <textarea value=${note} onInput=${e => setNote(e.target.value)} placeholder="Cảm giác hôm nay thế nào?" rows=${2} style=${{ ...inputStyle, resize: 'none', marginBottom: 14 }}/>
+
+        <label style=${{ display: 'block', cursor: 'pointer', marginBottom: 6 }}>
           <input type="file" accept="image/*" style=${{ display: 'none' }} onChange=${pickPhoto}/>
           ${photoPreview
-            ? html`<img src=${photoPreview} style=${{ width: '100%', borderRadius: r.lg, aspectRatio: '4/3', objectFit: 'cover' }}/>`
-            : html`<div style=${{ padding: '18px', borderRadius: r.lg, border: `1.5px dashed ${C.bdr2}`, textAlign: 'center', color: C.txt3, fontSize: 13 }}>＋ Thêm ảnh (tuỳ chọn)</div>`}
+            ? html`<img src=${photoPreview} style=${{ width: '100%', borderRadius: r.xl, aspectRatio: '4/3', objectFit: 'cover' }}/>`
+            : html`<div style=${{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '18px', borderRadius: r.xl, border: `1.5px dashed #C7D8E6`, color: C.txt3, fontSize: 13, fontWeight: 600 }}><${SportIcon} k="photo" size=${18} color=${C.txt3}/> Thêm ảnh (tuỳ chọn)</div>`}
         </label>
-        <p style=${{ margin: '0 0 16px', fontSize: 11.5, color: C.txt3 }}>Ảnh sẽ hiển thị với toàn bộ đồng nghiệp.</p>
+        <p style=${{ margin: '0 0 16px 2px', fontSize: 11.5, color: C.txt4 }}>Ảnh sẽ hiển thị với toàn bộ đồng nghiệp.</p>
 
-        <${Label} t="Hiển thị"/>
+        <p style=${{ margin: '0 0 8px 2px', ...T.label }}>Hiển thị</p>
         <div style=${{ display: 'flex', gap: 8 }}>
-          ${[{ v: 'company', l: '🌏 Đồng nghiệp' }, { v: 'private', l: '🔒 Chỉ mình tôi' }].map(o => html`
-            <button key=${o.v} onClick=${() => setVisibility(o.v)} class="btn-action" style=${{
-              flex: 1, padding: '11px', borderRadius: r.md, cursor: 'pointer', fontSize: 13.5, fontWeight: 500,
-              border: `1px solid ${visibility === o.v ? ACC : C.bdr}`,
-              background: visibility === o.v ? 'var(--accent-glow)' : '#fff',
-              color: visibility === o.v ? ACC : C.txt2,
-            }}>${o.l}</button>`)}
+          ${[{ v: 'company', l: 'Đồng nghiệp', k: 'globe' }, { v: 'private', l: 'Chỉ mình tôi', k: 'lock' }].map(o => {
+            const on = visibility === o.v;
+            return html`<button key=${o.v} onClick=${() => setVisibility(o.v)} class="btn-action" style=${{
+              flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '11px', borderRadius: r.md, cursor: 'pointer', fontSize: 13.5, fontWeight: 600,
+              border: on ? 'none' : `1px solid ${C.bdr}`, background: on ? BRAND.blue : '#fff', color: on ? '#fff' : C.txt2,
+            }}><${SportIcon} k=${o.k} size=${15} color=${on ? '#fff' : C.txt3}/>${o.l}</button>`;
+          })}
         </div>
       </div>
-    </${Wrap}>`;
+    </div>`;
 }
