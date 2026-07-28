@@ -1,8 +1,12 @@
 # Apollo Sport — Backlog sửa sau redesign
 
-Danh sách việc còn lại sau khi redesign 12 màn (nhánh `redesign`).
-Mỗi mục có mã (F1, F2…). Khi muốn làm mục nào, nhắn ví dụ: **"làm F4"** hoặc **"làm F4, F7"**.
-Cột *Nguyên nhân/Hướng* là phân tích của mình, có thể điều chỉnh khi bắt tay làm.
+> ## ✅ HOÀN TẤT (2026-07-28) — F1–F12 + mục D (bug sau kiểm thử) đều ☑.
+> Commit `76b165c` trên nhánh `redesign`. **Còn ngỏ duy nhất:** F6 cần chạy
+> `cd firebase && firebase deploy --only storage` (user tự deploy) để upload ảnh announcement hoạt động.
+> File này giữ lại làm nhật ký what/why từng mục.
+
+Danh sách việc sau khi redesign 12 màn (nhánh `redesign`).
+Mỗi mục có mã (F1, F2…). Cột *Nguyên nhân/Hướng* là phân tích ban đầu; phần **> XONG** dưới mỗi mục là cách đã sửa.
 
 Trạng thái: ☐ chưa làm · ☑ xong
 
