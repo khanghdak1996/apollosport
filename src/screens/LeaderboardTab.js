@@ -30,10 +30,11 @@ export function LeaderboardTab({ me, onOpenProfile }) {
     return () => { alive = false; };
   }, [scope, range, me.dept]);
 
+  const TOP_N = 50; // chỉ hiển thị top 50; nếu bạn ngoài top 50 thì hiện thẻ hạng riêng bên dưới
   const mine = rows.find(r => r.uid === me.uid);
   const podium = rows.slice(0, 3);
-  const rest = rows.slice(3, 12);
-  const meInList = rows.slice(0, 12).some(r => r.uid === me.uid);
+  const rest = rows.slice(3, TOP_N);
+  const meInList = rows.slice(0, TOP_N).some(r => r.uid === me.uid);
 
   // Bục: cột giữa = hạng 1, cao & rộng hơn (flex 1.15).
   const step = (row, rank) => {
