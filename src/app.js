@@ -9,7 +9,7 @@ import { uid, p2, fT, fD, durS, restLabel, fDM, fDT } from './domain/format.js';
 import { sVol, eVol, tVol, e1rm, startOfWeek, fWeek, pct, weeklyStats, exHistory, lastExSets, trainedExIds, titleOptions, sessionsByTitle, computePRs, exsOf, volOf, weeklyActive, sportBreakdown, distanceProgress, personalRecords, currentWeekActivity } from './domain/stats.js';
 import { EX } from './domain/exercises.js';
 import { EXDB } from './data/exercises-db.js';
-import { REST_PRESETS } from './domain/constants.js';
+const REST_PRESETS = [60, 90, 120, 180]; // preset thời gian nghỉ giữa set (giây)
 import { ACT, actOf, fieldsOf } from './domain/activities.js';
 import { buildGymSession, buildActivitySession, summaryStats, headline } from './domain/session.js';
 import { advanceStreak, liveStreak, dayStr } from './domain/streak.js';
@@ -67,6 +67,40 @@ const primStat = s => {
   const stats = summaryStats(s);
   return stats.find(x => x.icon !== 'clock' && typeof x.v === 'number') || stats.find(x => x.icon === 'star') || { v: s.points || 0, u: 'điểm' };
 };
+
+// Tổng điểm 7 ngày gần nhất (dùng cho HomeTab & CalendarTab).
+const points7d = sessions => sessions.reduce((t, s) => ((Date.now() - new Date(s.date)) / 86400000 <= 7 ? t + (s.points || 0) : t), 0);
+
+// Nút chọn quyền hiển thị buổi tập (Đồng nghiệp / Chỉ mình tôi). Dùng ở SaveWorkout & SessDetail.
+function VisibilityButtons({ value, onChange }) {
+  return html`
+    <div style=${{ display: 'flex', gap: 8 }}>
+      ${[{ v: 'company', k: 'globe', l: 'Đồng nghiệp' }, { v: 'private', k: 'lock', l: 'Chỉ mình tôi' }].map(o => {
+        const on = (value ?? 'company') === o.v;
+        return html`<button key=${o.v} onClick=${() => onChange(o.v)} class="btn-action" style=${{
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '11px', borderRadius: r.md, cursor: 'pointer', fontSize: 13.5, fontWeight: 500,
+          border: `1px solid ${on ? ACC : C.bdr}`, background: on ? 'var(--accent-glow)' : '#fff', color: on ? ACC : C.txt2,
+        }}><${SportIcon} k=${o.k} size=${15} color=${on ? ACC : C.txt3}/> ${o.l}</button>`;
+      })}
+    </div>`;
+}
+
+// Ô chọn/xem trước ảnh (bấm để chọn từ máy, nút × để gỡ). Dùng ở SaveWorkout & SessDetail.
+function PhotoPicker({ preview, onPick, onRemove, emptyLabel = 'Thêm ảnh', height = 160, radius = r.lg, pad = '22px', iconSize = 26 }) {
+  return html`
+    <label style=${{ display: 'block', cursor: 'pointer' }}>
+      <input type="file" accept="image/*" style=${{ display: 'none' }} onChange=${e => { const f = e.target.files[0]; if (f) onPick(f); }}/>
+      ${preview
+      ? html`<div style=${{ position: 'relative', borderRadius: radius, overflow: 'hidden' }}>
+          <img src=${preview} style=${{ width: '100%', height, objectFit: 'cover', display: 'block' }}/>
+          <button onClick=${e => { e.preventDefault(); e.stopPropagation(); onRemove(); }} style=${{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, color: '#fff', cursor: 'pointer', fontSize: 16 }}>×</button>
+        </div>`
+      : html`<div style=${{ border: `1.5px dashed #C7D8E6`, borderRadius: radius, padding: pad, textAlign: 'center', color: C.txt3 }}>
+          <div style=${{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}><${SportIcon} k="photo" size=${iconSize} color=${C.txt3} sw=${1.7}/></div>
+          <p style=${{ margin: 0, fontSize: 13, fontWeight: 500 }}>${emptyLabel}</p>
+        </div>`}
+    </label>`;
+}
 
 function TabBar({ tab, onTab }) {
   const items = [
@@ -357,14 +391,6 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
   const vol = tVol(workout.exs);
   const totalSets = workout.exs.reduce((t, e) => t + e.sets.filter(s => s.done).length, 0);
 
-  const pickPhoto = e => {
-    const f = e.target.files[0];
-    if (!f) return;
-    setPhotoFile(f);
-    setPhotoPreview(URL.createObjectURL(f));
-  };
-  const removePhoto = e => { e.preventDefault(); e.stopPropagation(); setPhotoFile(null); setPhotoPreview(null); };
-
   const save = async () => {
     const t = title.trim() || workout.dayName;
     const d = new Date(when);
@@ -394,20 +420,11 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
           style=${{ width: '100%', border: 'none', background: 'transparent', fontSize: 24, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: 20, padding: 0 }}
         />
 
-        <label style=${{ display: 'block', cursor: 'pointer', marginBottom: 20 }}>
-          <input type="file" accept="image/*" style=${{ display: 'none' }} onChange=${pickPhoto}/>
-          ${photoPreview
-      ? html`
-            <div style=${{ position: 'relative', borderRadius: r.lg, overflow: 'hidden' }}>
-              <img src=${photoPreview} style=${{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }}/>
-              <button onClick=${removePhoto} style=${{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, color: '#fff', cursor: 'pointer', fontSize: 16 }}>×</button>
-            </div>`
-      : html`
-            <div style=${{ border: `1.5px dashed #C7D8E6`, borderRadius: r.lg, padding: '22px', textAlign: 'center', color: C.txt3 }}>
-              <div style=${{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}><${SportIcon} k="photo" size=${26} color=${C.txt3} sw=${1.7}/></div>
-              <p style=${{ margin: 0, fontSize: 13, fontWeight: 500 }}>Thêm ảnh</p>
-            </div>`}
-        </label>
+        <div style=${{ marginBottom: 20 }}>
+          <${PhotoPicker} preview=${photoPreview}
+            onPick=${f => { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); }}
+            onRemove=${() => { setPhotoFile(null); setPhotoPreview(null); }}/>
+        </div>
 
         <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 20, alignItems: 'end' }}>
           <div>
@@ -443,15 +460,7 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
 
         <div style=${{ borderTop: `1px solid ${C.bdr}`, paddingTop: 14, marginBottom: 24 }}>
           <p style=${{ margin: '0 0 8px', fontSize: 11, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Hiển thị</p>
-          <div style=${{ display: 'flex', gap: 8 }}>
-            ${[{ v: 'company', k: 'globe', l: 'Đồng nghiệp' }, { v: 'private', k: 'lock', l: 'Chỉ mình tôi' }].map(o => html`
-              <button key=${o.v} onClick=${() => setVisibility(o.v)} class="btn-action" style=${{
-          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '11px', borderRadius: r.md, cursor: 'pointer', fontSize: 13.5, fontWeight: 500,
-          border: `1px solid ${visibility === o.v ? ACC : C.bdr}`,
-          background: visibility === o.v ? 'var(--accent-glow)' : '#fff',
-          color: visibility === o.v ? ACC : C.txt2,
-        }}><${SportIcon} k=${o.k} size=${15} color=${visibility === o.v ? ACC : C.txt3}/> ${o.l}</button>`)}
-          </div>
+          <${VisibilityButtons} value=${visibility} onChange=${setVisibility}/>
         </div>
 
         <button onClick=${onDiscard} class="btn-action" style=${{ width: '100%', background: 'transparent', border: 'none', color: C.red, fontSize: 14, fontWeight: 400, cursor: 'pointer', padding: '10px 0' }}>
@@ -648,7 +657,6 @@ function SessDetail({ session, onClose, canEdit = false, onSave, onChangeVisibil
   const dur = session.endTime - session.startTime;
   const a = actOf(session.type || 'gym');
   const openEdit = () => { setETitle(session.title || ''); setENote(session.note || ''); setEPhotoFile(null); setEPhotoPreview(null); setERemovePhoto(false); setEditing(true); };
-  const pickEditPhoto = e => { const f = e.target.files[0]; if (!f) return; setEPhotoFile(f); setEPhotoPreview(URL.createObjectURL(f)); setERemovePhoto(false); };
   const curPhoto = ePhotoPreview || (eRemovePhoto ? null : session.photoUrl);
   const exs = exsOf(session);
   const isGym = (session.type || 'gym') === 'gym';
@@ -697,29 +705,13 @@ function SessDetail({ session, onClose, canEdit = false, onSave, onChangeVisibil
             <p style=${{ margin: '0 0 6px', fontSize: 12, fontWeight: 600, color: C.txt2 }}>Ghi chú (nhật ký)</p>
             <textarea value=${eNote} onInput=${e => setENote(e.target.value)} rows=${3} placeholder="Cảm nhận buổi tập, ghi chú riêng..." style=${{ width: '100%', padding: '10px 12px', borderRadius: r.md, border: `1px solid ${C.bdr}`, fontSize: 14, boxSizing: 'border-box', resize: 'vertical', color: C.txt1, background: '#fff', fontFamily: 'inherit' }}/>
             <p style=${{ margin: '12px 0 6px', fontSize: 12, fontWeight: 600, color: C.txt2 }}>Ảnh</p>
-            <label style=${{ display: 'block', cursor: 'pointer' }}>
-              <input type="file" accept="image/*" style=${{ display: 'none' }} onChange=${pickEditPhoto}/>
-              ${curPhoto
-        ? html`<div style=${{ position: 'relative', borderRadius: r.md, overflow: 'hidden' }}>
-                  <img src=${curPhoto} style=${{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }}/>
-                  <button onClick=${e => { e.preventDefault(); e.stopPropagation(); setEPhotoFile(null); setEPhotoPreview(null); setERemovePhoto(true); }} title="Gỡ ảnh" style=${{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, color: '#fff', cursor: 'pointer', fontSize: 16 }}>×</button>
-                </div>`
-        : html`<div style=${{ border: `1.5px dashed #C7D8E6`, borderRadius: r.md, padding: '18px', textAlign: 'center', color: C.txt3 }}>
-                  <div style=${{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}><${SportIcon} k="photo" size=${24} color=${C.txt3} sw=${1.7}/></div>
-                  <p style=${{ margin: 0, fontSize: 13, fontWeight: 500 }}>${eRemovePhoto ? 'Đã gỡ ảnh — bấm để thêm ảnh mới' : 'Thêm ảnh'}</p>
-                </div>`}
-            </label>
+            <${PhotoPicker} preview=${curPhoto} radius=${r.md} pad="18px" iconSize=${24}
+              emptyLabel=${eRemovePhoto ? 'Đã gỡ ảnh — bấm để thêm ảnh mới' : 'Thêm ảnh'}
+              onPick=${f => { setEPhotoFile(f); setEPhotoPreview(URL.createObjectURL(f)); setERemovePhoto(false); }}
+              onRemove=${() => { setEPhotoFile(null); setEPhotoPreview(null); setERemovePhoto(true); }}/>
             ${onChangeVisibility && html`
               <p style=${{ margin: '14px 0 6px', fontSize: 12, fontWeight: 600, color: C.txt2 }}>Hiển thị</p>
-              <div style=${{ display: 'flex', gap: 8 }}>
-                ${[{ v: 'company', k: 'globe', l: 'Đồng nghiệp' }, { v: 'private', k: 'lock', l: 'Chỉ mình tôi' }].map(o => {
-      const on = (session.visibility ?? 'company') === o.v;
-      return html`<button key=${o.v} onClick=${() => onChangeVisibility(session.id, o.v)} class="btn-action" style=${{
-        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px', borderRadius: r.md, cursor: 'pointer', fontSize: 13, fontWeight: 500,
-        border: `1px solid ${on ? ACC : C.bdr}`, background: on ? 'var(--accent-glow)' : '#fff', color: on ? ACC : C.txt2,
-      }}><${SportIcon} k=${o.k} size=${15} color=${on ? ACC : C.txt3}/> ${o.l}</button>`;
-    })}
-              </div>
+              <${VisibilityButtons} value=${session.visibility} onChange=${v => onChangeVisibility(session.id, v)}/>
               <p style=${{ margin: '6px 0 0', fontSize: 11.5, color: C.txt3, lineHeight: 1.5 }}>Chuyển sang "Chỉ mình tôi" sẽ gỡ buổi này khỏi bảng tin & bảng xếp hạng của đồng nghiệp.</p>`}
             <p style=${{ margin: '12px 0 0', fontSize: 11.5, color: C.txt3, lineHeight: 1.5 }}>Sửa tiêu đề, ghi chú & ảnh. Điểm, chuỗi và xếp hạng giữ nguyên như lúc đăng.</p>
             <div style=${{ display: 'flex', gap: 8, marginTop: 12 }}>
@@ -1697,7 +1689,7 @@ function GymPair() {
         </div>
       `}
       <div style=${{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 20, position: 'relative' }}>
-        ${tab === 'home' && html`<${HomeTab} profile=${{ ...profile, photoURL: profile.img }} progs=${progs} sessions=${sessions} streak=${liveStreak(userDoc.streak)} onStart=${startWorkout} onView=${openSess} onSwitch=${() => setPg('settings')} onSeeAll=${() => openProfile(pid)} onManagePrograms=${() => setPg('progs')} onSeeAll=${() => setTab('me')} weeklyGoal=${userDoc.goals?.sessionsPerWeek || 3} points=${sessions.reduce((t, s) => ((new Date() - new Date(s.date)) / 86400000 <= 7 ? t + (s.points || 0) : t), 0)}/>`}
+        ${tab === 'home' && html`<${HomeTab} profile=${{ ...profile, photoURL: profile.img }} progs=${progs} sessions=${sessions} streak=${liveStreak(userDoc.streak)} onStart=${startWorkout} onView=${openSess} onSwitch=${() => setPg('settings')} onManagePrograms=${() => setPg('progs')} onSeeAll=${() => setTab('me')} weeklyGoal=${userDoc.goals?.sessionsPerWeek || 3} points=${points7d(sessions)}/>`}
         ${tab === 'feed' && html`<${FeedTab} me=${meAuthor()} myReactions=${myReactions} onOpenComments=${openComments} onOpenProfile=${openProfile} onManage=${openSess} moderating=${isAdmin && adminMode} onAdminDelete=${adminDeletePost} refreshKey=${feedKey}/>`}
         ${tab === 'rank' && html`<${LeaderboardTab} me=${meAuthor()} onOpenProfile=${openProfile}/>`}
         ${tab === 'me' && html`
@@ -1706,7 +1698,7 @@ function GymPair() {
               profile=${{ ...profile, photoURL: profile.img, dept: userDoc.dept }}
               sessions=${sessions}
               streak=${liveStreak(userDoc.streak)}
-              points=${sessions.reduce((t, s) => ((new Date() - new Date(s.date)) / 86400000 <= 7 ? t + (s.points || 0) : t), 0)}
+              points=${points7d(sessions)}
               weights=${weights}
               onView=${openSess}
               onAvatar=${() => openProfile(pid)}
