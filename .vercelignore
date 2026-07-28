@@ -1,0 +1,9 @@
+# Vercel chỉ cần: index.html, src/, fonts/, assets/ (những thứ app thực sự phục vụ).
+# Loại các file dev/tài liệu/cấu hình không cần đưa lên hosting tĩnh.
+
+firebase/
+tools/
+design_handoff_apollo_sport_redesign/
+*.md
+pinegrow.json
+.DS_Store
