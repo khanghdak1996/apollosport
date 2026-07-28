@@ -1,8 +1,19 @@
 # Apollo Sport — Handoff (bàn giao để tiếp tục ở chat mới)
 
 > Mạng xã hội tập luyện nội bộ công ty (mở rộng từ app gym cá nhân "GymPair").
-> Cập nhật: 2026-07-26. Đọc file này đầu tiên khi mở chat mới.
+> Cập nhật: 2026-07-28. Đọc file này đầu tiên khi mở chat mới.
 > **Plan hiện hành (đầy đủ A→F):** `/Users/hoangdanganhkhang/.claude/plans/t-m-g-c-l-i-phase-cozy-duckling.md`
+
+> ## ✅ REDESIGN HOÀN TẤT (2026-07-28, nhánh `redesign`)
+> Đã redesign toàn bộ UI theo Apollo Brand Book V9 + xử lý xong backlog **F1–F12** và các bug sau kiểm thử.
+> Commit `76b165c` (F1–F12 + bug fixes) và `2f0c5c2` (gitignore). **Chưa push.**
+> - Chi tiết từng mục: **[REDESIGN-FIXES.md](REDESIGN-FIXES.md)** (F1–F12 + mục D bug sau kiểm thử — đều ☑).
+> - Bản đồ màn ↔ file (gọi đúng tên màn khi cần chỉnh): **[MAP-MAN-HINH.md](MAP-MAN-HINH.md)**.
+> - **Gotcha & quyết định lâu dài:** xem memory `redesign-apollo-sport-progress.md` (loglat là số ms không phải Timestamp;
+>   firebase.json ở thư mục `firebase/`; nhiều màn còn nằm trong app.js; render-verify cần server no-store port mới; …).
+> - **Còn ngỏ:** F6 (ảnh announcement) cần chạy `cd firebase && firebase deploy --only storage` mới up ảnh được.
+>
+> Phần bên dưới là bối cảnh trước redesign (vẫn đúng về hạ tầng/luồng dữ liệu).
 
 > ### 👉 VIỆC KẾ TIẾP KHI VÀO CHAT MỚI
 > Đã xong & **user đã E2E account thật OK**: **A** (bớt gym-centric, ProgressTab lai), **B/C** (kho Hướng dẫn + YouTube), **D** (thư viện free-exercise-db: ảnh thật + nhóm cơ VN).
