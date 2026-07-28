@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { html } from './html.js';
 import { C, r, ACC, F, T, BRAND, sportColor, sportTint } from './ui/theme.js';
 import { Icons } from './ui/icons.js';
 import { SportIcon } from './ui/sportIcons.js';
+import { PhotoView } from './ui/Lightbox.js';
 import { Wrap, Card, Empty, Label, Btn } from './ui/primitives.js';
 import { beep } from './ui/sound.js';
 import { uid, p2, fT, fD, durS, restLabel, fDM, fDT } from './domain/format.js';
@@ -16,7 +17,7 @@ import { advanceStreak, liveStreak, dayStr } from './domain/streak.js';
 import { evaluateBadges, BADGES } from './domain/badges.js';
 import { db } from './data/local.js';
 import { compressImage, uploadSessionPhoto, deleteSessionPhoto } from './data/photos.js';
-import { saveSession, deleteSession as repoDeleteSession, updateSessionContent, updateSessionVisibility, deleteSessionWithStats, adminDeleteSession, dayContext } from './data/repo-sessions.js';
+import { saveSession, deleteSession as repoDeleteSession, updateSessionContent, updateSessionVisibility, deleteSessionWithStats, adminDeleteSession, dayContext, allSessionsOf } from './data/repo-sessions.js';
 import { loadMyReactions } from './data/repo-social.js';
 import { removeMyEntries } from './data/repo-leaderboard.js';
 import { getPrivateWeights, savePrivateWeights } from './data/repo-private.js';
@@ -719,7 +720,7 @@ function SessDetail({ session, onClose, canEdit = false, onSave, onChangeVisibil
               <button onClick=${async () => { if (!window.confirm('Lưu thay đổi cho bài này?')) return; await onSave(session.id, { title: eTitle, note: eNote, photoFile: ePhotoFile, removePhoto: eRemovePhoto }); setEditing(false); }} class="btn-action" style=${{ flex: 1, padding: '10px', borderRadius: r.md, border: 'none', background: ACC, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Lưu</button>
             </div>
           </div>`}
-        ${!editing && session.photoUrl && html`<img src=${session.photoUrl} style=${{ width: '100%', height: 220, objectFit: 'cover', borderRadius: r.lg, marginBottom: 16, display: 'block' }}/>`}
+        ${!editing && session.photoUrl && html`<${PhotoView} src=${session.photoUrl} alt=${session.title || ''} style=${{ width: '100%', height: 220, objectFit: 'cover', borderRadius: r.lg, marginBottom: 16, display: 'block' }}/>`}
         ${!editing && session.note && html`
           <div style=${{ background: '#ffffff', borderRadius: r.lg, padding: '14px 16px', marginBottom: 16, border: `1px solid ${C.bdr}`, fontSize: 13, color: C.txt1, lineHeight: 1.5, display: 'flex', gap: 8 }}>
             <span style=${{ flexShrink: 0, marginTop: 1 }}><${SportIcon} k="journal" size=${15} color=${C.txt3}/></span><span>${session.note}</span>
@@ -1514,6 +1515,53 @@ function GymPair() {
     }
     return earned;
   };
+
+  // ĐỒNG BỘ buổi tập của MÌNH từ cloud → cache cục bộ (một chiều, cloud là nguồn chuẩn).
+  // Trước đây Home & tab Cá nhân chỉ đọc cache local (`s:${pid}`), nên nếu log ở máy khác
+  // hoặc xoá cache thì các màn này thiếu buổi → lệch số với Thành tích/Xếp hạng.
+  // Kèm TỰ CHỮA users/{uid}.totals nếu counter (điểm/phút/buổi) lệch so với dữ liệu thật.
+  // Chạy đúng MỘT lần cho mỗi uid sau khi có userDoc.
+  const syncedRef = useRef(null);
+  useEffect(() => {
+    if (!pid || !userDoc) return;
+    if (syncedRef.current === pid) return;
+    syncedRef.current = pid;
+    let alive = true;
+    (async () => {
+      let cloud;
+      try { cloud = await allSessionsOf(pid, { isSelf: true }); }
+      catch { syncedRef.current = null; return; } // lỗi mạng → cho lần render sau thử lại
+      if (!alive || !cloud) return;
+
+      // Gộp vào cache: cloud ghi đè bản trùng id, giữ buổi local chưa kịp sync.
+      const localized = cloud.map(toLocal);
+      setSessions(prev => {
+        const byId = new Map();
+        for (const s of prev) byId.set(s.id, s);
+        for (const s of localized) byId.set(s.id, s);
+        const merged = [...byId.values()]
+          .sort((a, b) => (b.loggedAt || b.startTime || 0) - (a.loggedAt || a.startTime || 0))
+          .slice(0, 300);
+        db.set(`s:${pid}`, merged);
+        return merged;
+      });
+
+      // Tự chữa totals từ TẤT CẢ buổi thật (gồm cả buổi riêng tư).
+      const real = cloud.reduce((t, s) => ({
+        sessions: t.sessions + 1,
+        minutes: t.minutes + (s.activeMinutes || 0),
+        points: t.points + (s.points || 0),
+        volumeKg: t.volumeKg + (s.type === 'gym' ? Math.round(s.detail?.totalVol || 0) : 0),
+      }), { sessions: 0, minutes: 0, points: 0, volumeKg: 0 });
+      const cur = userDoc.totals || {};
+      const drift = ['sessions', 'minutes', 'points', 'volumeKg'].some(k => Math.round(cur[k] || 0) !== real[k]);
+      if (drift) {
+        try { await updateUserDoc(pid, { totals: real }); if (alive) setUserDoc(d => ({ ...d, totals: real })); }
+        catch { /* để lần đăng nhập sau chữa tiếp */ }
+      }
+    })();
+    return () => { alive = false; };
+  }, [pid, userDoc]);
 
   const startWorkout = (prog, di) => {
     const day = prog.days[di];

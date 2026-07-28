@@ -4,6 +4,7 @@
 import { html } from '../html.js';
 import { C, r, F, T, BRAND, SHADOW, sportColor } from '../ui/theme.js';
 import { SportIcon } from '../ui/sportIcons.js';
+import { PhotoView } from '../ui/Lightbox.js';
 import { actOf } from '../domain/activities.js';
 import { summaryStats, headline } from '../domain/session.js';
 import { fDT } from '../domain/format.js';
@@ -43,7 +44,7 @@ export function PostCard({ post, reacted, onReact, onOpenComments, onOpenProfile
       </div>
 
       ${post.note ? html`<p style=${{ margin: '10px 0 0', padding: '0 16px', fontSize: 13.5, color: C.txt1, lineHeight: 1.5 }}>${post.note}</p>` : ''}
-      ${post.photoUrl ? html`<img src=${post.photoUrl} loading="lazy" style=${{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block', background: C.bg3, marginTop: 12 }}/>` : ''}
+      ${post.photoUrl ? html`<${PhotoView} src=${post.photoUrl} alt=${post.title || ''} style=${{ width: '100%', aspectRatio: '4/3', objectFit: 'cover', display: 'block', background: C.bg3, marginTop: 12 }}/>` : ''}
 
       <div style=${{ display: 'flex', alignItems: 'center', gap: 14, margin: '11px 16px 0', padding: '11px 0 12px', borderTop: `1px solid ${C.bdr2}` }}>
         ${stats.map((st, i) => html`
