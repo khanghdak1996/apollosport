@@ -36,7 +36,7 @@ export function SignIn() {
       <div style=${{ position: 'absolute', width: 220, height: 220, borderRadius: '50%', background: C.bg3, top: 150, left: -110, pointerEvents: 'none' }}/>
 
       <!-- Logo Apollo English góc trên phải -->
-      <img src="./assets/apollo-logo.png" alt="Apollo English" style=${{ position: 'absolute', top: 'calc(10px + env(safe-area-inset-top))', right: 12, width: 96, height: 'auto', zIndex: 2, pointerEvents: 'none' }}/>
+      <img src="./assets/apollo-logo.png" alt="Apollo English" style=${{ position: 'absolute', top: 'calc(10px + env(safe-area-inset-top))', right: 1, width: 144, height: 'auto', zIndex: 2, pointerEvents: 'none' }}/>
 
       <div style=${{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '28px', position: 'relative', zIndex: 1 }}>
         <div class="scale-in" style=${{ width: '100%', maxWidth: 340, textAlign: 'center' }}>
