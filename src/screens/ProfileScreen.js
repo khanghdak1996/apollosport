@@ -1,18 +1,16 @@
 import { useState, useEffect } from 'preact/hooks';
 import { html } from '../html.js';
-import { C, r, ACC } from '../ui/theme.js';
-import { Wrap, Empty } from '../ui/primitives.js';
-import { Icons } from '../ui/icons.js';
+import { C, r, F, T, BRAND, sportColor, sportTint } from '../ui/theme.js';
+import { Wrap, Empty, Section } from '../ui/primitives.js';
+import { SportIcon } from '../ui/sportIcons.js';
 import { getUserDoc } from '../data/repo-users.js';
 import { allSessionsOf } from '../data/repo-sessions.js';
 import { liveStreak } from '../domain/streak.js';
-import { actOf, ACT } from '../domain/activities.js';
-import { headline, summaryStats } from '../domain/session.js';
+import { actOf } from '../domain/activities.js';
+import { summaryStats } from '../domain/session.js';
 import { fDT } from '../domain/format.js';
 import { BADGES } from '../domain/badges.js';
 import { personalRecords, currentWeekActivity } from '../domain/stats.js';
-
-const STAT_EMOJI = { flame: '🔥', check: '✅', clock: '⏱', route: '📏', bolt: '⚡', star: '⭐' };
 
 export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
   const [doc, setDoc] = useState(null);
@@ -33,122 +31,106 @@ export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
   const t = doc?.totals || {};
   const items = allSess.slice(0, 12); // buổi gần đây (đã sắp desc theo loggedAt)
 
-  // Kỷ lục cá nhân theo môn (Cục B): distance + session không đối kháng; gym & đối kháng → rỗng.
   const prBlocks = [...new Set(allSess.map(s => s.type || 'gym'))]
     .map(ty => ({ ty, recs: personalRecords(allSess, ty, actOf(ty).kind) }))
     .filter(x => x.recs.length);
 
-  // Tiến độ mục tiêu tuần — CHỈ hiện trên hồ sơ CỦA MÌNH (riêng tư, không phơi mục tiêu người khác).
+  // Tiến độ mục tiêu tuần — CHỈ hiện trên hồ sơ CỦA MÌNH.
   const goals = doc?.goals || {};
   const showGoals = isSelf && (goals.sessionsPerWeek > 0 || goals.minutesPerWeek > 0);
   const cw = showGoals ? currentWeekActivity(allSess) : null;
-  const goalBar = (cur, target, color) => {
+  const goalRow = (label, cur, target, color) => {
     const pctv = target > 0 ? Math.min(100, Math.round((cur / target) * 100)) : 0;
-    return html`<div style=${{ height: 8, borderRadius: 4, background: C.bg3, overflow: 'hidden' }}><div style=${{ height: '100%', width: `${pctv}%`, background: color, borderRadius: 4 }}/></div>`;
+    const done = cur >= target;
+    return html`
+      <div>
+        <div style=${{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 5 }}>
+          <span style=${{ color: C.txt2 }}>${label}</span>
+          <strong style=${{ display: 'flex', alignItems: 'center', gap: 4, color: done ? C.green : C.txt1 }}>${cur}/${target}${done ? html` <${SportIcon} k="check" size=${13} color=${C.green} sw=${2.4}/>` : ''}</strong>
+        </div>
+        <div style=${{ height: 8, borderRadius: 4, background: C.bg3, overflow: 'hidden' }}><div style=${{ height: '100%', width: pctv + '%', background: color, borderRadius: 4, transition: 'width .4s' }}/></div>
+      </div>`;
   };
-
-  const stat = (label, val) => html`
-    <div style=${{ flex: 1, textAlign: 'center' }}>
-      <p style=${{ margin: 0, fontSize: 18, fontWeight: 700, color: C.txt1 }}>${val}</p>
-      <p style=${{ margin: 0, fontSize: 10.5, color: C.txt3 }}>${label}</p>
-    </div>`;
 
   return html`
     <${Wrap}>
-      <div style=${{ padding: '14px 16px', borderBottom: `1px solid ${C.bdr}`, background: '#fff', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        <button onClick=${onBack} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.txt2 }}><${Icons.back} size=${18}/></button>
-        <h2 style=${{ margin: 0, fontSize: 17, fontWeight: 600, color: C.txt1 }}>Hồ sơ</h2>
+      <div style=${{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: C.bg2, borderBottom: `1px solid ${C.bdr}`, flexShrink: 0 }}>
+        <button onClick=${onBack} class="btn-action" style=${{ width: 36, height: 36, borderRadius: '50%', background: C.bg1, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+          <${SportIcon} k="back" size=${18} color=${C.txt2} sw=${2}/>
+        </button>
+        <p style=${{ margin: 0, flex: 1, ...T.h2 }}>${isSelf ? 'THÀNH TÍCH CỦA BẠN' : 'HỒ SƠ'}</p>
       </div>
 
       <div style=${{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         ${loading
-          ? html`<p style=${{ textAlign: 'center', color: C.txt3, fontSize: 13, padding: 40 }}>Đang tải...</p>`
-          : !doc
-            ? html`<${Empty} icon="other" msg="Không tìm thấy hồ sơ"/>`
-            : html`
-              <div style=${{ padding: '24px 16px 18px', textAlign: 'center' }}>
+      ? html`<p style=${{ textAlign: 'center', color: C.txt3, fontSize: 13, padding: 40 }}>Đang tải...</p>`
+      : !doc
+        ? html`<div style=${{ padding: 16 }}><${Empty} icon="other" msg="Không tìm thấy hồ sơ"/></div>`
+        : html`
+              <!-- Hero xanh -->
+              <div style=${{ background: BRAND.blue, color: '#fff', padding: '22px 18px 20px', textAlign: 'center' }}>
                 ${doc.photoURL
-                  ? html`<img src=${doc.photoURL} style=${{ width: 84, height: 84, borderRadius: '50%', objectFit: 'cover', border: `3px solid ${doc.accent || ACC}` }}/>`
-                  : html`<div style=${{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto', background: (doc.accent || ACC) + '22', color: doc.accent || ACC, border: `3px solid ${doc.accent || ACC}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 34 }}>${(doc.name || '?').charAt(0).toUpperCase()}</div>`}
-                <h1 style=${{ margin: '12px 0 2px', fontSize: 22, fontWeight: 600, color: C.txt1 }}>${doc.name}</h1>
-                <p style=${{ margin: 0, fontSize: 13, color: C.txt3 }}>${[doc.dept, doc.center].filter(Boolean).join(' · ') || '—'}</p>
-                ${st.current > 0 && html`<div style=${{ display: 'inline-block', marginTop: 10, background: 'var(--accent-glow)', color: ACC, borderRadius: 20, padding: '5px 14px', fontSize: 13, fontWeight: 600 }}>🔥 Chuỗi ${st.current} ngày</div>`}
-              </div>
+          ? html`<img src=${doc.photoURL} style=${{ width: 84, height: 84, borderRadius: '50%', objectFit: 'cover', border: `3px solid ${BRAND.yellow}` }}/>`
+          : html`<div style=${{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto', background: BRAND.babyBlue, color: BRAND.blue, border: `3px solid ${BRAND.yellow}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 34 }}>${(doc.name || '?').charAt(0).toUpperCase()}</div>`}
+                <p style=${{ margin: '12px 0 2px', fontSize: 20, fontWeight: 700, letterSpacing: '-0.01em' }}>${doc.name}</p>
+                <p style=${{ margin: 0, fontSize: 12.5, color: BRAND.babyBlue }}>${doc.dept || '—'}</p>
+                ${st.current > 0 && html`<div style=${{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 12, background: 'rgba(255,255,255,.16)', borderRadius: 20, padding: '6px 14px', fontSize: 13, fontWeight: 600 }}><${SportIcon} k="flame" size=${15} color=${BRAND.yellow}/> Chuỗi ${st.current} ngày</div>`}
 
-              <div style=${{ display: 'flex', padding: '0 16px 18px' }}>
-                <div style=${{ display: 'flex', flex: 1, background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.lg, padding: '14px 8px' }}>
-                  ${stat('Buổi tập', t.sessions || 0)}
-                  ${stat('Phút', t.minutes || 0)}
-                  ${stat('Điểm', t.points || 0)}
-                  ${stat('Chuỗi dài', doc.streak?.longest || 0)}
+                <div style=${{ display: 'flex', gap: 8, marginTop: 18 }}>
+                  ${[{ v: t.sessions || 0, l: 'Buổi tập' }, { v: t.minutes || 0, l: 'Phút' }, { v: t.points || 0, l: 'Điểm' }, { v: doc.streak?.longest || 0, l: 'Chuỗi dài' }].map((s, i) => html`
+                    <div key=${i} style=${{ flex: 1, background: 'rgba(255,255,255,.14)', borderRadius: 14, padding: '11px 6px', minWidth: 0 }}>
+                      <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 22, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>${s.v}</p>
+                      <p style=${{ margin: '3px 0 0', fontSize: 9.5, letterSpacing: '.07em', fontWeight: 600, color: BRAND.babyBlue, textTransform: 'uppercase' }}>${s.l}</p>
+                    </div>`)}
                 </div>
               </div>
 
-              ${showGoals && html`
-                <div style=${{ padding: '0 16px 18px' }}>
-                  <div style=${{ background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.lg, padding: '14px 16px' }}>
-                    <p style=${{ margin: '0 0 12px', fontSize: 13, fontWeight: 600, color: C.txt2 }}>🎯 Mục tiêu tuần này</p>
-                    <div style=${{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      ${goals.sessionsPerWeek > 0 && html`
-                        <div>
-                          <div style=${{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
-                            <span style=${{ color: C.txt3 }}>Buổi tập</span>
-                            <strong style=${{ color: C.txt1 }}>${cw.count}/${goals.sessionsPerWeek}${cw.count >= goals.sessionsPerWeek ? ' ✅' : ''}</strong>
-                          </div>
-                          ${goalBar(cw.count, goals.sessionsPerWeek, ACC)}
-                        </div>`}
-                      ${goals.minutesPerWeek > 0 && html`
-                        <div>
-                          <div style=${{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 5 }}>
-                            <span style=${{ color: C.txt3 }}>Phút vận động</span>
-                            <strong style=${{ color: C.txt1 }}>${cw.minutes}/${goals.minutesPerWeek}${cw.minutes >= goals.minutesPerWeek ? ' ✅' : ''}</strong>
-                          </div>
-                          ${goalBar(cw.minutes, goals.minutesPerWeek, '#22c55e')}
-                        </div>`}
-                    </div>
-                  </div>
-                </div>`}
+              <div style=${{ padding: '0 16px 80px' }}>
+                ${showGoals && html`
+                  <${Section} t="MỤC TIÊU TUẦN NÀY" mt=${18}/>
+                  <div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    ${goals.sessionsPerWeek > 0 && goalRow('Buổi tập', cw.count, goals.sessionsPerWeek, BRAND.blue)}
+                    ${goals.minutesPerWeek > 0 && goalRow('Phút vận động', cw.minutes, goals.minutesPerWeek, C.green)}
+                  </div>`}
 
-              ${prBlocks.length > 0 && html`
-                <div style=${{ padding: '0 16px 18px' }}>
-                  <p style=${{ margin: '0 0 10px', fontSize: 13, fontWeight: 600, color: C.txt2 }}>🏆 Kỷ lục cá nhân</p>
-                  <div style=${{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                ${prBlocks.length > 0 && html`
+                  <${Section} t="KỶ LỤC CÁ NHÂN" mt=${18} right=${html`<${SportIcon} k="trophy" size=${17} color=${BRAND.yellow}/>`}/>
+                  <div style=${{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     ${prBlocks.map(({ ty, recs }) => { const a = actOf(ty); return html`
-                      <div key=${ty} style=${{ background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.md, padding: '12px 14px' }}>
-                        <p style=${{ margin: '0 0 10px', fontSize: 13, fontWeight: 600, color: C.txt1, display: 'flex', alignItems: 'center', gap: 6 }}><span>${a.emoji}</span> ${a.label}</p>
+                      <div key=${ty} style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, padding: '13px 15px' }}>
+                        <p style=${{ margin: '0 0 10px', fontSize: 13.5, fontWeight: 700, color: C.txt1, display: 'flex', alignItems: 'center', gap: 7 }}><${SportIcon} k=${a.iconKey} size=${16} color=${sportColor(a.iconKey)}/> ${a.label}</p>
                         <div style=${{ display: 'grid', gridTemplateColumns: `repeat(${recs.length}, 1fr)`, gap: 8 }}>
                           ${recs.map(rc => html`<div key=${rc.key} style=${{ textAlign: 'center' }}>
-                            <p style=${{ margin: 0, fontSize: 16, fontWeight: 700, color: a.color }}>${rc.value}<span style=${{ fontSize: 10, fontWeight: 500, color: C.txt3 }}> ${rc.unit}</span></p>
+                            <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 18, color: sportColor(a.iconKey) }}>${rc.value}<span style=${{ fontSize: 10, fontWeight: 500, color: C.txt3 }}> ${rc.unit}</span></p>
                             <p style=${{ margin: '2px 0 0', fontSize: 9.5, color: C.txt3 }}>${rc.label}</p>
                           </div>`)}
                         </div>
                       </div>`; })}
-                  </div>
-                </div>`}
+                  </div>`}
 
-              ${(doc.badges?.length > 0) && html`
-                <div style=${{ padding: '0 16px 18px' }}>
-                  <div style=${{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    ${doc.badges.map(b => BADGES[b] && html`<span key=${b} title=${BADGES[b].label} style=${{ fontSize: 22 }}>${BADGES[b].icon}</span>`)}
-                  </div>
-                </div>`}
+                ${(doc.badges?.length > 0) && html`
+                  <${Section} t="HUY HIỆU" mt=${18}/>
+                  <div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, padding: '14px 16px', display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                    ${doc.badges.map(b => BADGES[b] && html`<span key=${b} title=${BADGES[b].label} style=${{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: C.txt2, background: C.bg3, borderRadius: 20, padding: '5px 12px' }}><span style=${{ fontSize: 16 }}>${BADGES[b].icon}</span> ${BADGES[b].label}</span>`)}
+                  </div>`}
 
-              <div style=${{ padding: '0 16px 24px' }}>
-                <p style=${{ margin: '0 0 10px', fontSize: 13, fontWeight: 600, color: C.txt2 }}>Buổi tập gần đây</p>
+                <${Section} t="BUỔI TẬP GẦN ĐÂY" mt=${18}/>
                 ${items.length === 0
-                  ? html`<${Empty} icon="other" msg="Chưa có buổi tập công khai"/>`
-                  : items.map(s => {
-                    const a = actOf(s.type);
-                    return html`
-                      <div key=${`${s.authorUid}_${s.id}`} onClick=${() => onView && onView(s)} class="card-hover" style=${{ display: 'flex', alignItems: 'center', gap: 12, background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.md, padding: '12px 14px', marginBottom: 8, cursor: 'pointer' }}>
-                        <span style=${{ fontSize: 24, flexShrink: 0 }}>${a.emoji}</span>
+          ? html`<${Empty} icon="other" msg="Chưa có buổi tập công khai"/>`
+          : html`<div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, overflow: 'hidden' }}>
+                    ${items.map((s, i) => {
+            const a = actOf(s.type);
+            return html`
+                      <div key=${`${s.authorUid}_${s.id}`} onClick=${() => onView && onView(s)} class="card-hover" style=${{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 15px', borderTop: i ? `1px solid ${C.bdr2}` : 'none', cursor: 'pointer' }}>
+                        <span style=${{ width: 34, height: 34, borderRadius: 10, background: sportTint(a.iconKey), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><${SportIcon} k=${a.iconKey} size=${19} color=${sportColor(a.iconKey)}/></span>
                         <div style=${{ flex: 1, minWidth: 0 }}>
-                          <p style=${{ margin: 0, fontSize: 13.5, fontWeight: 500, color: C.txt1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${s.title || a.label}</p>
-                          <p style=${{ margin: '2px 0 0', fontSize: 11.5, color: C.txt3 }}>${summaryStats(s).map(x => `${x.v}${x.u ? ' ' + x.u : ''}`).join(' · ')} · ${fDT(s.loggedAt)}</p>
+                          <p style=${{ margin: 0, fontSize: 14, fontWeight: 600, color: C.txt1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${s.title || a.label}</p>
+                          <p style=${{ margin: '2px 0 0', fontSize: 11.5, color: C.txt3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${summaryStats(s).map(x => `${x.v}${x.u ? ' ' + x.u : ''}`).join(' · ')} · ${fDT(s.loggedAt)}</p>
                         </div>
-                        ${s.visibility === 'private' && html`<span style=${{ fontSize: 13 }}>🔒</span>`}
+                        ${(s.visibility === 'private') ? html`<${SportIcon} k="lock" size=${14} color=${C.txt4}/>` : ''}
                       </div>`;
-                  })}
+          })}
+                  </div>`}
               </div>`}
       </div>
     </${Wrap}>`;

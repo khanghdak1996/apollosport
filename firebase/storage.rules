@@ -24,6 +24,17 @@ service firebase.storage {
       allow delete: if domainOk() && (uid == request.auth.uid || isAdmin());
     }
 
+    // Ảnh đính kèm THÔNG BÁO (announcement) của CLB / mục tiêu công ty (F6).
+    // Path tiền tố uid diễn đạt quyền sở hữu; file đặt theo id doc thông báo.
+    match /announcements/{uid}/{file} {
+      allow read:  if domainOk();
+      allow write: if domainOk()
+                   && uid == request.auth.uid
+                   && request.resource.size < 3 * 1024 * 1024
+                   && request.resource.contentType == 'image/jpeg';
+      allow delete: if domainOk() && (uid == request.auth.uid || isAdmin());
+    }
+
     match /{allPaths=**} { allow read, write: if false; }
   }
 }

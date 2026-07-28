@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { html } from '../html.js';
-import { C, r, ACC } from '../ui/theme.js';
+import { C, r, ACC, T, BRAND, sportColor } from '../ui/theme.js';
 import { Empty } from '../ui/primitives.js';
+import { SportIcon } from '../ui/sportIcons.js';
 import { ACTIVITIES } from '../domain/activities.js';
 import { feedPage, listenNewPosts } from '../data/repo-sessions.js';
 import { toggleReaction } from '../data/repo-social.js';
@@ -62,21 +63,24 @@ export function FeedTab({ me, myReactions, onReacted, onOpenComments, onOpenProf
     } else if (onReacted) onReacted(reacted);
   };
 
-  const chip = (id, label) => html`
+  const chip = (id, label, iconKey) => {
+    const on = typeFilter === id;
+    return html`
     <button key=${id || 'all'} onClick=${() => setTypeFilter(id)} class="btn-action" style=${{
-      padding: '7px 13px', borderRadius: 20, cursor: 'pointer', fontSize: 12.5, fontWeight: 500, whiteSpace: 'nowrap',
-      border: `1px solid ${typeFilter === id ? ACC : C.bdr}`,
-      background: typeFilter === id ? 'var(--accent-glow)' : '#fff',
-      color: typeFilter === id ? ACC : C.txt2,
-    }}>${label}</button>`;
+      display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: r.pill, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap',
+      border: `1px solid ${on ? BRAND.blue : C.bdr}`,
+      background: on ? C.bg3 : C.bg2,
+      color: on ? BRAND.blue : C.txt2,
+    }}>${iconKey ? html`<${SportIcon} k=${iconKey} size=${15} color=${on ? BRAND.blue : sportColor(iconKey)}/>` : ''}${label}</button>`;
+  };
 
   return html`
     <div class="fade-in">
       <div style=${{ position: 'sticky', top: 0, zIndex: 5, background: C.bg1, padding: '14px 16px 10px' }}>
-        <h2 style=${{ margin: '0 0 12px', fontSize: 24, fontWeight: 600, color: C.txt1, letterSpacing: '-0.02em' }}>Bảng tin</h2>
+        <h2 style=${{ margin: '0 0 12px', ...T.h1 }}>BẢNG TIN</h2>
         <div style=${{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
           ${chip(null, 'Tất cả')}
-          ${ACTIVITIES.map(a => chip(a.id, `${a.emoji} ${a.label}`))}
+          ${ACTIVITIES.map(a => chip(a.id, a.label, a.iconKey))}
         </div>
         ${newCount > 0 && html`
           <div style=${{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>

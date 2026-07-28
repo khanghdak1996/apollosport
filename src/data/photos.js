@@ -16,6 +16,19 @@ export async function deleteSessionPhoto(uid, sessionId) {
   catch { /* ảnh không tồn tại hoặc lỗi mạng — bỏ qua */ }
 }
 
+// Ảnh đính kèm thông báo (F6): announcements/{uid}/{fileId}.jpg (khớp storage.rules).
+export async function uploadAnnouncementPhoto(blob, uid, fileId) {
+  if (!storage) throw new Error(fbInitError || 'Firebase Storage chưa khởi tạo được');
+  const sref = storageRef(storage, `announcements/${uid}/${fileId}.jpg`);
+  await uploadBytes(sref, blob, { contentType: 'image/jpeg' });
+  return getDownloadURL(sref);
+}
+export async function deleteAnnouncementPhoto(uid, fileId) {
+  if (!storage || !fileId) return;
+  try { await deleteObject(storageRef(storage, `announcements/${uid}/${fileId}.jpg`)); }
+  catch { /* ảnh không tồn tại hoặc lỗi mạng — bỏ qua */ }
+}
+
     export const compressImage = (file, maxDim = 1280, quality = 0.75) => new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);

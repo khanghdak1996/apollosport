@@ -15,7 +15,7 @@ import { actOf } from '../domain/activities.js';
 const DOW = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 const MONTHS = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
 
-export function CalendarTab({ profile, sessions, streak, points = 0, rank, weights = [], onView, onOpenClubs, onOpenGoals, onOpenGuides, onSettings, onLogWeight }) {
+export function CalendarTab({ profile, sessions, streak, points = 0, rank, weights = [], onView, onAvatar, onOpenClubs, onOpenGoals, onOpenGuides, onSettings, onLogWeight }) {
   const today = new Date();
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const st = streak || { current: 0 };
@@ -73,12 +73,14 @@ export function CalendarTab({ profile, sessions, streak, points = 0, rank, weigh
 
       <div style=${{ background: BRAND.blue, padding: '18px 18px 20px', color: '#fff' }}>
         <div style=${{ display: 'flex', alignItems: 'center', gap: 13 }}>
-          ${profile.photoURL
+          <div onClick=${onAvatar} class="btn-action" style=${{ display: 'flex', alignItems: 'center', gap: 13, cursor: onAvatar ? 'pointer' : 'default', flex: 1, minWidth: 0 }}>
+            ${profile.photoURL
             ? html`<img src=${profile.photoURL} style=${{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', border: `3px solid ${BRAND.yellow}`, flexShrink: 0 }}/>`
             : html`<div style=${{ width: 56, height: 56, borderRadius: '50%', background: BRAND.babyBlue, border: `3px solid ${BRAND.yellow}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 22, color: BRAND.blue, flexShrink: 0 }}>${(profile.name || '?').charAt(0).toUpperCase()}</div>`}
-          <div style=${{ flex: 1, minWidth: 0 }}>
-            <p style=${{ margin: 0, fontSize: 17, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${profile.name}</p>
-            <p style=${{ margin: '1px 0 0', fontSize: 12, color: BRAND.babyBlue }}>${profile.dept || '—'}${rank ? ' · hạng ' + rank + ' tuần này' : ''}</p>
+            <div style=${{ flex: 1, minWidth: 0 }}>
+              <p style=${{ margin: 0, fontSize: 17, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${profile.name}</p>
+              <p style=${{ margin: '1px 0 0', fontSize: 12, color: BRAND.babyBlue }}>${profile.dept || '—'}${rank ? ' · hạng ' + rank + ' tuần này' : ''} · Xem thành tích ›</p>
+            </div>
           </div>
           <button onClick=${onSettings} class="btn-action" style=${{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,.18)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
             <${SportIcon} k="gear" size=${18} color="#fff" sw=${1.9}/>

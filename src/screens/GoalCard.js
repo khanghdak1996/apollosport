@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { html } from '../html.js';
-import { C, r, ACC } from '../ui/theme.js';
+import { C, r, F, T, BRAND, SHADOW, sportColor, sportTint } from '../ui/theme.js';
+import { SportIcon } from '../ui/sportIcons.js';
 import { actOf } from '../domain/activities.js';
 import { goalContribution } from '../domain/stats.js';
 import { getGoalProgress, setMyGoalProgress, deleteGoal } from '../data/repo-goals.js';
@@ -10,14 +11,31 @@ const METRIC = { sessions: { u: 'buổi', l: 'Số buổi' }, minutes: { u: 'ph�
 
 function fDate(s) { const [y, m, d] = (s || '').split('-'); return d ? `${d}/${m}` : s; }
 
-// Thẻ 1 mục tiêu chung: tính lại đóng góp của mình từ sessions, cộng tổng nhóm, hiện thanh tiến độ.
+// Vòng tiến độ 96px (track EDF3F9, fill xanh, linecap round, rotate -90).
+function Ring({ pct, reached }) {
+  const size = 96, sw = 10, R = (size - sw) / 2, Circ = 2 * Math.PI * R;
+  const off = Circ * (1 - Math.min(100, pct) / 100);
+  const col = reached ? C.green : BRAND.blue;
+  return html`
+    <div style=${{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      <svg width=${size} height=${size} style=${{ transform: 'rotate(-90deg)' }}>
+        <circle cx=${size / 2} cy=${size / 2} r=${R} fill="none" stroke=${C.bdr2} stroke-width=${sw}/>
+        <circle cx=${size / 2} cy=${size / 2} r=${R} fill="none" stroke=${col} stroke-width=${sw} stroke-linecap="round" stroke-dasharray=${Circ} stroke-dashoffset=${off} style=${{ transition: 'stroke-dashoffset .5s' }}/>
+      </svg>
+      <div style=${{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style=${{ fontFamily: F.display, fontWeight: 700, fontSize: 26, letterSpacing: '.01em', color: col }}>${pct}<span style=${{ fontSize: 13 }}>%</span></span>
+      </div>
+    </div>`;
+}
+
+// Thẻ 1 mục tiêu chung: tính lại đóng góp của mình từ sessions, cộng tổng nhóm, hiện tiến độ.
 export function GoalCard({ goal, me, mySessions, canContribute = true, isAdmin, onDeleted }) {
   const [progress, setProgress] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const m = METRIC[goal.metric] || METRIC.sessions;
   const a = goal.sport ? actOf(goal.sport) : null;
   const today = new Date().toISOString().split('T')[0];
-  const status = today < goal.startDate ? { t: 'Sắp diễn ra', c: C.txt3 } : today > goal.endDate ? { t: 'Đã kết thúc', c: C.txt3 } : { t: 'Đang diễn ra', c: '#22c55e' };
+  const status = today < goal.startDate ? { t: 'Sắp diễn ra', tone: 'quiet' } : today > goal.endDate ? { t: 'Đã kết thúc', tone: 'quiet' } : { t: 'Đang diễn ra', tone: 'good' };
   const canDelete = goal.creatorUid === me.uid || isAdmin;
 
   const withMine = (list, val) => [...list.filter(p => p.uid !== me.uid), { uid: me.uid, name: me.name || 'Bạn', value: val }];
@@ -29,7 +47,6 @@ export function GoalCard({ goal, me, mySessions, canContribute = true, isAdmin, 
       const myVal = goalContribution(mySessions || [], goal);
       const hadDoc = list.some(p => p.uid === me.uid);
       let merged = list;
-      // Tự động: mọi người được phép đóng góp (mục tiêu công ty = ai cũng; nhóm = thành viên).
       if (canContribute && (myVal > 0 || hadDoc)) {
         setMyGoalProgress(goal.id, me, myVal).catch(() => { });
         merged = withMine(list, myVal);
@@ -51,41 +68,46 @@ export function GoalCard({ goal, me, mySessions, canContribute = true, isAdmin, 
     await deleteGoal(goal.id); onDeleted && onDeleted(goal.id);
   };
 
+  const badge = { good: { bg: C.greenBg, fg: C.green }, quiet: { bg: C.bg3, fg: C.txt3 } }[status.tone];
+
   return html`
-    <div style=${{ background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.lg, padding: '16px', marginBottom: 12 }}>
-      <div style=${{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
+    <div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xxl, padding: '16px', marginBottom: 12, boxShadow: SHADOW.raised }}>
+      <div style=${{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <span style=${{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', color: badge.fg, background: badge.bg, borderRadius: 20, padding: '4px 11px' }}>${status.t}</span>
+        <span style=${{ flex: 1, fontSize: 11.5, color: C.txt4 }}>${fDate(goal.startDate)}–${fDate(goal.endDate)}</span>
+        ${canDelete && html`<button onClick=${del} class="btn-action" title="Xoá" style=${{ background: 'transparent', border: 'none', cursor: 'pointer', flexShrink: 0, padding: 4, display: 'flex' }}><${SportIcon} k="trash" size=${16} color=${C.txt4} sw=${1.9}/></button>`}
+      </div>
+
+      <div style=${{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <div style=${{ flex: 1, minWidth: 0 }}>
-          <p style=${{ margin: 0, fontSize: 15, fontWeight: 600, color: C.txt1 }}>${reached ? '🎉 ' : '🎯 '}${goal.title}</p>
-          <p style=${{ margin: '3px 0 0', fontSize: 11.5, color: C.txt3 }}>
-            <span style=${{ color: status.c, fontWeight: 500 }}>${status.t}</span> · ${fDate(goal.startDate)}–${fDate(goal.endDate)} · ${a ? `${a.emoji} ${a.label}` : m.l}
+          <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 22, lineHeight: 1.08, letterSpacing: '.01em', color: C.txt1, textTransform: 'uppercase' }}>${goal.title}</p>
+          <p style=${{ margin: '6px 0 0', fontSize: 12, color: C.txt3, display: 'flex', alignItems: 'center', gap: 5 }}>
+            ${a ? html`<${SportIcon} k=${a.iconKey} size=${13} color=${sportColor(a.iconKey)}/> ${a.label}` : m.l}
+          </p>
+          <p style=${{ margin: '10px 0 0' }}>
+            <span style=${{ fontFamily: F.display, fontWeight: 700, fontSize: 30, lineHeight: 1, color: reached ? C.green : BRAND.blue }}>${totalR}</span>
+            <span style=${{ fontSize: 13, fontWeight: 500, color: C.txt3 }}> / ${goal.target} ${m.u}</span>
           </p>
         </div>
-        ${canDelete && html`<button onClick=${del} class="btn-action" title="Xoá" style=${{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.txt3, fontSize: 16, flexShrink: 0, padding: 0 }}>🗑</button>`}
+        <${Ring} pct=${pctv} reached=${reached}/>
       </div>
 
-      <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-        <span style=${{ fontSize: 20, fontWeight: 700, color: reached ? '#22c55e' : ACC }}>${totalR}<span style=${{ fontSize: 12, fontWeight: 500, color: C.txt3 }}> / ${goal.target} ${m.u}</span></span>
-        <span style=${{ fontSize: 12, fontWeight: 600, color: reached ? '#22c55e' : C.txt2 }}>${pctv}%</span>
-      </div>
-      <div style=${{ height: 10, borderRadius: 5, background: C.bg3, overflow: 'hidden' }}>
-        <div style=${{ height: '100%', width: `${pctv}%`, background: reached ? '#22c55e' : ACC, borderRadius: 5, transition: 'width .4s' }}/>
-      </div>
-
-      <div style=${{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11.5, color: C.txt3 }}>
+      <div style=${{ display: 'flex', justifyContent: 'space-between', marginTop: 14, fontSize: 12, color: C.txt3 }}>
         <span>Đóng góp của bạn: <strong style=${{ color: C.txt1 }}>${goal.metric === 'distanceKm' ? Math.round(mine * 10) / 10 : Math.round(mine)} ${m.u}</strong></span>
         <span>${progress.filter(p => p.value > 0).length} người tham gia</span>
       </div>
 
       ${loaded && top.length > 0 && html`
-        <div style=${{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${C.bdr}` }}>
-          <p style=${{ margin: '0 0 8px', fontSize: 11, fontWeight: 600, color: C.txt3 }}>Góp nhiều nhất</p>
-          ${top.map(p => html`
-            <div key=${p.uid} style=${{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, padding: '3px 0', color: C.txt2 }}>
-              <span style=${{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${p.uid === me.uid ? 'Bạn' : p.name || '—'}</span>
+        <div style=${{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.bdr2}` }}>
+          <p style=${{ margin: '0 0 9px', ...T.label }}>GÓP NHIỀU NHẤT</p>
+          ${top.map((p, i) => html`
+            <div key=${p.uid} style=${{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, padding: '4px 0', color: C.txt2 }}>
+              <span style=${{ width: 16, fontFamily: F.display, fontWeight: 700, color: i === 0 ? BRAND.blue : C.txt4, flexShrink: 0 }}>${i + 1}</span>
+              <span style=${{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${p.uid === me.uid ? 'Bạn' : p.name || '—'}</span>
               <strong style=${{ color: C.txt1, flexShrink: 0, marginLeft: 8 }}>${goal.metric === 'distanceKm' ? Math.round(p.value * 10) / 10 : Math.round(p.value)} ${m.u}</strong>
             </div>`)}
         </div>`}
-      ${!canContribute && html`<p style=${{ margin: '10px 0 0', fontSize: 11, color: C.txt3, fontStyle: 'italic' }}>Tham gia nhóm để đóng góp vào mục tiêu này.</p>`}
+      ${!canContribute && html`<p style=${{ margin: '10px 0 0', ...T.lead }}>Tham gia nhóm để đóng góp vào mục tiêu này.</p>`}
 
       <div style=${{ marginTop: 14 }}>
         <${AnnouncementFeed} parent=${['goals', goal.id]} canPost=${goal.creatorUid === me.uid || isAdmin} me=${me} isAdmin=${isAdmin}/>

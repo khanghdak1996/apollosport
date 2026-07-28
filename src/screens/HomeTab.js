@@ -10,6 +10,7 @@ import { SportIcon } from '../ui/sportIcons.js';
 import { StatStrip, Section } from '../ui/primitives.js';
 import { actOf } from '../domain/activities.js';
 import { summaryStats } from '../domain/session.js';
+import { currentWeekActivity } from '../domain/stats.js';
 import { fD, durS } from '../domain/format.js';
 
 const primStat = s => {
@@ -35,10 +36,11 @@ function weekBars(sessions) {
   return DOW.map((l, i) => ({ l, on: done.has(i) }));
 }
 
-export function HomeTab({ profile, progs, sessions, streak, onStart, onView, onSwitch, onManagePrograms, weeklyGoal = 3, points = 0 }) {
-  const last7 = sessions.filter(s => (new Date() - new Date(s.date)) / 86400000 <= 7);
-  const nSessions = last7.length;
-  const nMinutes = Math.round(last7.reduce((t, s) => t + (s.activeMinutes || s.durationMin || 0), 0));
+export function HomeTab({ profile, progs, sessions, streak, onStart, onView, onSwitch, onManagePrograms, onSeeAll, weeklyGoal = 3, points = 0 }) {
+  // Tuần lịch (Thứ 2 → CN) — CÙNG nguồn với tab Cá nhân (ProgressTab) để mục tiêu tuần không lệch.
+  const week = currentWeekActivity(sessions);
+  const nSessions = week.count;
+  const nMinutes = week.minutes;
   const st = streak || { current: 0, atRisk: false };
   const bars = weekBars(sessions);
   const pct = Math.min(100, Math.round((nSessions / Math.max(1, weeklyGoal)) * 100));
@@ -109,7 +111,7 @@ export function HomeTab({ profile, progs, sessions, streak, onStart, onView, onS
 
       <!-- "Gần đây": 3 thẻ rời → MỘT thẻ nhiều dòng -->
       ${sessions.length > 0 ? html`
-        <${Section} t="GẦN ĐÂY" mt=${16} right=${html`<p style=${{ margin: 0, fontSize: 12, color: BRAND.blue, fontWeight: 600, cursor: 'pointer' }}>Tất cả ›</p>`}/>
+        <${Section} t="GẦN ĐÂY" mt=${16} right=${html`<p onClick=${onSeeAll} style=${{ margin: 0, fontSize: 12, color: BRAND.blue, fontWeight: 600, cursor: 'pointer' }}>Tất cả ›</p>`}/>
         <div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, overflow: 'hidden' }}>
           ${sessions.slice(0, 3).map((s, i) => {
             const a = actOf(s.type);
