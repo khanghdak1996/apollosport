@@ -18,6 +18,11 @@ const isInAppWebview = () => {
       || (/iPhone|iPad|iPod/i.test(ua) && !/Safari/i.test(ua));
 };
 
+// App đã cài (standalone PWA) không mở được cửa sổ popup -> phải dùng redirect.
+const isStandalonePWA = () =>
+  (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches)
+  || window.navigator.standalone === true;
+
 const ACCENTS = ['#0084ff', '#6366f1', '#db2777', '#f97316', '#06b6d4', '#22c55e', '#a855f7', '#ef4444', '#0ea5e9', '#eab308'];
 export const pickAccent = (uid) => {
   let h = 0;
@@ -28,7 +33,7 @@ export const pickAccent = (uid) => {
 // Đăng nhập Google. Ném lỗi (tiếng Việt) nếu email không thuộc domain công ty.
 export async function signIn() {
   await setPersistence(auth, browserLocalPersistence);
-  if (isInAppWebview()) {
+  if (isInAppWebview() || isStandalonePWA()) {
     await signInWithRedirect(auth, provider);
     return null; // trang sẽ reload; kết quả xử lý ở consumeRedirect()
   }
