@@ -31,6 +31,18 @@ export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
   const t = doc?.totals || {};
   const items = allSess.slice(0, 12); // buổi gần đây (đã sắp desc theo loggedAt)
 
+  // Hero: với hồ sơ CỦA MÌNH, tính thẳng từ danh sách buổi thật (allSess gồm cả buổi riêng tư)
+  // để luôn khớp với danh sách bên dưới & các màn khác, không lệ thuộc counter totals có thể trôi.
+  // Xem người khác thì chỉ có buổi công khai nên vẫn dùng totals (đã tự chữa khi họ đăng nhập).
+  const derived = isSelf ? allSess.reduce((x, s) => ({
+    sessions: x.sessions + 1,
+    minutes: x.minutes + (s.activeMinutes || 0),
+    points: x.points + (s.points || 0),
+  }), { sessions: 0, minutes: 0, points: 0 }) : null;
+  const heroSessions = derived ? derived.sessions : (t.sessions || 0);
+  const heroMinutes = derived ? derived.minutes : (t.minutes || 0);
+  const heroPoints = derived ? derived.points : (t.points || 0);
+
   const prBlocks = [...new Set(allSess.map(s => s.type || 'gym'))]
     .map(ty => ({ ty, recs: personalRecords(allSess, ty, actOf(ty).kind) }))
     .filter(x => x.recs.length);
@@ -77,7 +89,7 @@ export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
                 ${st.current > 0 && html`<div style=${{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 12, background: 'rgba(255,255,255,.16)', borderRadius: 20, padding: '6px 14px', fontSize: 13, fontWeight: 600 }}><${SportIcon} k="flame" size=${15} color=${BRAND.yellow}/> Chuỗi ${st.current} ngày</div>`}
 
                 <div style=${{ display: 'flex', gap: 8, marginTop: 18 }}>
-                  ${[{ v: t.sessions || 0, l: 'Buổi tập' }, { v: t.minutes || 0, l: 'Phút' }, { v: t.points || 0, l: 'Điểm' }, { v: doc.streak?.longest || 0, l: 'Chuỗi dài' }].map((s, i) => html`
+                  ${[{ v: heroSessions, l: 'Buổi tập' }, { v: heroMinutes, l: 'Phút' }, { v: heroPoints, l: 'Điểm' }, { v: doc.streak?.longest || 0, l: 'Chuỗi dài' }].map((s, i) => html`
                     <div key=${i} style=${{ flex: 1, background: 'rgba(255,255,255,.14)', borderRadius: 14, padding: '11px 6px', minWidth: 0 }}>
                       <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 22, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>${s.v}</p>
                       <p style=${{ margin: '3px 0 0', fontSize: 9.5, letterSpacing: '.07em', fontWeight: 600, color: BRAND.babyBlue, textTransform: 'uppercase' }}>${s.l}</p>
