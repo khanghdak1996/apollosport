@@ -3,11 +3,35 @@ import { html } from '../html.js';
 import { C, r, ACC } from '../ui/theme.js';
 import { Wrap, Btn, Label } from '../ui/primitives.js';
 import { ACTIVITIES } from '../domain/activities.js';
+import { DEPARTMENTS } from '../data/departments.js';
+
+const inputStyle = { width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: r.md, border: `1px solid ${C.bdr}`, fontSize: 15, color: C.txt1, background: '#fff' };
+
+// Dropdown chọn Phòng ban / Trung tâm từ DEPARTMENTS (gõ để lọc) — cùng nguồn với Cài đặt.
+function DeptSelect({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const ql = q.trim().toLowerCase();
+  const shown = ql ? DEPARTMENTS.filter(o => o.toLowerCase().includes(ql)) : DEPARTMENTS;
+  return html`
+    <div style=${{ position: 'relative' }}>
+      <input value=${open ? q : (value || '')}
+        onFocus=${() => { setOpen(true); setQ(''); }}
+        onBlur=${() => setTimeout(() => setOpen(false), 120)}
+        onInput=${e => setQ(e.target.value)}
+        placeholder="Chọn hoặc gõ để tìm…" style=${inputStyle}/>
+      ${open && html`
+        <div style=${{ position: 'absolute', left: 0, right: 0, top: '100%', zIndex: 30, marginTop: 6, background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.md, boxShadow: '0 12px 30px rgba(18,57,94,.16)', maxHeight: 240, overflowY: 'auto' }}>
+          ${shown.length
+      ? shown.map((o, i) => html`<div key=${o} onMouseDown=${() => { onChange(o); setOpen(false); setQ(''); }} style=${{ padding: '11px 14px', fontSize: 14, color: o === value ? ACC : C.txt1, fontWeight: o === value ? 700 : 500, cursor: 'pointer', borderTop: i ? `1px solid ${C.bdr2}` : 'none' }}>${o}</div>`)
+      : html`<div style=${{ padding: '12px 14px', fontSize: 13, color: C.txt3 }}>Không tìm thấy "${q}"</div>`}
+        </div>`}
+    </div>`;
+}
 
 export function Onboarding({ initialName = '', onDone }) {
   const [name, setName] = useState(initialName);
   const [dept, setDept] = useState('');
-  const [center, setCenter] = useState('');
   const [sports, setSports] = useState([]);
   const [busy, setBusy] = useState(false);
 
@@ -16,42 +40,37 @@ export function Onboarding({ initialName = '', onDone }) {
   const submit = async () => {
     if (!name.trim() || busy) return;
     setBusy(true);
-    try { await onDone({ name: name.trim(), dept: dept.trim(), center: center.trim(), sports }); }
+    try { await onDone({ name: name.trim(), dept: dept.trim(), center: '', sports }); }
     finally { setBusy(false); }
   };
-
-  const inputStyle = { width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: r.md, border: `1px solid ${C.bdr}`, fontSize: 15, color: C.txt1, background: '#fff' };
 
   return html`
     <${Wrap}>
       <div style=${{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '26px 18px 32px' }}>
-        <h1 style=${{ margin: '0 0 6px', fontSize: 26, fontWeight: 600, color: C.txt1, letterSpacing: '-0.02em' }}>Chào mừng! 👋</h1>
+        <h1 style=${{ margin: '0 0 6px', fontSize: 26, fontWeight: 600, color: C.txt1, letterSpacing: '-0.02em' }}>Chào mừng!</h1>
         <p style=${{ margin: '0 0 24px', color: C.txt2, fontSize: 14.5, lineHeight: 1.5 }}>Vài thông tin để bắt đầu. Bạn có thể đổi lại bất cứ lúc nào trong Cài đặt.</p>
 
         <${Label} t="Tên hiển thị"/>
         <input value=${name} onInput=${e => setName(e.target.value)} placeholder="Tên của bạn" style=${inputStyle}/>
 
-        <${Label} t="Phòng ban / Bộ phận" mt=${18}/>
-        <input value=${dept} onInput=${e => setDept(e.target.value)} placeholder="VD: Kỹ thuật, Marketing..." style=${inputStyle}/>
-
-        <${Label} t="Trung tâm / Cơ sở" mt=${18}/>
-        <input value=${center} onInput=${e => setCenter(e.target.value)} placeholder="VD: Hà Nội, HCM..." style=${inputStyle}/>
+        <${Label} t="Phòng ban / Trung tâm" mt=${18}/>
+        <${DeptSelect} value=${dept} onChange=${setDept}/>
 
         <${Label} t="Môn bạn hay tập (tuỳ chọn)" mt=${18}/>
         <div style=${{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           ${ACTIVITIES.filter(a => a.id !== 'other').map(a => {
-            const on = sports.includes(a.id);
-            return html`
+      const on = sports.includes(a.id);
+      return html`
               <button key=${a.id} onClick=${() => toggle(a.id)} class="btn-action" style=${{
-                padding: '8px 14px', borderRadius: 20, cursor: 'pointer', fontSize: 13, fontWeight: 500,
-                border: `1px solid ${on ? a.color : C.bdr}`,
-                background: on ? a.color + '1A' : '#fff', color: on ? a.color : C.txt2,
-              }}>${a.label}</button>`;
-          })}
+          padding: '8px 14px', borderRadius: 20, cursor: 'pointer', fontSize: 13, fontWeight: 500,
+          border: `1px solid ${on ? a.color : C.bdr}`,
+          background: on ? a.color + '1A' : '#fff', color: on ? a.color : C.txt2,
+        }}>${a.label}</button>`;
+    })}
         </div>
 
         <div style=${{ marginTop: 26, background: C.bg3, borderRadius: r.md, padding: '14px 16px', fontSize: 13, color: C.txt2, lineHeight: 1.55 }}>
-          🔒 <b style=${{ color: C.txt1 }}>Riêng tư:</b> Cân nặng và số đo của bạn <b>luôn riêng tư</b>, không ai thấy. Buổi tập của bạn sẽ hiển thị với đồng nghiệp trong bảng tin — bạn có thể đặt riêng tư từng buổi bất cứ lúc nào.
+          <b style=${{ color: C.txt1 }}>Riêng tư:</b> Cân nặng và số đo của bạn <b>luôn riêng tư</b>, không ai thấy. Buổi tập của bạn sẽ hiển thị với đồng nghiệp trong bảng tin — bạn có thể đặt riêng tư từng buổi bất cứ lúc nào.
         </div>
       </div>
 
