@@ -3,9 +3,17 @@ import { getFirestore, connectFirestoreEmulator } from 'fb/firestore';
 import { getAuth, onAuthStateChanged, connectAuthEmulator } from 'fb/auth';
 import { getStorage, connectStorageEmulator } from 'fb/storage';
 
+// Production dùng CHÍNH domain app làm authDomain (proxy /__/auth/* -> firebaseapp.com khai
+// báo trong vercel.json). Cần cho signInWithRedirect trong standalone PWA trên iOS: Safari
+// cô lập storage khi trang auth ở domain khác -> mất phiên -> lặp lại màn đăng nhập.
+// Localhost giữ authDomain mặc định của Firebase (không có proxy khi chạy máy).
+const AUTH_DOMAIN = ['localhost', '127.0.0.1'].includes(location.hostname)
+  ? 'apollo-sport-social.firebaseapp.com'
+  : 'apollosport.vercel.app';
+
 const firebaseConfig = {
   apiKey: "AIzaSyBUUbB149e2J_mZHulhbcYtXyUy2JbhN0k",
-  authDomain: "apollo-sport-social.firebaseapp.com",
+  authDomain: AUTH_DOMAIN,
   projectId: "apollo-sport-social",
   storageBucket: "apollo-sport-social.firebasestorage.app",
   messagingSenderId: "368506443580",
