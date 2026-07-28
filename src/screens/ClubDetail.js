@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { html } from '../html.js';
-import { C, r, ACC, F, BRAND } from '../ui/theme.js';
+import { C, r, ACC, F, BRAND, sportColor } from '../ui/theme.js';
 import { Wrap, Empty } from '../ui/primitives.js';
 import { Icons } from '../ui/icons.js';
 import { SportIcon } from '../ui/sportIcons.js';
@@ -17,6 +17,9 @@ import {
   joinPublicClub, leaveClub, requestJoin, approveRequest, denyRequest, deleteClub, clubFeedPage,
   inviteToClub, updateClubVisibility, listClubInvites,
 } from '../data/repo-clubs.js';
+
+// createdAt (Firestore Timestamp) → ms (số), khớp kiểu với session.loggedAt để lọc feed.
+const sinceMs = ts => (ts && typeof ts.toMillis === 'function') ? ts.toMillis() : (typeof ts === 'number' ? ts : null);
 
 export function ClubDetail({ clubId, me, mySessions, myReactions, isAdmin, onBack, onOpenProfile, onOpenComments, onDeleted }) {
   const [club, setClub] = useState(null);
@@ -57,7 +60,8 @@ export function ClubDetail({ clubId, me, mySessions, myReactions, isAdmin, onBac
     setLoading(false);
     // feed: bài của thành viên, đúng môn nhóm
     const set = new Set(mem.map(m => m.uid));
-    const { items, cursor, done } = await clubFeedPage(null, c.sport, set);
+    // loggedAt lưu dạng số (ms) nên "since" cũng phải là số — createdAt là Timestamp → .toMillis().
+    const { items, cursor, done } = await clubFeedPage(null, c.sport, set, sinceMs(c.createdAt));
     setItems(items); setCursor(cursor); setDone(done);
   };
   useEffect(() => { reload(); }, [clubId]);
@@ -66,7 +70,7 @@ export function ClubDetail({ clubId, me, mySessions, myReactions, isAdmin, onBac
     if (!sentinel.current || done || loading) return;
     const io = new IntersectionObserver(async (es) => {
       if (es[0].isIntersecting && cursor) {
-        const { items: more, cursor: c2, done: d2 } = await clubFeedPage(cursor, club.sport, memberSet);
+        const { items: more, cursor: c2, done: d2 } = await clubFeedPage(cursor, club.sport, memberSet, sinceMs(club.createdAt));
         setItems(prev => [...prev, ...more]); setCursor(c2); setDone(d2);
       }
     }, { rootMargin: '200px' });
@@ -163,8 +167,11 @@ export function ClubDetail({ clubId, me, mySessions, myReactions, isAdmin, onBac
                   </div>
                   <p style=${{ margin: '0 0 6px', fontSize: 11.5, color: C.txt3 }}>Cổng vào nhóm</p>
                   <div style=${{ display: 'flex', gap: 8 }}>
-                    ${[{ v: 'public', l: '🌐 Công khai' }, { v: 'invite', l: '🔒 Cần duyệt' }].map(o => html`
-                      <button key=${o.v} onClick=${() => changeVisibility(o.v)} disabled=${savingVis} class="btn-action" style=${{ flex: 1, padding: '9px', borderRadius: r.md, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, border: `1px solid ${club.visibility === o.v ? ACC : C.bdr}`, background: club.visibility === o.v ? 'var(--accent-glow)' : '#fff', color: club.visibility === o.v ? ACC : C.txt2 }}>${o.l}</button>`)}
+                    ${[{ v: 'public', k: 'globe', l: 'Công khai' }, { v: 'invite', k: 'lock', l: 'Cần duyệt' }].map(o => {
+      const on = club.visibility === o.v;
+      return html`
+                      <button key=${o.v} onClick=${() => changeVisibility(o.v)} disabled=${savingVis} class="btn-action" style=${{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: r.md, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, border: `1px solid ${on ? ACC : C.bdr}`, background: on ? 'var(--accent-glow)' : '#fff', color: on ? ACC : C.txt2 }}><${SportIcon} k=${o.k} size=${14} color=${on ? ACC : C.txt3}/> ${o.l}</button>`;
+    })}
                   </div>
                   <p style=${{ margin: '8px 0 0', fontSize: 11, color: C.txt3, lineHeight: 1.5 }}>${club.visibility === 'public' ? 'Ai cũng vào được ngay.' : 'Người mới phải gửi yêu cầu, bạn duyệt. Người được mời vào thẳng.'}</p>
                 </div>`}
@@ -197,7 +204,7 @@ export function ClubDetail({ clubId, me, mySessions, myReactions, isAdmin, onBac
 
               <div style=${{ padding: '8px 16px 4px' }}>
                 <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <p style=${{ margin: 0, fontSize: 13, fontWeight: 600, color: C.txt2 }}>🎯 Mục tiêu nhóm</p>
+                  <p style=${{ margin: 0, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: C.txt2 }}><${SportIcon} k="target" size=${15} color=${ACC}/> Mục tiêu nhóm</p>
                   ${isOwner && html`<button onClick=${() => setShowGoalForm(true)} class="btn-action" style=${{ background: 'var(--accent-glow)', border: 'none', borderRadius: 14, padding: '6px 12px', color: ACC, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>＋ Tạo</button>`}
                 </div>
                 ${goals.length === 0
@@ -206,7 +213,7 @@ export function ClubDetail({ clubId, me, mySessions, myReactions, isAdmin, onBac
               </div>
 
               <div style=${{ padding: '8px 16px 20px' }}>
-                <p style=${{ margin: '0 0 10px', fontSize: 13, fontWeight: 600, color: C.txt2 }}>Hoạt động của nhóm · ${a.emoji} ${a.label}</p>
+                <p style=${{ margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: C.txt2 }}>Hoạt động của nhóm · <${SportIcon} k=${a.iconKey} size=${14} color=${sportColor(a.iconKey)}/> ${a.label}</p>
                 ${items.length === 0
                   ? html`<${Empty} icon=${a.iconKey} msg="Chưa có buổi ${a.label.toLowerCase()} nào" sub="Thành viên đăng buổi tập sẽ hiện ở đây"/>`
                   : items.map(p => html`<${PostCard}

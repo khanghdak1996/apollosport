@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { html } from './html.js';
-import { C, r, ACC, F, BRAND } from './ui/theme.js';
+import { C, r, ACC, F, T, BRAND, sportColor, sportTint } from './ui/theme.js';
 import { Icons } from './ui/icons.js';
 import { SportIcon } from './ui/sportIcons.js';
 import { Wrap, Card, Empty, Label, Btn } from './ui/primitives.js';
@@ -12,11 +12,11 @@ import { EXDB } from './data/exercises-db.js';
 import { REST_PRESETS } from './domain/constants.js';
 import { ACT, actOf, fieldsOf } from './domain/activities.js';
 import { buildGymSession, buildActivitySession, summaryStats, headline } from './domain/session.js';
-import { advanceStreak, computeStreak, liveStreak, dayStr } from './domain/streak.js';
+import { advanceStreak, liveStreak, dayStr } from './domain/streak.js';
 import { evaluateBadges, BADGES } from './domain/badges.js';
 import { db } from './data/local.js';
 import { compressImage, uploadSessionPhoto, deleteSessionPhoto } from './data/photos.js';
-import { saveSession, deleteSession as repoDeleteSession, updateSessionContent, deleteSessionWithStats, adminDeleteSession, dayContext } from './data/repo-sessions.js';
+import { saveSession, deleteSession as repoDeleteSession, updateSessionContent, updateSessionVisibility, deleteSessionWithStats, adminDeleteSession, dayContext } from './data/repo-sessions.js';
 import { loadMyReactions } from './data/repo-social.js';
 import { removeMyEntries } from './data/repo-leaderboard.js';
 import { getPrivateWeights, savePrivateWeights } from './data/repo-private.js';
@@ -403,8 +403,8 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
               <button onClick=${removePhoto} style=${{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, color: '#fff', cursor: 'pointer', fontSize: 16 }}>×</button>
             </div>`
       : html`
-            <div style=${{ border: `1.5px dashed ${C.bdr2}`, borderRadius: r.lg, padding: '22px', textAlign: 'center', color: C.txt3 }}>
-              <div style=${{ fontSize: 26, marginBottom: 6 }}>📷</div>
+            <div style=${{ border: `1.5px dashed #C7D8E6`, borderRadius: r.lg, padding: '22px', textAlign: 'center', color: C.txt3 }}>
+              <div style=${{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}><${SportIcon} k="photo" size=${26} color=${C.txt3} sw=${1.7}/></div>
               <p style=${{ margin: 0, fontSize: 13, fontWeight: 500 }}>Thêm ảnh</p>
             </div>`}
         </label>
@@ -444,13 +444,13 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
         <div style=${{ borderTop: `1px solid ${C.bdr}`, paddingTop: 14, marginBottom: 24 }}>
           <p style=${{ margin: '0 0 8px', fontSize: 11, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Hiển thị</p>
           <div style=${{ display: 'flex', gap: 8 }}>
-            ${[{ v: 'company', l: '🌏 Đồng nghiệp' }, { v: 'private', l: '🔒 Chỉ mình tôi' }].map(o => html`
+            ${[{ v: 'company', k: 'globe', l: 'Đồng nghiệp' }, { v: 'private', k: 'lock', l: 'Chỉ mình tôi' }].map(o => html`
               <button key=${o.v} onClick=${() => setVisibility(o.v)} class="btn-action" style=${{
-          flex: 1, padding: '11px', borderRadius: r.md, cursor: 'pointer', fontSize: 13.5, fontWeight: 500,
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '11px', borderRadius: r.md, cursor: 'pointer', fontSize: 13.5, fontWeight: 500,
           border: `1px solid ${visibility === o.v ? ACC : C.bdr}`,
           background: visibility === o.v ? 'var(--accent-glow)' : '#fff',
           color: visibility === o.v ? ACC : C.txt2,
-        }}>${o.l}</button>`)}
+        }}><${SportIcon} k=${o.k} size=${15} color=${visibility === o.v ? ACC : C.txt3}/> ${o.l}</button>`)}
           </div>
         </div>
 
@@ -638,7 +638,7 @@ function PickEx({ exList, onPick, onClose, onAddEx }) {
     </${Wrap}>`;
 }
 
-function SessDetail({ session, onClose, canEdit = false, onSave, onDelete }) {
+function SessDetail({ session, onClose, canEdit = false, onSave, onChangeVisibility, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [eTitle, setETitle] = useState(session.title || '');
   const [eNote, setENote] = useState(session.note || '');
@@ -655,15 +655,14 @@ function SessDetail({ session, onClose, canEdit = false, onSave, onDelete }) {
   const authorName = session.authorName;
   const authorPhoto = session.authorPhoto;
   const subtitle = [isGym ? (session.detail?.progName || session.progName) : a.label, fD(session.date)].filter(Boolean).join(' · ');
-  const STAT_EMOJI = { flame: '🔥', check: '✅', clock: '⏱', route: '📏', bolt: '⚡', star: '⭐', wave: '🌊', gauge: '💨' };
   const cells = isGym
     ? [
-      { l: 'Tổng volume', v: `${Math.round(volOf(session))} kg` },
-      { l: 'Thời gian', v: durS(dur) },
-      { l: 'Số bài tập', v: `${exs.length} bài` },
-      { l: 'Tổng set', v: `${session.detail?.totalSets ?? exs.reduce((t, e) => t + e.sets.filter(s => s.done).length, 0)} sets` },
+      { l: 'Tổng volume', v: `${Math.round(volOf(session))} kg`, k: 'flame' },
+      { l: 'Thời gian', v: durS(dur), k: 'clock' },
+      { l: 'Số bài tập', v: `${exs.length} bài`, k: 'gym' },
+      { l: 'Tổng set', v: `${session.detail?.totalSets ?? exs.reduce((t, e) => t + e.sets.filter(s => s.done).length, 0)} sets`, k: 'check' },
     ]
-    : summaryStats(session).map(x => ({ l: x.l || 'Chỉ số', v: `${x.v}${x.u ? ' ' + x.u : ''}`, e: STAT_EMOJI[x.icon] }));
+    : summaryStats(session).map(x => ({ l: x.l || 'Chỉ số', v: `${x.v}${x.u ? ' ' + x.u : ''}`, k: x.icon }));
   // Các ô chi tiết còn lại (kiểu bơi, trường phái, độ cao, số ván...) không nằm trong summary.
   const SKIP_DETAIL = new Set(['durationMin', 'distanceKm', 'distanceM', 'paceMinPerKm', 'laps']);
   const d = session.detail || {};
@@ -674,17 +673,20 @@ function SessDetail({ session, onClose, canEdit = false, onSave, onDelete }) {
   return html`
     <${Wrap} cx=${{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 100, background: C.bg1 }}>
       <div style=${{ padding: '14px 16px', borderBottom: `1px solid ${C.bdr}`, flexShrink: 0, background: '#ffffff', display: 'flex', gap: 12, alignItems: 'center' }}>
-        <button onClick=${onClose} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.txt2 }}>
-          <${Icons.close} size=${20}/>
+        <button onClick=${onClose} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <${SportIcon} k="close" size=${18} color=${C.txt2} sw=${2}/>
         </button>
-        <div style=${{ flex: 1, minWidth: 0 }}>
-          <h2 style=${{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em' }}>${a.emoji} ${session.title || a.label}</h2>
-          <p style=${{ margin: 0, color: C.txt3, fontSize: 12 }}>${authorName ? `${authorName} · ` : ''}${subtitle}</p>
+        <div style=${{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style=${{ width: 30, height: 30, borderRadius: 9, background: sportTint(a.iconKey), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><${SportIcon} k=${a.iconKey} size=${17} color=${sportColor(a.iconKey)}/></span>
+          <div style=${{ minWidth: 0 }}>
+            <h2 style=${{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${session.title || a.label}</h2>
+            <p style=${{ margin: 0, color: C.txt3, fontSize: 12 }}>${authorName ? `${authorName} · ` : ''}${subtitle}</p>
+          </div>
         </div>
         ${canEdit && !editing && html`
-          <button onClick=${openEdit} class="btn-action" title="Sửa bài" style=${{ background: '#f1f5f9', border: 'none', borderRadius: 18, height: 34, padding: '0 13px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: C.txt1, fontSize: 13, fontWeight: 600, flexShrink: 0 }}><${Icons.edit} size=${14}/> Sửa</button>`}
+          <button onClick=${openEdit} class="btn-action" title="Sửa bài" style=${{ background: '#f1f5f9', border: 'none', borderRadius: 18, height: 34, padding: '0 13px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: C.txt1, fontSize: 13, fontWeight: 600, flexShrink: 0 }}><${SportIcon} k="edit" size=${14} color=${C.txt1} sw=${2}/> Sửa</button>`}
         ${canEdit && !editing && onDelete && html`
-          <button onClick=${() => { if (window.confirm('Xoá bài đăng này? Số liệu (điểm, phút, buổi, chuỗi, xếp hạng) sẽ được trừ lại. Không hoàn tác được.')) onDelete(session); }} class="btn-action" title="Xoá bài" style=${{ background: '#fef2f2', border: `1px solid ${C.red}33`, borderRadius: 18, height: 34, padding: '0 13px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: C.red, fontSize: 13, fontWeight: 600, flexShrink: 0 }}><${Icons.trash} size=${14}/> Xoá</button>`}
+          <button onClick=${() => { if (window.confirm('Xoá bài đăng này? Số liệu (điểm, phút, buổi, chuỗi, xếp hạng) sẽ được trừ lại. Không hoàn tác được.')) onDelete(session); }} class="btn-action" title="Xoá bài" style=${{ background: '#fef2f2', border: `1px solid ${C.red}33`, borderRadius: 18, height: 34, padding: '0 13px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: C.red, fontSize: 13, fontWeight: 600, flexShrink: 0 }}><${SportIcon} k="trash" size=${14} color=${C.red} sw=${2}/> Xoá</button>`}
         ${!editing && !canEdit && authorPhoto && html`<img src=${authorPhoto} style=${{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}/>`}
       </div>
       <div style=${{ flex: 1, overflowY: 'auto', padding: '16px', WebkitOverflowScrolling: 'touch' }}>
@@ -702,11 +704,23 @@ function SessDetail({ session, onClose, canEdit = false, onSave, onDelete }) {
                   <img src=${curPhoto} style=${{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }}/>
                   <button onClick=${e => { e.preventDefault(); e.stopPropagation(); setEPhotoFile(null); setEPhotoPreview(null); setERemovePhoto(true); }} title="Gỡ ảnh" style=${{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: 28, height: 28, color: '#fff', cursor: 'pointer', fontSize: 16 }}>×</button>
                 </div>`
-        : html`<div style=${{ border: `1.5px dashed ${C.bdr2}`, borderRadius: r.md, padding: '18px', textAlign: 'center', color: C.txt3 }}>
-                  <div style=${{ fontSize: 24, marginBottom: 4 }}>📷</div>
+        : html`<div style=${{ border: `1.5px dashed #C7D8E6`, borderRadius: r.md, padding: '18px', textAlign: 'center', color: C.txt3 }}>
+                  <div style=${{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}><${SportIcon} k="photo" size=${24} color=${C.txt3} sw=${1.7}/></div>
                   <p style=${{ margin: 0, fontSize: 13, fontWeight: 500 }}>${eRemovePhoto ? 'Đã gỡ ảnh — bấm để thêm ảnh mới' : 'Thêm ảnh'}</p>
                 </div>`}
             </label>
+            ${onChangeVisibility && html`
+              <p style=${{ margin: '14px 0 6px', fontSize: 12, fontWeight: 600, color: C.txt2 }}>Hiển thị</p>
+              <div style=${{ display: 'flex', gap: 8 }}>
+                ${[{ v: 'company', k: 'globe', l: 'Đồng nghiệp' }, { v: 'private', k: 'lock', l: 'Chỉ mình tôi' }].map(o => {
+      const on = (session.visibility ?? 'company') === o.v;
+      return html`<button key=${o.v} onClick=${() => onChangeVisibility(session.id, o.v)} class="btn-action" style=${{
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px', borderRadius: r.md, cursor: 'pointer', fontSize: 13, fontWeight: 500,
+        border: `1px solid ${on ? ACC : C.bdr}`, background: on ? 'var(--accent-glow)' : '#fff', color: on ? ACC : C.txt2,
+      }}><${SportIcon} k=${o.k} size=${15} color=${on ? ACC : C.txt3}/> ${o.l}</button>`;
+    })}
+              </div>
+              <p style=${{ margin: '6px 0 0', fontSize: 11.5, color: C.txt3, lineHeight: 1.5 }}>Chuyển sang "Chỉ mình tôi" sẽ gỡ buổi này khỏi bảng tin & bảng xếp hạng của đồng nghiệp.</p>`}
             <p style=${{ margin: '12px 0 0', fontSize: 11.5, color: C.txt3, lineHeight: 1.5 }}>Sửa tiêu đề, ghi chú & ảnh. Điểm, chuỗi và xếp hạng giữ nguyên như lúc đăng.</p>
             <div style=${{ display: 'flex', gap: 8, marginTop: 12 }}>
               <button onClick=${() => setEditing(false)} class="btn-action" style=${{ flex: 1, padding: '10px', borderRadius: r.md, border: `1px solid ${C.bdr}`, background: '#fff', color: C.txt2, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>Huỷ</button>
@@ -716,13 +730,13 @@ function SessDetail({ session, onClose, canEdit = false, onSave, onDelete }) {
         ${!editing && session.photoUrl && html`<img src=${session.photoUrl} style=${{ width: '100%', height: 220, objectFit: 'cover', borderRadius: r.lg, marginBottom: 16, display: 'block' }}/>`}
         ${!editing && session.note && html`
           <div style=${{ background: '#ffffff', borderRadius: r.lg, padding: '14px 16px', marginBottom: 16, border: `1px solid ${C.bdr}`, fontSize: 13, color: C.txt1, lineHeight: 1.5, display: 'flex', gap: 8 }}>
-            <span>📝</span><span>${session.note}</span>
+            <span style=${{ flexShrink: 0, marginTop: 1 }}><${SportIcon} k="journal" size=${15} color=${C.txt3}/></span><span>${session.note}</span>
           </div>
         `}
         <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
-          ${cells.map(({ l, v, e }) => html`
+          ${cells.map(({ l, v, k }) => html`
             <div key=${l} style=${{ background: '#ffffff', borderRadius: r.md, padding: '14px 16px', border: `1px solid ${C.bdr}`, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style=${{ fontSize: 20 }}>${e || '💪'}</div>
+              <span style=${{ width: 34, height: 34, borderRadius: 10, background: C.bg3, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><${SportIcon} k=${k || 'star'} size=${18} color=${BRAND.blue}/></span>
               <div>
                 <p style=${{ margin: '0 0 2px', fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>${l}</p>
                 <p style=${{ margin: 0, fontSize: 18, fontWeight: 600, color: ACC }}>${v}</p>
@@ -762,7 +776,7 @@ function SessDetail({ session, onClose, canEdit = false, onSave, onDelete }) {
             </div>
             ${ex.notes && html`
               <div style=${{ marginTop: 10, paddingTop: 10, borderTop: `1px solid rgba(0,0,0,0.03)`, fontSize: 12, color: C.txt2, fontStyle: 'italic', display: 'flex', gap: 6 }}>
-                <span>📝</span>
+                <span style=${{ flexShrink: 0, marginTop: 1 }}><${SportIcon} k="journal" size=${14} color=${C.txt3}/></span>
                 <span>${ex.notes}</span>
               </div>
             `}
@@ -918,7 +932,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
       <${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
         ${(!hasGoal && !goalEdit) ? html`
           <div style=${{ textAlign: 'center', padding: '6px 0' }}>
-            <p style=${{ margin: '0 0 10px', fontSize: 13, color: C.txt2 }}>Đặt mục tiêu để giữ thói quen đều đặn 💪</p>
+            <p style=${{ margin: '0 0 10px', ...T.lead, textAlign: 'center' }}>Đặt mục tiêu để giữ thói quen đều đặn.</p>
             <${Btn} onClick=${() => setGoalEdit(true)}>Đặt mục tiêu</${Btn}>
           </div>`
       : goalEdit ? html`
@@ -941,21 +955,21 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
           <div style=${{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             ${goals?.sessionsPerWeek > 0 && html`
               <div>
-                <div style=${{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 5 }}>
+                <div style=${{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 5 }}>
                   <span style=${{ color: C.txt2 }}>Buổi tập</span>
-                  <strong style=${{ color: C.txt1 }}>${curWeek.count}/${goals.sessionsPerWeek}${curWeek.count >= goals.sessionsPerWeek ? ' ✅' : ''}</strong>
+                  <strong style=${{ display: 'flex', alignItems: 'center', gap: 4, color: curWeek.count >= goals.sessionsPerWeek ? C.green : C.txt1 }}>${curWeek.count}/${goals.sessionsPerWeek}${curWeek.count >= goals.sessionsPerWeek ? html` <${SportIcon} k="check" size=${13} color=${C.green} sw=${2.4}/>` : ''}</strong>
                 </div>
-                ${bar(curWeek.count, goals.sessionsPerWeek, ACC)}
+                ${bar(curWeek.count, goals.sessionsPerWeek, BRAND.blue)}
               </div>`}
             ${goals?.minutesPerWeek > 0 && html`
               <div>
-                <div style=${{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 5 }}>
+                <div style=${{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 5 }}>
                   <span style=${{ color: C.txt2 }}>Phút vận động</span>
-                  <strong style=${{ color: C.txt1 }}>${curWeek.minutes}/${goals.minutesPerWeek}${curWeek.minutes >= goals.minutesPerWeek ? ' ✅' : ''}</strong>
+                  <strong style=${{ display: 'flex', alignItems: 'center', gap: 4, color: curWeek.minutes >= goals.minutesPerWeek ? C.green : C.txt1 }}>${curWeek.minutes}/${goals.minutesPerWeek}${curWeek.minutes >= goals.minutesPerWeek ? html` <${SportIcon} k="check" size=${13} color=${C.green} sw=${2.4}/>` : ''}</strong>
                 </div>
-                ${bar(curWeek.minutes, goals.minutesPerWeek, '#22c55e')}
+                ${bar(curWeek.minutes, goals.minutesPerWeek, C.green)}
               </div>`}
-            <button onClick=${() => setGoalEdit(true)} class="btn-action" style=${{ alignSelf: 'flex-start', background: 'transparent', border: 'none', color: ACC, fontSize: 12.5, fontWeight: 500, cursor: 'pointer', padding: 0 }}>Sửa mục tiêu</button>
+            <button onClick=${() => setGoalEdit(true)} class="btn-action" style=${{ alignSelf: 'flex-start', background: 'transparent', border: 'none', color: BRAND.blue, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', padding: 0 }}>Sửa mục tiêu</button>
           </div>`}
       </${Card}>`;
 
@@ -1033,11 +1047,11 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
     const cells = [{ l: primL, v: primV }, { l: 'Dài nhất', v: longV }, { l: 'Số buổi', v: `${dp.count}` }];
     return html`
       <${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
-        <p style=${{ margin: '0 0 12px', fontSize: 14, fontWeight: 600, color: ACC }}>${a.emoji} ${a.label}</p>
+        <p style=${{ margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 7, fontFamily: F.display, fontWeight: 700, fontSize: 16, letterSpacing: '.04em', textTransform: 'uppercase', color: C.txt1 }}><${SportIcon} k=${a.iconKey} size=${17} color=${sportColor(a.iconKey)}/> ${a.label}</p>
         <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
           ${cells.map(c => html`<div key=${c.l}>
             <p style=${{ margin: 0, fontSize: 10, color: C.txt3, textTransform: 'sentence-case' }}>${c.l}</p>
-            <p style=${{ margin: '2px 0 0', fontSize: 15, fontWeight: 600, color: '#0f172a' }}>${c.v}</p>
+            <p style=${{ margin: '2px 0 0', fontSize: 15, fontWeight: 600, color: C.txt1 }}>${c.v}</p>
           </div>`)}
         </div>
       </${Card}>
@@ -1060,11 +1074,11 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
     const cells = [{ l: 'Số buổi', v: `${list.length}` }, { l: 'Tổng phút', v: `${Math.round(totalMin)}` }, { l: 'Tổng điểm', v: `${Math.round(totalPts)}` }];
     return html`
       <${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
-        <p style=${{ margin: '0 0 12px', fontSize: 14, fontWeight: 600, color: ACC }}>${a.emoji} ${a.label}</p>
+        <p style=${{ margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 7, fontFamily: F.display, fontWeight: 700, fontSize: 16, letterSpacing: '.04em', textTransform: 'uppercase', color: C.txt1 }}><${SportIcon} k=${a.iconKey} size=${17} color=${sportColor(a.iconKey)}/> ${a.label}</p>
         <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
           ${cells.map(c => html`<div key=${c.l}>
             <p style=${{ margin: 0, fontSize: 10, color: C.txt3, textTransform: 'sentence-case' }}>${c.l}</p>
-            <p style=${{ margin: '2px 0 0', fontSize: 15, fontWeight: 600, color: '#0f172a' }}>${c.v}</p>
+            <p style=${{ margin: '2px 0 0', fontSize: 15, fontWeight: 600, color: C.txt1 }}>${c.v}</p>
           </div>`)}
         </div>
       </${Card}>
@@ -1080,8 +1094,13 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
   return html`
     <div class="fade-in">
       <div style=${{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 16, WebkitOverflowScrolling: 'touch' }}>
-        ${[{ id: 'overview', emoji: '📊', label: 'Tổng quan' }, ...doneTypes.map(t => ({ id: t, emoji: actOf(t).emoji, label: actOf(t).label }))].map(o => html`
-          <button key=${o.id} onClick=${() => setView(o.id)} class="btn-action" style=${{ flexShrink: 0, padding: '8px 14px', borderRadius: 20, cursor: 'pointer', fontSize: 13, fontWeight: 500, border: `1px solid ${view === o.id ? ACC : C.bdr}`, background: view === o.id ? 'var(--accent-glow)' : '#fff', color: view === o.id ? ACC : C.txt2, whiteSpace: 'nowrap' }}>${o.emoji} ${o.label}</button>`)}
+        ${[{ id: 'overview', k: 'star', label: 'Tổng quan' }, ...doneTypes.map(t => ({ id: t, k: actOf(t).iconKey, label: actOf(t).label }))].map(o => {
+      const on = view === o.id;
+      return html`
+          <button key=${o.id} onClick=${() => setView(o.id)} class="btn-action" style=${{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, padding: '8px 14px', borderRadius: r.pill, cursor: 'pointer', fontSize: 13, fontWeight: 600, border: `1px solid ${on ? BRAND.blue : C.bdr}`, background: on ? C.bg3 : C.bg2, color: on ? BRAND.blue : C.txt2, whiteSpace: 'nowrap' }}>
+            <${SportIcon} k=${o.k} size=${15} color=${on ? BRAND.blue : C.txt3}/> ${o.label}
+          </button>`;
+    })}
       </div>
 
       ${view === 'overview' ? overview
@@ -1393,12 +1412,6 @@ function GymPair() {
     try { await updateUserDoc(pid, { goals }); }
     catch (e) { reportCloudError('Lưu mục tiêu thất bại', e); }
   };
-  const recomputeStreak = async () => {
-    const st = computeStreak(sessions.map(s => s.date).filter(Boolean));
-    const next = { current: st.current, longest: st.longest, lastDate: st.lastDate };
-    await updateUserDoc(pid, { streak: next });
-    setUserDoc(d => ({ ...d, streak: next }));
-  };
   const deleteAccount = async () => {
     try {
       [`c:${pid}`, `p:${pid}`, `s:${pid}`, `a:${pid}`, `pr:${pid}`, `wt:${pid}`].forEach(k => { try { localStorage.removeItem(k); } catch { } });
@@ -1425,6 +1438,19 @@ function GymPair() {
     setFeedKey(k => k + 1);
     try { await updateSessionContent(pid, id, full); }
     catch (e) { reportCloudError('Sửa buổi tập thất bại', e); }
+  };
+
+  // F5 — đổi công khai/riêng tư buổi tập đã đăng. Cập nhật cục bộ trước (optimistic) rồi
+  // reconcile leaderboard trên cloud từ danh sách buổi ĐÃ đổi visibility.
+  const changeVisibility = async (id, visibility) => {
+    const cur = sessions.find(s => s.id === id);
+    if (!cur || (cur.visibility ?? 'company') === visibility) return;
+    const next = sessions.map(s => s.id === id ? { ...s, visibility } : s);
+    saveS(next);
+    setPgCtx(c => (c && c.id === id) ? { ...c, visibility } : c);
+    setFeedKey(k => k + 1);
+    try { await updateSessionVisibility({ ...cur, visibility }, visibility, meAuthor(), next); }
+    catch (e) { reportCloudError('Đổi hiển thị thất bại', e); }
   };
 
   // Xoá bài đã đăng KÈM hoàn nguyên số liệu (điểm/phút/buổi/volume + streak + leaderboard kỳ đó).
@@ -1594,7 +1620,7 @@ function GymPair() {
     return html`<${ActiveWorkout} workout=${active} sessions=${sessions} onChange=${saveA} onFinish=${() => setPg('save-workout')} onDiscard=${discardWorkout} onPickEx=${goPickEx} onMinimize=${() => setShowWorkout(false)} onGuide=${exId => openGuide(guideForExercise(exId), () => { setPgCtx(null); setPg(null); })}/>`;
   }
   if (pg === 'create-prog') return html`<${CreateProg} exList=${exList} editProg=${pgCtx} onSave=${p => { saveP(pgCtx ? progs.map(x => x.id === p.id ? p : x) : [...progs, p]); setPg(null); setPgCtx(null); }} onClose=${() => { setPg(null); setPgCtx(null); }}/>`;
-  if (pg === 'sess-detail') return html`<${SessDetail} session=${pgCtx} canEdit=${pgCtx.authorUid === pid} onSave=${editSession} onDelete=${deletePost} onClose=${() => { setPg(null); setPgCtx(null); }}/>`;
+  if (pg === 'sess-detail') return html`<${SessDetail} session=${pgCtx} canEdit=${pgCtx.authorUid === pid} onSave=${editSession} onChangeVisibility=${changeVisibility} onDelete=${deletePost} onClose=${() => { setPg(null); setPgCtx(null); }}/>`;
   if (pg === 'progs') return html`<${ProgsTab} progs=${progs} onNew=${() => { setPgCtx(null); setPg('create-prog'); }} onEdit=${p => { setPgCtx(p); setPg('create-prog'); }} onDel=${id => saveP(progs.filter(p => p.id !== id))} onStart=${startWorkout} onBack=${() => setPg(null)}/>`;
   if (pg === 'pick-activity') return html`<${PickActivity} recentTypes=${(userDoc.prefs?.sports) || []} onClose=${() => setPg(null)} onGym=${() => setPg('progs')} onActivity=${type => { setPgCtx({ type }); setPg('log-activity'); }}/>`;
   if (pg === 'log-activity') {
@@ -1617,17 +1643,17 @@ function GymPair() {
       moderating: adminMode,
     }}
         isAdmin=${isAdmin}
+        onToggleModerating=${(v) => { if (isAdmin) setAdminMode(v); }}
         onBack=${() => setPg(null)}
         onSave=${async (v) => {
       const prevOptIn = !(userDoc.prefs?.optOutLeaderboard);
-      await saveProfileFields({ name: v.name, dept: v.dept, center: v.center });
+      await saveProfileFields({ name: v.name, dept: v.dept });
       const prefs = { ...(userDoc.prefs || {}), optOutLeaderboard: !v.leaderboardOptIn, hideWeight: v.hideWeight };
       await updateUserDoc(pid, { prefs });
       setUserDoc(d => ({ ...d, prefs: { ...d.prefs, optOutLeaderboard: !v.leaderboardOptIn, hideWeight: v.hideWeight } }));
       if (prevOptIn && !v.leaderboardOptIn) await removeMyEntries(pid);
       if (isAdmin) setAdminMode(v.moderating);
     }}
-        onRecalcStreak=${recomputeStreak}
         onClearHistory=${clearHistory}
         onSignOut=${() => signOutUser()}
         onDeleteAccount=${deleteAccount}/>`;
@@ -1671,7 +1697,7 @@ function GymPair() {
         </div>
       `}
       <div style=${{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 20, position: 'relative' }}>
-        ${tab === 'home' && html`<${HomeTab} profile=${{ ...profile, photoURL: profile.img }} progs=${progs} sessions=${sessions} streak=${liveStreak(userDoc.streak)} onStart=${startWorkout} onView=${openSess} onSwitch=${() => signOutUser()} onManagePrograms=${() => setPg('progs')} weeklyGoal=${userDoc.goals?.sessionsPerWeek || 3} points=${sessions.reduce((t, s) => ((new Date() - new Date(s.date)) / 86400000 <= 7 ? t + (s.points || 0) : t), 0)}/>`}
+        ${tab === 'home' && html`<${HomeTab} profile=${{ ...profile, photoURL: profile.img }} progs=${progs} sessions=${sessions} streak=${liveStreak(userDoc.streak)} onStart=${startWorkout} onView=${openSess} onSwitch=${() => setPg('settings')} onSeeAll=${() => openProfile(pid)} onManagePrograms=${() => setPg('progs')} onSeeAll=${() => setTab('me')} weeklyGoal=${userDoc.goals?.sessionsPerWeek || 3} points=${sessions.reduce((t, s) => ((new Date() - new Date(s.date)) / 86400000 <= 7 ? t + (s.points || 0) : t), 0)}/>`}
         ${tab === 'feed' && html`<${FeedTab} me=${meAuthor()} myReactions=${myReactions} onOpenComments=${openComments} onOpenProfile=${openProfile} onManage=${openSess} moderating=${isAdmin && adminMode} onAdminDelete=${adminDeletePost} refreshKey=${feedKey}/>`}
         ${tab === 'rank' && html`<${LeaderboardTab} me=${meAuthor()} onOpenProfile=${openProfile}/>`}
         ${tab === 'me' && html`
@@ -1683,6 +1709,7 @@ function GymPair() {
               points=${sessions.reduce((t, s) => ((new Date() - new Date(s.date)) / 86400000 <= 7 ? t + (s.points || 0) : t), 0)}
               weights=${weights}
               onView=${openSess}
+              onAvatar=${() => openProfile(pid)}
               onOpenClubs=${() => setPg('clubs')}
               onOpenGoals=${() => setPg('goals')}
               onOpenGuides=${() => setPg('guides')}

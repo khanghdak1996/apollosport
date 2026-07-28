@@ -150,8 +150,11 @@ export async function deleteClub(clubId) {
 // Feed của nhóm: bài của THÀNH VIÊN, CHỈ đúng môn của nhóm. Dùng index (visibility,type,loggedAt)
 // rồi lọc client theo tập thành viên. Trang 15 → lọc; UI cuộn để nạp thêm.
 const PAGE = 15;
-export async function clubFeedPage(cursor, sport, memberSet) {
-  const parts = [collection(db, 'sessions'), where('visibility', '==', 'company'), where('type', '==', sport), orderBy('loggedAt', 'desc'), limit(PAGE)];
+export async function clubFeedPage(cursor, sport, memberSet, since) {
+  const parts = [collection(db, 'sessions'), where('visibility', '==', 'company'), where('type', '==', sport)];
+  // Chỉ lấy bài từ khi CLB được tạo trở đi (range trên cùng field loggedAt — khớp index sẵn có).
+  if (since) parts.push(where('loggedAt', '>=', since));
+  parts.push(orderBy('loggedAt', 'desc'), limit(PAGE));
   if (cursor) parts.push(startAfter(cursor));
   const snap = await getDocs(query(...parts));
   const items = snap.docs.map(d => d.data()).filter(s => memberSet.has(s.authorUid));

@@ -5,6 +5,7 @@ import { useState } from 'preact/hooks';
 import { html } from '../html.js';
 import { C, r, F, T, BRAND } from '../ui/theme.js';
 import { SportIcon } from '../ui/sportIcons.js';
+import { DEPARTMENTS } from '../data/departments.js';
 
 function Field({ label, value, onInput, placeholder, first }) {
   return html`
@@ -12,6 +13,32 @@ function Field({ label, value, onInput, placeholder, first }) {
       <p style=${{ margin: '0 0 4px', ...T.label }}>${label}</p>
       <input value=${value} onInput=${onInput} placeholder=${placeholder}
         style=${{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: 'none', outline: 'none', fontSize: 15, fontWeight: 600, color: C.txt1, fontFamily: F.body, padding: 0 }}/>
+    </div>`;
+}
+
+// Dropdown chọn từ danh sách + ô tìm kiếm (gõ để lọc, cuộn để xem hết).
+function SelectField({ label, value, options, placeholder, onChange, first }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const ql = q.trim().toLowerCase();
+  const shown = ql ? options.filter(o => o.toLowerCase().includes(ql)) : options;
+  return html`
+    <div style=${{ padding: '13px 0', borderTop: first ? 'none' : `1px solid ${C.bdr2}`, position: 'relative' }}>
+      <p style=${{ margin: '0 0 4px', ...T.label }}>${label}</p>
+      <div style=${{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <input value=${open ? q : (value || '')} onFocus=${() => { setOpen(true); setQ(''); }}
+          onBlur=${() => setTimeout(() => setOpen(false), 120)}
+          onInput=${e => setQ(e.target.value)} placeholder=${placeholder}
+          style=${{ flex: 1, boxSizing: 'border-box', background: 'transparent', border: 'none', outline: 'none', fontSize: 15, fontWeight: 600, color: C.txt1, fontFamily: F.body, padding: 0 }}/>
+        <${SportIcon} k="chevronR" size=${15} color=${C.txt5} sw=${2} cx=${{ transform: open ? 'rotate(-90deg)' : 'rotate(90deg)', transition: 'transform .2s' }}/>
+      </div>
+      ${open && html`
+        <div style=${{ position: 'absolute', left: -6, right: -6, top: '100%', zIndex: 30, marginTop: 6, background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.md, boxShadow: '0 12px 30px rgba(18,57,94,.16)', maxHeight: 240, overflowY: 'auto' }}>
+          ${shown.length
+      ? shown.map((o, i) => html`
+            <div key=${o} onMouseDown=${() => { onChange(o); setOpen(false); setQ(''); }} style=${{ padding: '10px 14px', fontSize: 14, color: o === value ? BRAND.blue : C.txt1, fontWeight: o === value ? 700 : 500, cursor: 'pointer', borderTop: i ? `1px solid ${C.bdr2}` : 'none' }}>${o}</div>`)
+      : html`<div style=${{ padding: '12px 14px', fontSize: 13, color: C.txt3 }}>Không tìm thấy "${q}"</div>`}
+        </div>`}
     </div>`;
 }
 
@@ -39,10 +66,9 @@ function Row({ t, s, on, onToggle, first }) {
 const GroupTitle = ({ t }) => html`<p style=${{ margin: '0 2px 9px', fontFamily: F.display, fontWeight: 700, fontSize: 13, letterSpacing: '.11em', color: C.txt3, textTransform: 'uppercase' }}>${t}</p>`;
 const Panel = ({ children, cx }) => html`<div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, padding: '0 16px', marginBottom: 20, ...cx }}>${children}</div>`;
 
-export function Settings({ profile, onSave, onBack, onSignOut, onDeleteAccount, onRecalcStreak, onClearHistory, isAdmin }) {
+export function Settings({ profile, onSave, onBack, onSignOut, onDeleteAccount, onClearHistory, isAdmin, onToggleModerating }) {
   const [name, setName] = useState(profile.name || '');
   const [dept, setDept] = useState(profile.dept || '');
-  const [center, setCenter] = useState(profile.center || '');
   const [inRank, setInRank] = useState(profile.leaderboardOptIn !== false);
   const [hideWeight, setHideWeight] = useState(!!profile.hideWeight);
   const [moderating, setModerating] = useState(!!profile.moderating);
@@ -60,25 +86,15 @@ export function Settings({ profile, onSave, onBack, onSignOut, onDeleteAccount, 
         <${GroupTitle} t="Hồ sơ"/>
         <${Panel} cx=${{ padding: '4px 16px 16px' }}>
           <${Field} first=${true} label="TÊN HIỂN THỊ" value=${name} onInput=${e => setName(e.target.value)} placeholder="Tên của bạn"/>
-          <${Field} label="PHÒNG BAN / BỘ PHẬN" value=${dept} onInput=${e => setDept(e.target.value)} placeholder="VD: TD Communications"/>
-          <${Field} label="TRUNG TÂM / CƠ SỞ" value=${center} onInput=${e => setCenter(e.target.value)} placeholder="VD: Hà Nội, HCM…"/>
-          <button onClick=${() => onSave({ name, dept, center, leaderboardOptIn: inRank, hideWeight, moderating })} class="btn-action" style=${{ width: '100%', background: BRAND.blue, border: 'none', borderRadius: 13, padding: 12, fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer', marginTop: 6 }}>Lưu hồ sơ</button>
+          <${SelectField} label="PHÒNG BAN / TRUNG TÂM" value=${dept} options=${DEPARTMENTS} onChange=${setDept} placeholder="Chọn hoặc gõ để tìm…"/>
+          <button onClick=${() => onSave({ name, dept, leaderboardOptIn: inRank, hideWeight, moderating })} class="btn-action" style=${{ width: '100%', background: BRAND.blue, border: 'none', borderRadius: 13, padding: 12, fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer', marginTop: 6 }}>Lưu hồ sơ</button>
         </${Panel}>
 
         <${GroupTitle} t="Quyền riêng tư"/>
         <${Panel}>
           <${Row} first=${true} t="Tham gia bảng xếp hạng" s="Điểm của bạn hiển thị trên bảng xếp hạng" on=${inRank} onToggle=${() => setInRank(!inRank)}/>
           <${Row} t="Ẩn theo dõi cân nặng" s="Cân nặng luôn riêng tư; bật để ẩn hẳn tính năng này" on=${hideWeight} onToggle=${() => setHideWeight(!hideWeight)}/>
-          ${isAdmin ? html`<${Row} t="Chế độ quản trị" s="Bật để kiểm duyệt bài & bình luận vi phạm của người khác" on=${moderating} onToggle=${() => setModerating(!moderating)}/>` : ''}
-        </${Panel}>
-
-        <${GroupTitle} t="Chuỗi tập"/>
-        <${Panel} cx=${{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style=${{ flex: 1, minWidth: 0 }}>
-            <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 600, color: C.txt1 }}>Tính lại chuỗi</p>
-            <p style=${{ margin: '2px 0 0', fontSize: 12, color: C.txt4 }}>Dùng khi bạn ghi buổi tập lùi ngày và chuỗi bị lệch</p>
-          </div>
-          <button onClick=${onRecalcStreak} class="btn-action" style=${{ background: 'transparent', border: 'none', padding: 0, fontSize: 13, fontWeight: 600, color: BRAND.blue, cursor: 'pointer', flexShrink: 0 }}>Tính lại ›</button>
+          ${isAdmin ? html`<${Row} t="Chế độ quản trị" s="Bật để kiểm duyệt bài & bình luận vi phạm của người khác" on=${moderating} onToggle=${() => { const nv = !moderating; setModerating(nv); onToggleModerating && onToggleModerating(nv); }}/>` : ''}
         </${Panel}>
 
         <${GroupTitle} t="Tài khoản"/>

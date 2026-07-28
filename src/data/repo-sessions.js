@@ -75,6 +75,35 @@ export async function updateSessionContent(uid, id, patch) {
   await updateDoc(doc(db, 'sessions', sid(uid, id)), data);
 }
 
+// F5 — Đổi công khai/riêng tư của MỘT buổi đã đăng, KÈM reconcile leaderboard tuần & tháng.
+// totals (điểm/phút/buổi) đếm MỌI buổi bất kể visibility → KHÔNG đổi ở đây; chỉ entry
+// leaderboard (chỉ tính 'company') cần tính lại. allSessions = danh sách buổi CỤC BỘ
+// SAU khi đã đổi visibility của bài này (để recompute self-correcting). Rules cho chủ bài
+// update visibility (authorUid/loggedAt/date/counters giữ nguyên).
+export async function updateSessionVisibility(session, visibility, me, allSessions) {
+  const b = writeBatch(db);
+  b.update(doc(db, 'sessions', sid(me.uid, session.id)), { visibility });
+
+  if (!me.prefs?.optOutLeaderboard) {
+    const st = computeStreak(allSessions.map(s => s.date).filter(Boolean));
+    const periods = [
+      [weekId(session.date), d => weekId(d) === weekId(session.date)],
+      [monthId(session.date), d => monthId(d) === monthId(session.date)],
+    ];
+    for (const [pid, inPeriod] of periods) {
+      const ref = doc(db, 'leaderboard', pid, 'entries', me.uid);
+      const agg = recomputePeriodEntry(allSessions, inPeriod);
+      if (!agg) { b.delete(ref); continue; }
+      b.set(ref, {
+        uid: me.uid, name: me.name, photoURL: me.photoURL || null, dept: me.dept || '',
+        sessions: agg.sessions, minutes: agg.minutes, points: agg.points, volumeKg: agg.volumeKg,
+        longestStreakInPeriod: st.current, updatedAt: serverTimestamp(),
+      });
+    }
+  }
+  await b.commit();
+}
+
 // Tính lại entry leaderboard của MỘT kỳ từ các buổi tập cục bộ còn lại (sau khi xoá 1 bài).
 // Khớp công thức tổng hợp ở saveSession: điểm cộng dồn, phút cap 120/ngày, sessions = số NGÀY có tập.
 function recomputePeriodEntry(remaining, inPeriod) {

@@ -1,7 +1,8 @@
 import { useState } from 'preact/hooks';
 import { html } from '../html.js';
-import { C, r } from '../ui/theme.js';
+import { C, r, F, BRAND } from '../ui/theme.js';
 import { Wrap } from '../ui/primitives.js';
+import { SportIcon } from '../ui/sportIcons.js';
 import { signIn } from '../auth.js';
 import { ALLOWED_DOMAINS } from '../config.js';
 
@@ -29,29 +30,44 @@ export function SignIn() {
   };
 
   return html`
-    <${Wrap} cx=${{ alignItems: 'center', justifyContent: 'center', padding: 28, background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)', position: 'relative' }}>
-      <div style=${{ position: 'absolute', width: 150, height: 150, background: '#0084ff', filter: 'blur(80px)', opacity: 0.1, top: '20%', left: '10%', pointerEvents: 'none' }}/>
-      <div style=${{ position: 'absolute', width: 150, height: 150, background: '#22c55e', filter: 'blur(80px)', opacity: 0.1, bottom: '25%', right: '10%', pointerEvents: 'none' }}/>
+    <${Wrap} cx=${{ background: '#fff', overflow: 'hidden' }}>
+      <!-- 2 vòng tròn trang trí brand -->
+      <div style=${{ position: 'absolute', width: 280, height: 280, borderRadius: '50%', background: BRAND.babyBlue, opacity: 0.55, top: -90, right: -70, pointerEvents: 'none' }}/>
+      <div style=${{ position: 'absolute', width: 220, height: 220, borderRadius: '50%', background: C.bg3, top: 150, left: -110, pointerEvents: 'none' }}/>
 
-      <div class="scale-in" style=${{ textAlign: 'center', width: '100%', maxWidth: 360, zIndex: 1 }}>
-        <div style=${{ fontSize: 52, marginBottom: 15, animation: 'pulseGlow 2.5s infinite ease-in-out', display: 'inline-block', background: 'rgba(0,0,0,0.03)', width: 90, height: 90, lineHeight: '90px', borderRadius: '50%' }}>🏃</div>
-        <h1 style=${{ margin: '0 0 8px', fontSize: 34, fontWeight: 600, letterSpacing: '-0.03em', background: 'linear-gradient(90deg, #0f172a, #475569)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Apollo Sport</h1>
-        <p style=${{ margin: '0 0 40px', color: C.txt2, fontSize: 15.5, fontWeight: 400, lineHeight: 1.5 }}>Cùng đồng nghiệp xây thói quen vận động — chia sẻ thành quả, giữ chuỗi, tiếp lửa cho nhau.</p>
+      <!-- Logo Apollo English góc trên phải -->
+      <img src="./assets/apollo-logo.png" alt="Apollo English" style=${{ position: 'absolute', top: 'calc(10px + env(safe-area-inset-top))', right: 12, width: 96, height: 'auto', zIndex: 2, pointerEvents: 'none' }}/>
 
-        <button onClick=${go} disabled=${busy} class="btn-action" style=${{
-          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-          background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.md, padding: '14px 18px',
-          fontSize: 15, fontWeight: 500, color: C.txt1, cursor: busy ? 'default' : 'pointer',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.06)', opacity: busy ? 0.6 : 1,
-        }}>
-          <${GoogleMark}/> ${busy ? 'Đang đăng nhập...' : 'Đăng nhập với Google'}
-        </button>
+      <div style=${{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '28px', position: 'relative', zIndex: 1 }}>
+        <div class="scale-in" style=${{ width: '100%', maxWidth: 340, textAlign: 'center' }}>
+          <div style=${{ width: 76, height: 76, borderRadius: 24, background: BRAND.blue, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, boxShadow: '0 10px 26px rgba(37,118,185,.32)' }}>
+            <${SportIcon} k="run" size=${38} color="#fff" sw=${1.9}/>
+          </div>
 
-        <p style=${{ margin: '16px 0 0', color: C.txt3, fontSize: 12.5 }}>Chỉ dành cho tài khoản <b style=${{ color: C.txt2 }}>@${ALLOWED_DOMAINS[0]}</b></p>
+          <p style=${{ margin: '0 0 14px', fontFamily: F.display, fontWeight: 700, fontSize: 52, lineHeight: .95, letterSpacing: '.02em', color: BRAND.blue, textTransform: 'uppercase' }}>Apollo<br/>Social Sport</p>
 
-        ${error && html`
-          <div style=${{ marginTop: 18, background: C.redBg, border: '1px solid #fecaca', borderRadius: r.md, padding: '10px 14px', fontSize: 13, color: '#991b1b', lineHeight: 1.4 }}>${error}</div>
-        `}
+          <p style=${{ margin: '0 0 34px', fontFamily: F.serif, fontSize: 15, lineHeight: 1.6, color: C.txt2 }}>
+            Cùng đồng nghiệp xây thói quen vận động — chia sẻ thành quả, giữ chuỗi, tiếp lửa cho nhau.
+          </p>
+
+          <button onClick=${go} disabled=${busy} class="btn-action" style=${{
+      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+      background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: 15, padding: 15,
+      fontSize: 15, fontWeight: 600, color: C.txt1, cursor: busy ? 'default' : 'pointer',
+      boxShadow: '0 8px 24px rgba(37,118,185,.1)', opacity: busy ? 0.6 : 1,
+    }}>
+            <${GoogleMark}/> ${busy ? 'Đang đăng nhập...' : 'Đăng nhập với Google'}
+          </button>
+
+          <p style=${{ margin: '16px 0 0', color: C.txt4, fontSize: 12.5 }}>Chỉ dành cho tài khoản <b style=${{ color: C.txt2 }}>@${ALLOWED_DOMAINS[0]}</b></p>
+
+          ${error && html`
+            <div style=${{ marginTop: 18, background: C.redBg, border: `1px solid ${C.redBdr}`, borderRadius: r.md, padding: '10px 14px', fontSize: 13, color: C.redInk, lineHeight: 1.4 }}>${error}</div>`}
+        </div>
       </div>
+
+      <p style=${{ margin: 0, padding: '0 20px calc(22px + env(safe-area-inset-bottom))', textAlign: 'center', fontFamily: "'Bebas Neue', sans-serif", fontSize: 17, letterSpacing: '.22em', textTransform: 'uppercase', color: '#2476b9', position: 'relative', zIndex: 1 }}>
+        Where the best become better
+      </p>
     </${Wrap}>`;
 }
