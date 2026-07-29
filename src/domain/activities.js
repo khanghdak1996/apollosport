@@ -1,104 +1,143 @@
 // Registry đa môn thể thao.
-// kind quyết định form nào render (strength dùng luồng gym cũ; distance/session dùng LogActivity).
-// met = chỉ số vận động (MET) dùng để quy đổi ra điểm chung giữa các môn.
-// fields = ô nhập RIÊNG cho môn đó (mức Vừa). Không có fields → dùng FIELDS[kind] mặc định.
+// kind      quyết định form nào render (strength dùng luồng gym cũ; distance/session dùng LogActivity).
+// category  quyết định CÁCH tính MET để chấm điểm (xem domain/session.js effectiveMet):
+//   pace      – MET nền tra từ TỐC ĐỘ (quãng đường bắt buộc + thời lượng → speedBands),
+//               rồi × hệ số RPE (0.8–1.2) để thưởng nỗ lực cá nhân.
+//   rpe_only  – MET nội suy tuyến tính giữa metMin↔metMax theo mức RPE (index).
+//   gym       – MET suy từ volume load (set×rep×kg) × RPE (metMin/metMax chỉ để clamp).
+// metMin/metMax = dải MET của môn (Compendium 2024, hiện là ước lượng tham khảo — xem checklist spec).
+// speedBands = ngưỡng tốc độ km/h → MET cho môn category=pace ([[maxKmh, met], …], phần tử cuối Infinity).
+// fields = ô nhập RIÊNG cho môn đó. Không có fields → dùng FIELDS[kind] mặc định.
 // Thêm môn mới = thêm 1 dòng ở đây, không phải đổi schema hay rules.
 
+// ── Thang RPE 5 mức (Borg CR-10 rút gọn) — dùng CHUNG cho mọi môn ───────────
+// index  = hệ số nội suy MET (0→metMin, 1→metMax) cho môn rpe_only.
+// factor = hệ số điều chỉnh MET nền theo nỗ lực cho môn pace (±20%).
+// gymRaw = giá trị RPE thô nhân vào volume load cho gym.
+export const RPE_LEVELS = [
+  { level: 1, label: 'Rất nhẹ',          desc: 'Hát được thoải mái',           index: 0.00, factor: 0.8, gymRaw: 1.5 },
+  { level: 2, label: 'Nhẹ',              desc: 'Nói chuyện bình thường',       index: 0.25, factor: 0.9, gymRaw: 3.5 },
+  { level: 3, label: 'Vừa',              desc: 'Nói câu dài, không hát được',  index: 0.50, factor: 1.0, gymRaw: 5.5 },
+  { level: 4, label: 'Nặng',             desc: 'Chỉ nói được câu ngắn',        index: 0.75, factor: 1.1, gymRaw: 7.5 },
+  { level: 5, label: 'Gắng sức tối đa',  desc: 'Gần như không nói được',       index: 1.00, factor: 1.2, gymRaw: 9.5 },
+];
+const RPE_MAP = Object.fromEntries(RPE_LEVELS.map(x => [x.level, x]));
+// Mức RPE của 1 session; thiếu/không hợp lệ → mặc định Vừa (level 3).
+export const rpeOf = level => RPE_MAP[level] || RPE_MAP[3];
+
 // ── Ô nhập dùng lại ─────────────────────────────────────────────
-// type: number | seg | select | counter | time | pace
-//   number  – ô số (unit hiển thị hậu tố)
-//   seg     – nhóm nút chọn 1 (ít lựa chọn)
-//   select  – chip chọn 1 (nhiều lựa chọn, tự xuống dòng)
-//   counter – bộ đếm ± (số hiệp/ván/lap)
-//   time    – mm:ss (lưu chuỗi)
-//   pace    – CHỈ hiển thị, tự tính từ quãng đường + thời lượng (mode: km|kmh|100m)
+// type: number | seg | select | counter | time | pace | rpe
+//   number   – ô số (unit hiển thị hậu tố)
+//   seg      – nhóm nút chọn 1 (ít lựa chọn)
+//   select   – chip chọn 1 (nhiều lựa chọn, tự xuống dòng)
+//   counter  – bộ đếm ± (số hiệp/ván/lap)
+//   time     – mm:ss (lưu chuỗi)
+//   pace     – CHỈ hiển thị, tự tính từ quãng đường + thời lượng (mode: km|kmh|100m)
+//   rpe      – 5 thẻ chọn mức gắng sức (RPE_LEVELS), lưu level 1–5
 // adv: true → ô nâng cao, ẩn dưới "Thêm chi tiết ▾".
 const DUR = { k: 'durationMin', label: 'Thời lượng (phút)', type: 'number', required: true };
-const INTENSITY = { k: 'intensity', label: 'Cường độ', type: 'seg', opts: ['nhẹ', 'vừa', 'mạnh'], def: 'vừa' };
+const RPE = { k: 'rpe', label: 'Mức độ gắng sức', type: 'rpe', def: 3, required: true };
+const DIST_KM = { k: 'distanceKm', label: 'Quãng đường (km)', type: 'number', unit: 'km', required: true };
+
+// Ngưỡng tốc độ (km/h) → MET nền cho môn pace. Duyệt tới ngưỡng đầu tiên mà kmh < maxKmh.
+// Bơi quy đổi từ pace /100m: 3:00→6.0, 2:00→8.3, <2:00→10.0 (ước lượng — xem checklist).
+const SPEED_BANDS = {
+  walk:  [[4.8, 2.8], [6.4, 3.5], [Infinity, 6.0]],
+  run:   [[8.85, 8.3], [10.5, 9.8], [12.1, 11.0], [Infinity, 12.8]],
+  cycle: [[16, 4.0], [19, 6.8], [22, 8.0], [25, 10.0], [Infinity, 12.0]],
+  swim:  [[2.0, 6.0], [3.0, 8.3], [Infinity, 10.0]],
+};
+
+// MET nền theo tốc độ (km/h) của môn pace. kmh<=0 hoặc không có bands → metMin.
+export const metForSpeed = (sportId, kmh) => {
+  const a = actOf(sportId);
+  const bands = a.speedBands;
+  if (!bands || !(kmh > 0)) return a.metMin || 0;
+  for (const [maxKmh, met] of bands) if (kmh < maxKmh) return met;
+  return bands[bands.length - 1][1];
+};
 
 export const ACTIVITIES = [
-  { id: 'gym', emoji: '🏋️',        label: 'Tập gym',    icon: 'dumbbell', iconKey: 'gym', kind: 'strength', met: 5.0, color: '#6366f1', verb: 'đã hoàn thành buổi' },
+  { id: 'gym', emoji: '🏋️',        label: 'Tập gym',    icon: 'dumbbell', iconKey: 'gym', kind: 'strength', category: 'gym', metMin: 3.5, metMax: 6.5, color: '#6366f1', verb: 'đã hoàn thành buổi' },
 
-  { id: 'run', emoji: '🏃', label: 'Chạy bộ', icon: 'run', iconKey: 'run', kind: 'distance', met: 9.0, color: '#f97316', verb: 'đã chạy', laps: true, fields: [
+  { id: 'run', emoji: '🏃', label: 'Chạy bộ', icon: 'run', iconKey: 'run', kind: 'distance', category: 'pace', metMin: 8.3, metMax: 12.8, speedBands: SPEED_BANDS.run, color: '#f97316', verb: 'đã chạy', laps: true, fields: [
     DUR,
-    { k: 'distanceKm', label: 'Quãng đường (km)', type: 'number', unit: 'km' },
+    DIST_KM,
     { k: '_pace', label: 'Pace', type: 'pace', mode: 'km' },
-    INTENSITY,
+    RPE,
     { k: 'elevM', label: 'Độ cao (m)', type: 'number', unit: 'm', adv: true },
     { k: 'hrAvg', label: 'Nhịp tim TB (bpm)', type: 'number', unit: 'bpm', adv: true },
   ] },
 
-  { id: 'walk', emoji: '🚶', label: 'Đi bộ', icon: 'walk', iconKey: 'walk', kind: 'distance', met: 3.5, color: '#84cc16', verb: 'đã đi bộ', fields: [
+  { id: 'walk', emoji: '🚶', label: 'Đi bộ', icon: 'walk', iconKey: 'walk', kind: 'distance', category: 'pace', metMin: 2.8, metMax: 6.0, speedBands: SPEED_BANDS.walk, color: '#84cc16', verb: 'đã đi bộ', fields: [
     DUR,
-    { k: 'distanceKm', label: 'Quãng đường (km)', type: 'number', unit: 'km' },
+    DIST_KM,
     { k: '_pace', label: 'Pace', type: 'pace', mode: 'km' },
-    INTENSITY,
+    RPE,
     { k: 'stepK', label: 'Số bước (nghìn)', type: 'number', unit: 'k', adv: true },
   ] },
 
-  { id: 'cycle', emoji: '🚴', label: 'Đạp xe', icon: 'bike', iconKey: 'bike', kind: 'distance', met: 7.5, color: '#06b6d4', verb: 'đã đạp xe', laps: true, fields: [
+  { id: 'cycle', emoji: '🚴', label: 'Đạp xe', icon: 'bike', iconKey: 'bike', kind: 'distance', category: 'pace', metMin: 4.0, metMax: 12.0, speedBands: SPEED_BANDS.cycle, color: '#06b6d4', verb: 'đã đạp xe', laps: true, fields: [
     DUR,
-    { k: 'distanceKm', label: 'Quãng đường (km)', type: 'number', unit: 'km' },
+    DIST_KM,
     { k: '_speed', label: 'Tốc độ TB', type: 'pace', mode: 'kmh' },
     { k: 'place', label: 'Địa điểm', type: 'seg', opts: ['Trong nhà', 'Ngoài trời'], def: 'Ngoài trời' },
-    INTENSITY,
+    RPE,
     { k: 'elevM', label: 'Độ cao (m)', type: 'number', unit: 'm', adv: true },
   ] },
 
-  { id: 'swim', emoji: '🏊', label: 'Bơi', icon: 'swim', iconKey: 'swim', kind: 'distance', met: 7.0, color: '#0ea5e9', verb: 'đã bơi', laps: true, fields: [
+  { id: 'swim', emoji: '🏊', label: 'Bơi', icon: 'swim', iconKey: 'swim', kind: 'distance', category: 'pace', metMin: 6.0, metMax: 10.0, speedBands: SPEED_BANDS.swim, color: '#0ea5e9', verb: 'đã bơi', laps: true, fields: [
     DUR,
-    { k: 'stroke', label: 'Kiểu bơi', type: 'select', opts: ['Tự do', 'Ếch', 'Ngửa', 'Bướm', 'Hỗn hợp'], def: 'Tự do' },
     { k: 'poolLen', label: 'Chiều dài bể', type: 'seg', opts: ['25m', '50m'], def: '25m' },
-    { k: 'distanceM', label: 'Quãng đường (m)', type: 'number', unit: 'm' },
+    { k: 'distanceM', label: 'Quãng đường (m)', type: 'number', unit: 'm', required: true },
     { k: '_pace100', label: 'Pace /100m', type: 'pace', mode: '100m' },
-    INTENSITY,
+    RPE,
   ] },
 
-  { id: 'hiking', emoji: '🥾', label: 'Leo núi', icon: 'mountain', iconKey: 'hike', kind: 'distance', met: 6.0, color: '#78716c', verb: 'đã leo núi', fields: [
+  { id: 'hiking', emoji: '🥾', label: 'Leo núi', icon: 'mountain', iconKey: 'hike', kind: 'distance', category: 'rpe_only', metMin: 4.0, metMax: 7.8, color: '#78716c', verb: 'đã leo núi', fields: [
     DUR,
     { k: 'distanceKm', label: 'Quãng đường (km)', type: 'number', unit: 'km' },
     { k: 'elevGainM', label: 'Độ cao leo (m)', type: 'number', unit: 'm' },
-    INTENSITY,
+    RPE,
   ] },
 
-  { id: 'yoga', emoji: '🧘', label: 'Yoga', icon: 'yoga', iconKey: 'yoga', kind: 'session', met: 3.0, color: '#a855f7', verb: 'đã tập yoga', fields: [
+  { id: 'yoga', emoji: '🧘', label: 'Yoga', icon: 'yoga', iconKey: 'yoga', kind: 'session', category: 'rpe_only', metMin: 2.0, metMax: 4.0, color: '#a855f7', verb: 'đã tập yoga', fields: [
     DUR,
-    { k: 'style', label: 'Trường phái', type: 'select', opts: ['Hatha', 'Vinyasa', 'Yin', 'Power'], def: 'Hatha' },
-    INTENSITY,
+    RPE,
     { k: 'goal', label: 'Mục tiêu', type: 'select', opts: ['Thư giãn', 'Dẻo dai', 'Sức mạnh', 'Thăng bằng'], def: 'Thư giãn', adv: true },
   ] },
 
-  { id: 'football', emoji: '⚽', label: 'Bóng đá', icon: 'ball', iconKey: 'ball', kind: 'session', met: 8.0, color: '#22c55e', verb: 'đã chơi bóng đá', fields: [
+  { id: 'football', emoji: '⚽', label: 'Bóng đá', icon: 'ball', iconKey: 'ball', kind: 'session', category: 'rpe_only', metMin: 5.0, metMax: 10.0, color: '#22c55e', verb: 'đã chơi bóng đá', fields: [
     DUR,
     { k: 'periods', label: 'Số hiệp', type: 'counter', def: 0, max: 20 },
-    INTENSITY,
+    RPE,
   ] },
 
-  { id: 'basketball', emoji: '🏀', label: 'Bóng rổ', icon: 'ball', iconKey: 'ball', kind: 'session', met: 6.5, color: '#ef4444', verb: 'đã chơi bóng rổ', fields: [
+  { id: 'basketball', emoji: '🏀', label: 'Bóng rổ', icon: 'ball', iconKey: 'ball', kind: 'session', category: 'rpe_only', metMin: 4.5, metMax: 8.5, color: '#ef4444', verb: 'đã chơi bóng rổ', fields: [
     DUR,
     { k: 'periods', label: 'Số hiệp', type: 'counter', def: 0, max: 20 },
-    INTENSITY,
+    RPE,
   ] },
 
-  { id: 'badminton', emoji: '🏸', label: 'Cầu lông', icon: 'racket', iconKey: 'racket', kind: 'session', met: 5.5, color: '#eab308', verb: 'đã chơi cầu lông', fields: [
+  { id: 'badminton', emoji: '🏸', label: 'Cầu lông', icon: 'racket', iconKey: 'racket', kind: 'session', category: 'rpe_only', metMin: 4.5, metMax: 9.0, color: '#eab308', verb: 'đã chơi cầu lông', fields: [
     DUR,
     { k: 'games', label: 'Số ván', type: 'counter', def: 0, max: 30 },
-    INTENSITY,
+    RPE,
   ] },
 
-  { id: 'tennis', emoji: '🎾', label: 'Tennis', icon: 'racket', iconKey: 'racket', kind: 'session', met: 7.3, color: '#f59e0b', verb: 'đã chơi tennis', fields: [
+  { id: 'tennis', emoji: '🎾', label: 'Tennis', icon: 'racket', iconKey: 'racket', kind: 'session', category: 'rpe_only', metMin: 5.0, metMax: 8.0, color: '#f59e0b', verb: 'đã chơi tennis', fields: [
     DUR,
     { k: 'games', label: 'Số ván (set)', type: 'counter', def: 0, max: 30 },
-    INTENSITY,
+    RPE,
   ] },
 
-  { id: 'pickleball', emoji: '🥒', label: 'Pickleball', icon: 'racket', iconKey: 'racket', kind: 'session', met: 5.0, color: '#14b8a6', verb: 'đã chơi pickleball', fields: [
+  { id: 'pickleball', emoji: '🥒', label: 'Pickleball', icon: 'racket', iconKey: 'racket', kind: 'session', category: 'rpe_only', metMin: 4.5, metMax: 8.0, color: '#14b8a6', verb: 'đã chơi pickleball', fields: [
     DUR,
     { k: 'games', label: 'Số ván', type: 'counter', def: 0, max: 30 },
-    INTENSITY,
+    RPE,
   ] },
 
-  { id: 'other', emoji: '✨', label: 'Khác', icon: 'spark', iconKey: 'other', kind: 'session', met: 4.0, color: '#64748b', verb: 'đã tập' },
+  { id: 'other', emoji: '✨', label: 'Khác', icon: 'spark', iconKey: 'other', kind: 'session', category: 'rpe_only', metMin: 3.0, metMax: 6.0, color: '#64748b', verb: 'đã tập' },
 ];
 
 export const ACT = Object.fromEntries(ACTIVITIES.map(a => [a.id, a]));
@@ -111,9 +150,9 @@ export const FIELDS = {
     DUR,
     { k: 'distanceKm', label: 'Quãng đường (km)', type: 'number', unit: 'km' },
     { k: '_pace', label: 'Pace', type: 'pace', mode: 'km' },
-    INTENSITY,
+    RPE,
   ],
-  session: [DUR, INTENSITY],
+  session: [DUR, RPE],
   strength: null, // gym dùng luồng ActiveWorkout riêng
 };
 

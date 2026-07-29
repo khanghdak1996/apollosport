@@ -1,6 +1,6 @@
 // Suy dẫn thuần từ một session (mọi type). Feed/lịch/streak/xếp hạng chỉ đọc các
 // field cấp trên + hàm ở đây, không cần biết cấu trúc gym bên trong detail.
-import { actOf, fieldsOf } from './activities.js';
+import { actOf, fieldsOf, rpeOf, metForSpeed } from './activities.js';
 import { uid } from './format.js';
 import { tVol } from './stats.js';
 
@@ -8,15 +8,40 @@ import { tVol } from './stats.js';
 // và tránh timer quên tắt.
 export const activeMinutes = s => Math.min(180, Math.max(0, Math.round(s.durationMin || 0)));
 
-const INTENSITY_K = { 'nhẹ': 0.8, 'vừa': 1.0, 'mạnh': 1.2 };
+// Gym: quy đổi volume load (set×rep×kg × RPE) → MET. GYM_K cần calibrate với buổi
+// tập mẫu thật trước khi mở rộng người dùng (spec mục 17.1); GYM_MET_CAP chặn người
+// tập volume rất lớn không phá thang điểm chung.
+const GYM_K = 0.027;
+const GYM_MET_CAP = 12;
 
-// Điểm quy đổi chung giữa mọi môn. ~1 điểm / phút vận động cường độ vừa.
-// Đây là trục duy nhất so sánh được gym với chạy/yoga (kg vô nghĩa với các môn kia).
-export const computePoints = s => {
+// MET hiệu dụng của 1 session — nền tảng chấm điểm, thống nhất cho mọi môn.
+//   pace     : MET nền theo tốc độ (quãng đường + thời lượng) × hệ số RPE (0.8–1.2).
+//   gym      : suy từ volume load × RPE (clamp về [metMin, GYM_MET_CAP]).
+//   rpe_only : nội suy tuyến tính metMin↔metMax theo index của mức RPE.
+export const effectiveMet = s => {
   const a = actOf(s.type);
-  const k = INTENSITY_K[s.detail?.intensity] ?? 1.0;
-  return Math.round(activeMinutes(s) * a.met * k / 5);
+  const rpe = rpeOf(s.detail?.rpe);
+  if (a.category === 'pace') {
+    const km = s.type === 'swim'
+      ? (parseFloat(s.detail?.distanceM) || 0) / 1000
+      : (parseFloat(s.detail?.distanceKm) || 0);
+    const kmh = km > 0 ? km / (activeMinutes(s) / 60) : 0;
+    return metForSpeed(s.type, kmh) * rpe.factor;
+  }
+  if (a.category === 'gym') {
+    const load = (s.detail?.totalVol || 0) * rpe.gymRaw;
+    const met = load * GYM_K / Math.max(1, activeMinutes(s));
+    return Math.min(GYM_MET_CAP, Math.max(a.metMin || 0, met));
+  }
+  const lo = a.metMin || 0;
+  const hi = a.metMax || lo;
+  return lo + rpe.index * (hi - lo);
 };
+
+// Điểm buổi tập = MET hiệu dụng × thời lượng (giờ) × 10 (chuẩn MET-phút của WHO/IPAQ,
+// chia lại theo giờ ×10 cho số điểm gọn). Trục duy nhất so sánh công bằng mọi môn.
+export const computePoints = s =>
+  Math.round(effectiveMet(s) * (activeMinutes(s) / 60) * 10);
 
 // Pace phút/km cho môn distance.
 export const paceMinPerKm = detail => {
@@ -75,9 +100,9 @@ export const summaryStats = s => {
     { icon: 'bolt',  v: paceLabel(s),       u: '/km',  l: 'Pace' },
   ];
   return [
-    { icon: 'clock', v: s.durationMin || 0,   u: 'phút', l: 'Thời lượng' },
-    { icon: 'bolt',  v: d.intensity || 'vừa', u: '',     l: 'Cường độ' },
-    { icon: 'star',  v: s.points || 0,        u: 'điểm', l: 'Điểm' },
+    { icon: 'clock', v: s.durationMin || 0,      u: 'phút', l: 'Thời lượng' },
+    { icon: 'bolt',  v: rpeOf(d.rpe).label,      u: '',     l: 'Gắng sức' },
+    { icon: 'star',  v: s.points || 0,           u: 'điểm', l: 'Điểm' },
   ];
 };
 
@@ -128,7 +153,7 @@ export function buildGymSession(active, meta, author, streakAtPost = 0) {
     date, startTime: start, endTime: now, loggedAt: meta.loggedAt || now,
     durationMin,
     visibility: meta.visibility || 'company',
-    detail: { progId: active.progId, progName: active.progName, dayName: active.dayName, totalVol, totalSets, exs },
+    detail: { progId: active.progId, progName: active.progName, dayName: active.dayName, totalVol, totalSets, exs, rpe: parseInt(meta.rpe) || 3 },
   };
   return finalizeSession(base, author, streakAtPost);
 }
@@ -140,7 +165,9 @@ function collectDetail(type, vals) {
   for (const f of fieldsOf(type)) {
     if (f.type === 'pace' || f.k === 'durationMin') continue;
     const raw = vals[f.k];
-    if (raw == null || raw === '') { if (f.k === 'intensity') detail.intensity = f.def || 'vừa'; continue; }
+    // RPE bắt buộc: rỗng → mặc định mức def (Vừa).
+    if (f.type === 'rpe') { detail.rpe = parseInt(raw) || f.def || 3; continue; }
+    if (raw == null || raw === '') continue;
     if (f.type === 'number' || f.type === 'counter') {
       const n = parseFloat(raw);
       if (!isNaN(n)) detail[f.k] = n;
@@ -148,7 +175,7 @@ function collectDetail(type, vals) {
       detail[f.k] = raw;
     }
   }
-  if (detail.intensity == null) detail.intensity = 'vừa';
+  if (detail.rpe == null) detail.rpe = 3;
   return detail;
 }
 
