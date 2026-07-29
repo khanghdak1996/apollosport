@@ -11,8 +11,8 @@ import { sVol, eVol, tVol, e1rm, startOfWeek, fWeek, pct, weeklyStats, exHistory
 import { EX } from './domain/exercises.js';
 import { EXDB } from './data/exercises-db.js';
 const REST_PRESETS = [60, 90, 120, 180]; // preset thời gian nghỉ giữa set (giây)
-import { ACT, actOf, fieldsOf } from './domain/activities.js';
-import { buildGymSession, buildActivitySession, summaryStats, headline } from './domain/session.js';
+import { ACT, actOf, fieldsOf, RPE_LEVELS, rpeOf } from './domain/activities.js';
+import { buildGymSession, buildActivitySession, summaryStats, headline, computePoints } from './domain/session.js';
 import { advanceStreak, liveStreak, dayStr } from './domain/streak.js';
 import { evaluateBadges, BADGES } from './domain/badges.js';
 import { db } from './data/local.js';
@@ -382,6 +382,7 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
   const [photoPreview, setPhotoPreview] = useState(null);
   const [saving, setSaving] = useState(false);
   const [visibility, setVisibility] = useState(defaultVisibility);
+  const [rpe, setRpe] = useState(3);
   const [durMin, setDurMin] = useState(() => String(Math.max(1, Math.round((Date.now() - workout.startTime) / 60000))));
   const [when, setWhen] = useState(() => {
     const d = new Date();
@@ -391,6 +392,8 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
 
   const vol = tVol(workout.exs);
   const totalSets = workout.exs.reduce((t, e) => t + e.sets.filter(s => s.done).length, 0);
+  // Điểm quy đổi live cho buổi gym (volume load × RPE). Đồng bộ với các môn ở LogActivity.
+  const livePoints = computePoints({ type: 'gym', durationMin: parseFloat(durMin) || 0, detail: { totalVol: vol, rpe } });
 
   const save = async () => {
     const t = title.trim() || workout.dayName;
@@ -398,7 +401,7 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
     setSaving(true);
     // Không upload ở đây; truyền photoFile lên để GymPair xử lý theo uid.
     onSave({
-      title: t, note: note.trim(), photoFile, visibility,
+      title: t, note: note.trim(), photoFile, visibility, rpe,
       durationMin: parseFloat(durMin) || Math.round((Date.now() - workout.startTime) / 60000),
       date: isNaN(d) ? undefined : d.toISOString().split('T')[0],
       loggedAt: isNaN(d) ? Date.now() : d.getTime(),
@@ -441,6 +444,33 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
             <p style=${{ margin: '0 0 2px', fontSize: 11, color: C.txt3, fontWeight: 400 }}>Sets</p>
             <p style=${{ margin: 0, fontSize: 16, fontWeight: 600, color: '#0f172a' }}>${totalSets}</p>
           </div>
+        </div>
+
+        <div style=${{ borderTop: `1px solid ${C.bdr}`, paddingTop: 14, marginBottom: 16 }}>
+          <p style=${{ margin: '0 0 8px', fontSize: 11, color: C.txt3, fontWeight: 400 }}>Buổi này nặng cỡ nào?</p>
+          <div style=${{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            ${RPE_LEVELS.map(lv => {
+              const on = rpe === lv.level;
+              return html`<button key=${lv.level} onClick=${() => setRpe(lv.level)} class="btn-action" style=${{
+                display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', padding: '10px 12px', borderRadius: r.md, cursor: 'pointer',
+                border: on ? 'none' : `1px solid ${C.bdr}`, background: on ? BRAND.blue : '#fff',
+              }}>
+                <span style=${{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, background: on ? 'rgba(255,255,255,.25)' : C.bg3, color: on ? '#fff' : C.txt3 }}>${lv.level}</span>
+                <span style=${{ flex: 1, minWidth: 0 }}>
+                  <span style=${{ display: 'block', fontSize: 13.5, fontWeight: 700, color: on ? '#fff' : C.txt1 }}>${lv.label}</span>
+                  <span style=${{ display: 'block', fontSize: 11.5, color: on ? 'rgba(255,255,255,.85)' : C.txt3 }}>${lv.desc}</span>
+                </span>
+              </button>`;
+            })}
+          </div>
+        </div>
+
+        <div style=${{ display: 'flex', alignItems: 'center', gap: 12, background: BRAND.babyBlue, borderRadius: r.lg, padding: '14px 16px', marginBottom: 16 }}>
+          <div style=${{ flex: 1, minWidth: 0 }}>
+            <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 12, letterSpacing: '.1em', color: '#2E5A80', textTransform: 'uppercase' }}>Buổi này được</p>
+            <p style=${{ margin: '2px 0 0', fontFamily: F.serif, fontStyle: 'italic', fontSize: 12, color: '#3D6285' }}>${Math.round(vol)} kg · ${totalSets} set · ${rpeOf(rpe).label}</p>
+          </div>
+          <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 34, lineHeight: 1, color: BRAND.blue, flexShrink: 0 }}>${livePoints}<span style=${{ fontSize: 14, marginLeft: 4 }}>đ</span></p>
         </div>
 
         <div style=${{ borderTop: `1px solid ${C.bdr}`, paddingTop: 14, marginBottom: 16 }}>
