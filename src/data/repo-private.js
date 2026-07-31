@@ -3,10 +3,12 @@ import { db, reportCloudError } from '../firebase.js';
 
 // Cân nặng là dữ liệu tuyệt mật -> users/{uid}/private/weights (rules chỉ chủ đọc/ghi).
 // Lưu 1 doc chứa mảng entries [{ at, kg }] cho đơn giản.
+// Trả []  = cloud có thẩm quyền, không có cân nặng (doc chưa tạo / đã xoá) → dùng để dọn cache.
+// Trả null = KHÔNG đọc được (lỗi mạng/quyền) → phía gọi phải GIỮ cache local, tránh xoá nhầm.
 export async function getPrivateWeights(uid) {
   try {
     const s = await getDoc(doc(db, 'users', uid, 'private', 'weights'));
-    return s.exists() ? (s.data().entries || []) : null;
+    return s.exists() ? (s.data().entries || []) : [];
   } catch (e) { reportCloudError('Không tải được cân nặng', e); return null; }
 }
 

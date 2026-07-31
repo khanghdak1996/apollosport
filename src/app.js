@@ -1395,9 +1395,10 @@ function GymPair() {
       setPrs(pr || {});
       setWeights(w || []);
       setReady(true);
-      // Cân nặng riêng tư: ưu tiên bản trên cloud (đồng bộ nhiều máy), fallback local.
+      // Cân nặng riêng tư: CLOUD LÀ NGUỒN CHUẨN. cloudW = [] (đã xoá/chưa có) → dọn cache local
+      // theo (setWeights([])); cloudW = null (lỗi mạng/quyền) → GIỮ cache local, thử lại lần sau.
       const cloudW = await getPrivateWeights(pid);
-      if (cloudW) { setWeights(cloudW); db.set(`wt:${pid}`, cloudW); }
+      if (cloudW !== null) { setWeights(cloudW); db.set(`wt:${pid}`, cloudW); }
     })();
   }, [pid]);
 
