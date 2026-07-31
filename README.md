@@ -5,7 +5,9 @@ Mạng xã hội tập luyện **nội bộ công ty** — mở rộng từ app 
 > Đăng nhập Google khoá theo domain công ty (`@apollo.edu.vn`). Toàn bộ dữ liệu đồng bộ qua Firebase.
 
 ## 🚀 Tính năng chính
-- **Ghi mọi môn:** gym (chương trình + set builder), chạy/đi bộ/đạp/bơi/leo núi (quãng đường, pace, lap), yoga, bóng đá/rổ/cầu lông/tennis/pickleball… Mỗi môn có ô nhập riêng, quy đổi ra **điểm** chung (theo MET) để so sánh công bằng.
+- **Ghi mọi môn:** gym (chương trình + set builder), chạy/đi bộ/đạp/bơi/leo núi (quãng đường, pace, lap), yoga, bóng đá/rổ/cầu lông/tennis/pickleball… Mỗi môn có ô nhập riêng, quy đổi ra **điểm** chung để so sánh công bằng.
+- **Chấm điểm khoa học (MET × giờ × 10):** cường độ đo bằng thang **RPE 5 mức** (kèm "talk test"). Môn có tốc độ (chạy/đi/đạp/bơi) tự tính MET từ **quãng đường + thời lượng**, RPE điều chỉnh ±20% để ghi nhận nỗ lực cá nhân; môn đồng đội/yoga nội suy MET theo RPE; gym tính theo khối lượng (set×rep×kg) × RPE. Xem chi tiết ở `Metric-cham-diem-the-thao.md`.
+- **🤖 Trợ lý AI (tư vấn tập luyện & dinh dưỡng):** bong bóng chat popup, hỏi đáp tiếng Việt qua OpenAI. Key API **giữ ở server** (Vercel serverless `api/chat.js`), xác thực bằng Firebase token — không lộ ra client. History chỉ trong phiên (không lưu).
 - **Bảng tin công ty:** thả tim + bình luận; sửa/xoá bài & bình luận của mình.
 - **Chuỗi (streak) + Huy hiệu + Màn mừng:** động viên duy trì thói quen; cảnh báo khi sắp mất chuỗi.
 - **Bảng xếp hạng** công ty / phòng ban theo điểm (tuần & tháng).
@@ -18,9 +20,9 @@ Mạng xã hội tập luyện **nội bộ công ty** — mở rộng từ app 
 - **Riêng tư:** cân nặng/số đo luôn riêng tư; tuỳ chọn ẩn khỏi bảng xếp hạng; xoá tài khoản.
 
 ## 🧱 Công nghệ
-- **Preact 10 + htm** qua import map — **không có bước build**.
-- **Firebase 10.14.1** — Auth (Google) · Firestore · Storage.
-- Firebase project: `apollo-sport-social`.
+- **Preact 10 + htm** qua import map — **không có bước build** cho frontend.
+- **Firebase 10.14.1** — Auth (Google) · Firestore · Storage. Project: `apollo-sport-social`.
+- **Vercel serverless function** (`api/chat.js`) làm proxy an toàn cho **OpenAI** (trợ lý AI) — dependency-free, không cần `package.json`.
 
 ## 💻 Chạy local
 Ứng dụng dùng ES modules nên **KHÔNG mở trực tiếp `file://`** được (bị CORS chặn) — phải chạy qua một web server tĩnh:
@@ -31,9 +33,14 @@ python3 -m http.server 8000
 
 Rồi mở `http://localhost:8000`.
 
+> ⚠️ Trợ lý AI cần serverless `/api/chat` nên **`python http.server` không chạy được phần chat**. Muốn test chat tại máy: dùng `vercel dev` (có file `.env` với `OPENAI_API_KEY`), hoặc test thẳng trên bản Vercel.
+
 ## ☁️ Triển khai
-- **Firebase Hosting** hoặc **GitHub Pages** (host tĩnh, không cần backend riêng).
-- Cấu hình Firebase đã nhúng sẵn trong `src/firebase.js`.
+- **Production: Vercel** (auto-deploy từ nhánh `main`) — https://apollosport.vercel.app. Framework Preset = **Other**, không build command. `vercel.json` cấu hình proxy `/__/auth/*`; thư mục `api/` được Vercel tự nhận là serverless function.
+- **Biến môi trường (Vercel → Settings → Environment Variables):**
+  - `OPENAI_API_KEY` — **bắt buộc** để trợ lý AI hoạt động (giữ bí mật, chỉ ở server).
+  - `OPENAI_MODEL` — tuỳ chọn (mặc định `gpt-4o-mini`).
+- Cấu hình Firebase (web) đã nhúng sẵn trong `src/firebase.js` (apiKey web là public, bình thường với Firebase).
 - Deploy security rules & indexes:
 
 ```bash
@@ -43,15 +50,17 @@ cd firebase && firebase deploy --only firestore:rules,storage:rules,firestore:in
 ## 📂 Cấu trúc
 ```
 index.html              # style + import map + nạp src/main.js
+api/
+  chat.js               # Vercel serverless: proxy OpenAI (giữ key) + verify Firebase token
 src/
-  app.js                # component UI cốt lõi + GymPair root (state/routing)
+  app.js                # component UI cốt lõi + GymPair root (state/routing) + bong bóng chat
   main.js firebase.js auth.js html.js config.js
   ui/                   # theme, icons, primitives, sound
-  domain/               # activities, session, stats, streak, badges, guides, ...
-  data/                 # repo-* (sessions, social, users, clubs, goals, posts), photos, local
-  screens/              # Feed, Leaderboard, Profile, Settings, Clubs, Goals, Guides, ...
+  domain/               # activities (registry môn + RPE), session (chấm điểm), stats, streak, badges, guides, ...
+  data/                 # repo-* (sessions, social, users, clubs, goals, posts), chat-ai, photos, local
+  screens/              # Feed, Leaderboard, Profile, Settings, Clubs, Goals, Guides, ChatBot, ...
 tools/                  # build-exercise-db.mjs (dev: sinh thư viện bài tập)
 firebase/               # firestore.rules, storage.rules, indexes, firebase.json
 ```
 
-> Ghi chú phát triển & lộ trình chi tiết: xem `HANDOFF.md`.
+> Ghi chú phát triển & lộ trình chi tiết: xem `HANDOFF.md` (log đầy đủ) và `CHAT-HANDOFF.md` (ngữ cảnh cô đọng cho phiên mới).

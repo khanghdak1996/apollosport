@@ -73,7 +73,15 @@ Ký hiệu:
 |---|---|---|
 | `src/screens/Settings.js` **[screen]** | **Cài đặt** (hồ sơ, quyền riêng tư, admin, đăng xuất/xoá) | Bấm **avatar ở Trang chủ**, hoặc nút bánh răng ở tab Cá nhân (`pg==='settings'`) |
 
-## 8. Thành phần con (không phải màn độc lập) — `src/app.js`
+## 8. Trợ lý AI (chatbot)
+
+| Tên file | Màn | Cách đi đến |
+|---|---|---|
+| `src/screens/ChatBot.js` **[screen]** | **Trợ lý Apollo** — popup chat tư vấn tập luyện & dinh dưỡng (OpenAI). Header có "＋ Mới" (xoá history) + nút đóng (minimize). | Bấm **bong bóng chat** (góc trái dưới, đối diện nút ＋). Đóng = minimize (giữ history trong phiên); reload = mất history. |
+
+> Bong bóng chat + state `chatOpen`/`chatMsgs` nằm trong `GymPair` (`app.js`). Gọi API qua `src/data/chat-ai.js` → serverless `api/chat.js` (giữ `OPENAI_API_KEY`). Không lưu Firestore.
+
+## 9. Thành phần con (không phải màn độc lập) — `src/app.js`
 
 | Hàm | Vai trò |
 |---|---|
@@ -83,7 +91,7 @@ Ký hiệu:
 | `BarChart` | Biểu đồ cột (thống kê) |
 | `DeltaBadge` | Nhãn ▲▼ thay đổi so kỳ trước |
 | `SegToggle` | Nút gạt 2 lựa chọn (vd Theo bài / Theo buổi) |
-| `GymPair` | Component gốc của app (state điều phối toàn bộ) |
+| `GymPair` | Component gốc của app (state điều phối toàn bộ + bong bóng chat) |
 
 ---
 

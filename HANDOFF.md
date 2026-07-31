@@ -334,3 +334,25 @@ Tinh chỉnh Đợt 2 theo chốt của user:
 - **Mục tiêu công ty: bỏ opt-in → auto** (xem §16 đã sửa). Mọi người tự động đóng góp.
 - **Trang chủ (HomeTab, app.js): bỏ khối "Bắt đầu tập" gym** (Label + Quản lý chương trình + danh sách chương trình với nút ▶ theo buổi). Lý do: Home không còn gym-centric; chọn chương trình gym chỉ hiện khi user chủ động bắt đầu môn gym (nút ＋ → PickActivity → onGym → ProgsTab, luồng cũ vẫn nguyên). HomeTab giờ = hero + 3 tile (Chuỗi/Tuần này/Phút tuần) + "Gần đây". Props `progs/onStart/onManagePrograms` của HomeTab còn truyền nhưng không dùng (vô hại).
 - **GoalForm: sửa mặc định đơn vị theo môn.** Trước đây club goal luôn mặc định `distanceKm` dù môn gì. Giờ: default = (môn kind==='distance' → km, còn lại → số buổi); và **ẩn lựa chọn "Quãng đường (km)"** cho nhóm môn không phải distance (yoga/bóng/gym…) — km chỉ hiện với company hoặc club môn distance.
+
+## 18. ✅ Chấm điểm mới — MET × giờ × 10 + RPE (2026-07-31)
+Thay hệ chấm điểm cũ (`met(sport) × phút × hệ_số_nhẹ_vừa_mạnh / 5`) bằng mô hình khoa học hơn. Thiết kế đầy đủ ở `Metric-cham-diem-the-thao.md`; bản đã triển khai (sau 2 vòng phản hồi của Khang):
+- **Công thức thống nhất:** `điểm = MET hiệu dụng × giờ × 10` (clamp phút [0,180]). Ở `domain/session.js` (`effectiveMet` + `computePoints`).
+- **Cường độ = RPE 5 mức** (Rất nhẹ → Gắng sức tối đa, kèm talk test) thay "nhẹ/vừa/mạnh". `RPE_LEVELS` trong `domain/activities.js` (mỗi mức có `index`, `factor`, `gymRaw`).
+- **3 nhóm môn** (field `category` trong registry):
+  - `pace` (chạy/đi/đạp/bơi): **bắt buộc quãng đường** → tự tính tốc độ → `metForSpeed(speedBands)` × hệ số RPE (0.8–1.2). Bỏ dropdown pace-band thủ công (v1 từng làm rồi gỡ vì gây rối/mâu thuẫn với pace tự tính). Bơi bỏ ô "Kiểu bơi".
+  - `rpe_only` (bóng đá/rổ/cầu lông/tennis/pickleball/yoga/leo núi/khác): nội suy `metMin↔metMax` theo `index` RPE. Yoga bỏ ô "Trường phái".
+  - `gym`: volume load (`totalVol × gymRaw`) × hệ số `GYM_K` (≈0.027, **CẦN calibrate**), clamp `[metMin, 12]`. Thêm ô RPE + card điểm live vào `SaveWorkout`.
+- **Clean-cut:** không tính lại điểm/leaderboard cũ; không đổi schema (vẫn ghi `points`/`activeMinutes`).
+- Verify: node --check OK, harness Node kiểm số điểm khớp ví dụ (chạy 10km/60′ → 98đ; nữ mới 6km/60′ gắng sức max → ~100đ vs nam khoẻ nhẹ → ~75đ; bóng đá 60′ vừa → 75đ). **Màn nhập cần đăng nhập → test kỹ trên Vercel.**
+- Còn lại: calibrate `GYM_K`; rà `metMin`/`metMax` + `speedBands` (nhất là bơi) theo Compendium 2024.
+
+## 19. ✅ Trợ lý AI — chatbot tư vấn (OpenAI, proxy an toàn) (2026-07-31)
+Chatbot popup tư vấn tập luyện & dinh dưỡng, kiểu popup web bán hàng.
+- **Kiến trúc bảo mật:** client `askAI()` (`data/chat-ai.js`) đính Firebase ID token → `POST /api/chat` (Vercel serverless) → verify token (`@apollo.edu.vn` + email_verified qua Identity Toolkit `accounts:lookup`) → gọi **OpenAI Chat Completions** (non-streaming) với `SYSTEM_PROMPT` → trả text. **`OPENAI_API_KEY` chỉ ở `process.env` server, không xuống client.** Dependency-free (không `package.json`), CommonJS + global fetch.
+- **Chống lạm phí:** cap `max_tokens`=800, cắt lịch sử 20 lượt/4000 ký tự, chặn origin lạ. (Nên đặt thêm budget limit ở OpenAI.)
+- **UI** (`screens/ChatBot.js`, bám khung `CommentsSheet`): bong bóng chat góc trái dưới (`app.js`, state `chatOpen`/`chatMsgs` trong `GymPair`); minimize giữ history trong phiên, "＋ Mới" xoá, **không lưu Firestore** (reload là mất). Empty state có gợi ý câu hỏi; hiệu ứng "đang gõ" (keyframes `chatDotBounce` trong `index.html`).
+- **Instruction bot** = hằng `SYSTEM_PROMPT` trong `api/chat.js` (sửa tại đây): tư vấn tiếng Việt, guardrails y tế (không chẩn đoán/kê đơn → khuyên gặp bác sĩ), từ chối chủ đề ngoài fitness/dinh dưỡng.
+- **Env (Vercel):** `OPENAI_API_KEY` (bắt buộc), `OPENAI_MODEL` (tuỳ chọn, mặc định `gpt-4o-mini`). `.gitignore` đã bỏ qua `.env*`.
+- **Test:** cần `/api` chạy → `vercel dev` (có `.env`) hoặc bản Vercel; `python http.server` không chạy được phần chat. Component đã render thử OK (khớp design).
+- Nâng cấp sau (đã note): streaming (`stream:true` + parse SSE), cá nhân hoá theo user, rate-limit/user, markdown đầy đủ.
