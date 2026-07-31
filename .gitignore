@@ -5,3 +5,8 @@
 # Editor / OS junk
 *.swp
 Thumbs.db
+
+# Secrets / env (Vercel serverless: OPENAI_API_KEY, v.v.)
+.env
+.env.*
+.vercel

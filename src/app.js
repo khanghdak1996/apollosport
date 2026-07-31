@@ -33,6 +33,7 @@ import { CalendarTab } from './screens/CalendarTab.js';
 import { FeedTab } from './screens/FeedTab.js';
 import { LeaderboardTab } from './screens/LeaderboardTab.js';
 import { CommentsSheet } from './screens/CommentsSheet.js';
+import { ChatBot } from './screens/ChatBot.js';
 import { Settings } from './screens/Settings.js';
 import { ProfileScreen } from './screens/ProfileScreen.js';
 import { GuidesScreen } from './screens/GuidesScreen.js';
@@ -1327,6 +1328,8 @@ function GymPair() {
   const [celebStreak, setCelebStreak] = useState(null);
   const [cloudError, setCloudError] = useState(null);
   const [myReactions, setMyReactions] = useState(new Set());
+  const [chatOpen, setChatOpen] = useState(false);   // trợ lý AI: mở/minimize
+  const [chatMsgs, setChatMsgs] = useState([]);       // history trong phiên (không lưu Firestore)
 
   useEffect(() => {
     setCloudErrorHandler(setCloudError);
@@ -1798,6 +1801,16 @@ function GymPair() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         boxShadow: '0 6px 20px var(--accent-glow), 0 2px 6px rgba(0,0,0,0.15)',
       }}>＋</button>`}
+
+      ${!chatOpen && html`
+        <button onClick=${() => setChatOpen(true)} class="btn-action" aria-label="Trợ lý AI" style=${{
+        position: 'absolute', bottom: 78, left: 18, zIndex: 50,
+        width: 52, height: 52, borderRadius: '50%', border: 'none', cursor: 'pointer',
+        background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: '0 6px 20px var(--accent-glow), 0 2px 6px rgba(0,0,0,0.15)',
+      }}><${SportIcon} k="comment" size=${24} color=${ACC}/></button>`}
+
+      ${chatOpen && html`<${ChatBot} msgs=${chatMsgs} setMsgs=${setChatMsgs} onClose=${() => setChatOpen(false)}/>`}
 
       ${active && !showWorkout && html`<${ResumeBar} workout=${active} onResume=${() => setShowWorkout(true)}/>`}
       <${TabBar} tab=${tab} onTab=${setTab}/>
