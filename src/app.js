@@ -1403,6 +1403,12 @@ function GymPair() {
 
   const saveP = p => { setProgs(p); db.set(`p:${pid}`, p); };
   const saveS = s => { setSessions(s); db.set(`s:${pid}`, s); };
+  // Đã đẩy buổi lên cloud thành công → gỡ cờ pendingSync để lần sync sau coi cloud là chuẩn.
+  const markSessionSynced = id => setSessions(prev => {
+    const next = prev.map(s => s.id === id ? { ...s, pendingSync: false } : s);
+    db.set(`s:${pid}`, next);
+    return next;
+  });
   const saveA = a => { setActive(a); db.set(`a:${pid}`, a); };
   const saveC = list => { setExList(list); db.set(`c:${pid}`, list.filter(e => !EX.find(b => b.id === e.id))); };
   const savePrs = pr => { setPrs(pr); db.set(`pr:${pid}`, pr); };
@@ -1566,13 +1572,15 @@ function GymPair() {
       catch { syncedRef.current = null; return; } // lỗi mạng → cho lần render sau thử lại
       if (!alive || !cloud) return;
 
-      // Gộp vào cache: cloud ghi đè bản trùng id, giữ buổi local chưa kịp sync.
+      // Cloud là NGUỒN CHUẨN: bắt đầu từ danh sách cloud, chỉ giữ thêm buổi local
+      // ĐANG chờ đẩy lên (pendingSync) mà cloud chưa có. Buổi local không pending & không
+      // còn trên cloud coi như đã bị xoá/kiểm duyệt trên cloud → BỎ (tránh "bóng ma" dữ liệu
+      // khi reset Firestore). Buổi vừa tạo offline vẫn được giữ nhờ cờ pendingSync.
       const localized = cloud.map(toLocal);
       setSessions(prev => {
-        const byId = new Map();
-        for (const s of prev) byId.set(s.id, s);
-        for (const s of localized) byId.set(s.id, s);
-        const merged = [...byId.values()]
+        const cloudIds = new Set(localized.map(s => s.id));
+        const pendingLocal = prev.filter(s => s.pendingSync && !cloudIds.has(s.id));
+        const merged = [...localized, ...pendingLocal]
           .sort((a, b) => (b.loggedAt || b.startTime || 0) - (a.loggedAt || a.startTime || 0))
           .slice(0, 300);
         db.set(`s:${pid}`, merged);
@@ -1620,7 +1628,7 @@ function GymPair() {
     }
     const stLocal = advanceStreak(userDoc.streak, date);
     const sess = buildGymSession(active, { ...meta, photoUrl, date }, meAuthor(), stLocal.current);
-    const local = toLocal(sess);
+    const local = { ...toLocal(sess), pendingSync: true };
     const updatedSessions = [local, ...sessions].slice(0, 300);
     const { updated, newly } = computePRs(sess, prs);
     savePrs(updated);
@@ -1637,6 +1645,7 @@ function GymPair() {
     try {
       const st = await saveSession(sess, meAuthor(), dayContext(sessions, date));
       setUserDoc(d => ({ ...d, streak: st }));
+      markSessionSynced(sess.id);
     } catch (e) { reportCloudError('Đồng bộ buổi tập thất bại', e); }
   };
 
@@ -1650,7 +1659,7 @@ function GymPair() {
       try { const blob = await compressImage(input.photoFile); sess.photoUrl = await uploadSessionPhoto(blob, pid, sess.id); }
       catch (e) { reportCloudError('Upload ảnh thất bại', e); }
     }
-    const local = toLocal(sess);
+    const local = { ...toLocal(sess), pendingSync: true };
     const earned = awardBadges(sess, stLocal);
     saveS([local, ...sessions].slice(0, 300));
     setNewPRs([]);
@@ -1662,6 +1671,7 @@ function GymPair() {
     try {
       const st = await saveSession(sess, meAuthor(), dayContext(sessions, date));
       setUserDoc(d => ({ ...d, streak: st }));
+      markSessionSynced(sess.id);
     } catch (e) { reportCloudError('Đồng bộ buổi tập thất bại', e); }
   };
 
