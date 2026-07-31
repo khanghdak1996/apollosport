@@ -23,11 +23,15 @@ const firebaseConfig = {
 
 export let auth = null, db = null, storage = null, fbInitError = null;
 
-// Chạy emulator khi ở localhost VÀ bật cờ (localStorage.useEmulator='1' hoặc ?emu ở URL).
-// Mặc định: dùng project thật ngay cả trên localhost, để test Google đăng nhập thật.
+// AN TOÀN PRODUCTION: localhost MẶC ĐỊNH dùng emulator để việc dev/test KHÔNG bao giờ
+// đụng vào cloud thật (đã có người dùng thật). Muốn test trên cloud thật ở localhost
+// (vd: kiểm tra Google đăng nhập thật), cố ý bật cờ: thêm ?real vào URL hoặc đặt
+// localStorage.useRealCloud='1'. Bản deploy (không phải localhost) LUÔN dùng cloud thật.
+export const useRealCloud = () =>
+  localStorage.getItem('useRealCloud') === '1' || location.search.includes('real');
+
 export const useEmulator = () =>
-  ['localhost', '127.0.0.1'].includes(location.hostname)
-  && (localStorage.getItem('useEmulator') === '1' || location.search.includes('emu'));
+  ['localhost', '127.0.0.1'].includes(location.hostname) && !useRealCloud();
 
 let cloudErrorHandler = null;
 export const setCloudErrorHandler = (fn) => { cloudErrorHandler = fn; };
@@ -45,7 +49,9 @@ try {
     connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
     connectFirestoreEmulator(db, '127.0.0.1', 8080);
     connectStorageEmulator(storage, '127.0.0.1', 9199);
-    console.info('[firebase] dùng emulator cục bộ');
+    console.info('[firebase] EMULATOR cục bộ — dữ liệu test KHÔNG đụng cloud thật. (Cần chạy: firebase emulators:start)');
+  } else if (['localhost', '127.0.0.1'].includes(location.hostname)) {
+    console.warn('[firebase] ⚠️ localhost đang nối CLOUD THẬT (?real). Mọi thao tác ghi vào dữ liệu người dùng thật!');
   }
 } catch (e) {
   fbInitError = `Khởi tạo Firebase thất bại: ${e?.code || e?.message || e}`;
