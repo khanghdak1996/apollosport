@@ -1,6 +1,6 @@
 # Apollo Sport — Handoff cho phiên làm việc mới
 
-> Dán file này (hoặc phần liên quan) vào chat mới để có ngữ cảnh. Cập nhật: 2026-07-28.
+> Dán file này (hoặc phần liên quan) vào chat mới để có ngữ cảnh. Cập nhật: 2026-07-31.
 
 ## 1. Dự án là gì
 - App **PWA thể thao nội bộ Apollo**: đồng nghiệp ghi buổi tập (gym & nhiều môn), bảng tin, bảng xếp hạng, nhóm/CLB, mục tiêu, huy hiệu, chuỗi ngày.
@@ -30,15 +30,20 @@ Bối cảnh: muốn dùng standalone PWA nhưng Google login bằng popup khôn
 Giới hạn đăng nhập: chỉ email **@apollo.edu.vn** (`src/config.js` `ALLOWED_DOMAINS`), provider gắn `hd=apollo.edu.vn`.
 
 ## 4. Kiến trúc code (thư mục `src/`)
-- `main.js` → render `<GymPair/>`; `app.js` (~1700 dòng) = component gốc + nhiều màn inline (ActiveWorkout, SaveWorkout, CreateProg, PickEx, SessDetail, ProgressTab, CelebrationModal…), router thủ công bằng state `tab` + `pg`/`pgCtx`.
-- `screens/` — các màn tách file (SignIn, Onboarding, HomeTab, CalendarTab, FeedTab, LeaderboardTab, ProfileScreen, Settings, Clubs*, Goals*, Guides*, Comments, PostCard…).
+- `main.js` → render `<GymPair/>`; `app.js` (~1800 dòng) = component gốc + nhiều màn inline (ActiveWorkout, SaveWorkout, CreateProg, PickEx, SessDetail, ProgressTab, CelebrationModal…), router thủ công bằng state `tab` + `pg`/`pgCtx`. Cũng chứa **bong bóng chat + mount `ChatBot`** (state `chatOpen`/`chatMsgs`).
+- `screens/` — các màn tách file (SignIn, Onboarding, HomeTab, CalendarTab, FeedTab, LeaderboardTab, ProfileScreen, Settings, Clubs*, Goals*, Guides*, Comments, PostCard, **ChatBot**…).
 - `ui/` — theme (tokens màu `C`/`BRAND`/`F`/`T`, `ACC`), primitives (`Wrap/Card/Btn/Label`…), icons, sportIcons, sound, fonts.css.
-- `domain/` — logic thuần: `activities`, `session` (build/điểm), `stats`, `streak`, `badges`, `exercises` (EX ~112 bài), `guides`+`fitness-vocab`, `format`, `period`.
-- `data/` — `local.js` (localStorage cache), `photos.js` (upload ảnh), và các `repo-*.js` gọi Firestore (users/sessions/social/leaderboard/clubs/goals/posts/private), `departments.js`, `instructions-vi.js`, `exercises-db.js` (auto-gen, 2.3k dòng), **`cloud.js` = lớp cũ đã chết**.
+- `domain/` — logic thuần: `activities` (registry môn + `RPE_LEVELS`/`speedBands`/`metForSpeed`), `session` (build + **chấm điểm `computePoints`/`effectiveMet`**), `stats`, `streak`, `badges`, `exercises` (EX ~112 bài), `guides`+`fitness-vocab`, `format`, `period`.
+- `data/` — `local.js` (localStorage cache), `photos.js` (upload ảnh), **`chat-ai.js` (`askAI()` gọi `/api/chat`)**, và các `repo-*.js` gọi Firestore (users/sessions/social/leaderboard/clubs/goals/posts/private), `departments.js`, `instructions-vi.js`, `exercises-db.js` (auto-gen, 2.3k dòng), **`cloud.js` = lớp cũ đã chết**.
+- **`api/chat.js`** (ngoài `src/`) — Vercel serverless: proxy OpenAI (giữ `OPENAI_API_KEY`) + verify Firebase ID token (`@apollo.edu.vn`) + `SYSTEM_PROMPT` (instruction bot). Dependency-free, không có `package.json`.
 - `tools/build-exercise-db.mjs` — script dev sinh `exercises-db.js`.
 - `firebase/` — `firestore.rules`, `firestore.indexes.json`, `storage.rules`, `firebase.json`, `.firebaserc` (default project).
 
-Mô hình dữ liệu **local-first**: mỗi mutation `setState` + `localStorage`, rồi `await repo.*()` lên cloud; lỗi cloud chỉ hiện banner.
+Mô hình dữ liệu **local-first**: mỗi mutation `setState` + `localStorage`, rồi `await repo.*()` lên cloud; lỗi cloud chỉ hiện banner. (Trợ lý AI không lưu Firestore — history chỉ trong phiên.)
+
+## 4b. Chấm điểm & Trợ lý AI (2 mảng mới)
+- **Chấm điểm** (`domain/session.js` + `activities.js`): công thức thống nhất **điểm = MET hiệu dụng × giờ × 10**. Cường độ = thang **RPE 5 mức** (thay "nhẹ/vừa/mạnh" cũ). Môn pace (chạy/đi/đạp/bơi) **bắt buộc quãng đường** → tự tính tốc độ → MET nền × hệ số RPE (0.8–1.2); môn `rpe_only` nội suy metMin↔metMax theo RPE; gym = volume load × RPE (hệ số `GYM_K` còn cần calibrate). Clean-cut, không tính lại điểm cũ. Thiết kế đầy đủ: `Metric-cham-diem-the-thao.md`.
+- **Trợ lý AI**: client `askAI()` (`data/chat-ai.js`) đính Firebase ID token → `POST /api/chat` → proxy verify token + gọi OpenAI Chat Completions (non-streaming) → trả text. Key **chỉ ở server**. Cần env `OPENAI_API_KEY` (+ tuỳ chọn `OPENAI_MODEL`, mặc định `gpt-4o-mini`) trên Vercel.
 
 ## 5. Quyền admin
 - Lưu ở Firestore collection **`admins/{uid}`** (một doc/uid), set TAY qua Console. Admin là **cộng thêm** (vẫn là user bình thường). Bật "Chế độ quản trị" trong Cài đặt để xoá bài/bình luận vi phạm.
@@ -67,6 +72,9 @@ firebase firestore:delete goals --recursive --force
 ```
 
 ## 7. Việc đã làm gần đây (commit mới → cũ)
+- `c9e16a9` **AI Chatbot** tư vấn tập luyện & dinh dưỡng (OpenAI qua proxy `api/chat.js` an toàn) — 2026-07-31.
+- `da0a6b2` **Chấm điểm mới**: MET × giờ × 10 (RPE 5 mức + pace tự tính) — 2026-07-31.
+- `64550e9` Fix số liệu lệch giữa các màn + xem full ảnh ở bảng tin.
 - `7456e62` auth same-domain qua Vercel proxy để signInWithRedirect chạy trên iOS PWA.
 - `7fd47dc` PWA: manifest + icon standalone, redirect khi standalone.
 - `309c14f` Onboarding: dropdown Phòng ban/Trung tâm từ DEPARTMENTS, bỏ ô Cơ sở & emoji.
@@ -75,6 +83,8 @@ firebase firestore:delete goals --recursive --force
 - Trong `db047f7` đã kèm: gộp logic lặp trong `app.js` (`points7d`, `VisibilityButtons`, `PhotoPicker`), leaderboard hiển thị **top 50** (không realtime, load khi mở tab), xoá `domain/constants.js` (đã dời `REST_PRESETS` vào app.js) + xoá 4 ảnh nặng không dùng.
 
 ## 8. Còn tồn / nên làm sau
+- [ ] **Calibrate `GYM_K`** (trong `domain/session.js`, hiện ≈0.027) với vài buổi gym mẫu thật để điểm gym cân với cardio. Số liệu `metMin`/`metMax` các môn hiện là ước lượng — rà lại theo Compendium 2024. Bơi `speedBands` cũng cần rà.
+- [ ] **Trợ lý AI:** đặt **usage/budget limit** ở OpenAI (chống lạm phí). Xác nhận `OPENAI_MODEL` đúng model rẻ hiện hành. Nâng cấp sau nếu cần: **streaming** (hiện chữ dần), cá nhân hoá theo user, rate-limit/user, render markdown đầy đủ.
 - [ ] **Review bảo mật `firestore.rules` + `storage.rules`** trước khi mở rộng người dùng (chủ dự án đã hẹn làm sau).
 - [ ] Xác nhận iOS standalone login đã ổn sau khi thêm OAuth redirect URI (đã xong bước config; cần test lại). Nếu còn "missing initial state"/lặp: chỉnh thêm `auth.js` (thứ tự `getRedirectResult` / `browserPopupRedirectResolver`).
 - [ ] Dọn dead code còn lại: `data/cloud.js` + `fbDb/fbStorage/fbReady`, và vài dead export/unused import (Hero, Pill, SportChip, ACCENTS ở theme.js, topEntries, historyOf, removeMyGoalProgress, các *_VI thừa…).

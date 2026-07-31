@@ -2,6 +2,12 @@
 
 *Phạm vi: chạy bộ/đi bộ/đạp xe, gym/tập tạ, yoga/thể dục nhẹ — nhập liệu 100% thủ công, dùng cho leaderboard nội bộ.*
 
+> **📌 Trạng thái ĐÃ TRIỂN KHAI (2026-07-31):** Đây là tài liệu thiết kế (nhiều vòng đề xuất). Bản **đã code** trong app khác vài chỗ so với các vòng khám phá bên dưới — chốt cuối:
+> - Công thức: **điểm = MET hiệu dụng × giờ × 10** (RPE 5 mức).
+> - Môn có tốc độ (chạy/đi/đạp/bơi): **bắt buộc quãng đường → tự tính tốc độ → MET nền × hệ số RPE (0.8–1.2)**. KHÔNG dùng dropdown pace-band thủ công (mục 4/10 chỉ là ý tưởng trung gian, đã bỏ).
+> - Môn không có tốc độ: nội suy `metMin↔metMax` theo RPE. Gym: volume load × RPE.
+> - Code: `src/domain/session.js` (`effectiveMet`, `computePoints`) + `src/domain/activities.js` (`RPE_LEVELS`, `speedBands`, `metForSpeed`).
+
 ## TL;DR
 
 Thay "Nhẹ/Vừa/Nặng" mơ hồ bằng **hai lớp dữ liệu người dùng có thể tự trả lời chính xác**: (1) một **mốc đo được** riêng cho từng môn (pace, tốc độ, mức tạ...) để suy ra MET, và (2) thang **RPE (Borg CR-10, thang 1–10 "How was your workout?")** kèm neo mô tả rõ + talk test để chấm cường độ cảm nhận. Điểm cuối = **MET-phút** (chuẩn khoa học, công bằng giữa các môn) đối chiếu với RPE để chống khai gian.
