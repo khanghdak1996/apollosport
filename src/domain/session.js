@@ -1,6 +1,7 @@
 // Suy dẫn thuần từ một session (mọi type). Feed/lịch/streak/xếp hạng chỉ đọc các
 // field cấp trên + hàm ở đây, không cần biết cấu trúc gym bên trong detail.
-import { actOf, fieldsOf, rpeOf, metForSpeed } from './activities.js';
+import { actOf, fieldsOf, rpeOf, rpeLabel, actLabel, actVerb, metForSpeed } from './activities.js';
+import { t } from '../i18n.js';
 import { uid } from './format.js';
 import { tVol } from './stats.js';
 
@@ -80,40 +81,41 @@ export const speedKmh = s => {
 export const summaryStats = s => {
   const d = s.detail || {};
   if (s.type === 'gym') return [
-    { icon: 'flame', v: Math.round(d.totalVol || 0), u: 'kg',   l: 'Tổng volume' },
-    { icon: 'check', v: d.totalSets || 0,            u: 'sets', l: 'Tổng set' },
-    { icon: 'clock', v: s.durationMin || 0,          u: 'phút', l: 'Thời lượng' },
+    { icon: 'flame', v: Math.round(d.totalVol || 0), u: 'kg',   l: t('stat.volume') },
+    { icon: 'check', v: d.totalSets || 0,            u: 'sets', l: t('stat.sets') },
+    { icon: 'clock', v: s.durationMin || 0,          u: t('unit.min'), l: t('stat.duration') },
   ];
   if (s.type === 'swim' && d.distanceM) return [
-    { icon: 'route', v: d.distanceM,        u: 'm',     l: 'Quãng đường' },
-    { icon: 'clock', v: s.durationMin || 0, u: 'phút',  l: 'Thời lượng' },
-    { icon: 'wave',  v: pace100Label(s),    u: '/100m', l: 'Pace' },
+    { icon: 'route', v: d.distanceM,        u: 'm',     l: t('stat.distance') },
+    { icon: 'clock', v: s.durationMin || 0, u: t('unit.min'),  l: t('stat.duration') },
+    { icon: 'wave',  v: pace100Label(s),    u: '/100m', l: t('stat.pace') },
   ];
   if (s.type === 'cycle' && d.distanceKm) return [
-    { icon: 'route', v: d.distanceKm,       u: 'km',   l: 'Quãng đường' },
-    { icon: 'clock', v: s.durationMin || 0, u: 'phút', l: 'Thời lượng' },
-    { icon: 'gauge', v: speedKmh(s),        u: 'km/h', l: 'Tốc độ TB' },
+    { icon: 'route', v: d.distanceKm,       u: 'km',   l: t('stat.distance') },
+    { icon: 'clock', v: s.durationMin || 0, u: t('unit.min'), l: t('stat.duration') },
+    { icon: 'gauge', v: speedKmh(s),        u: 'km/h', l: t('stat.avgSpeed') },
   ];
   if (actOf(s.type).kind === 'distance' && d.distanceKm) return [
-    { icon: 'route', v: d.distanceKm,       u: 'km',   l: 'Quãng đường' },
-    { icon: 'clock', v: s.durationMin || 0, u: 'phút', l: 'Thời lượng' },
-    { icon: 'bolt',  v: paceLabel(s),       u: '/km',  l: 'Pace' },
+    { icon: 'route', v: d.distanceKm,       u: 'km',   l: t('stat.distance') },
+    { icon: 'clock', v: s.durationMin || 0, u: t('unit.min'), l: t('stat.duration') },
+    { icon: 'bolt',  v: paceLabel(s),       u: '/km',  l: t('stat.pace') },
   ];
   return [
-    { icon: 'clock', v: s.durationMin || 0,      u: 'phút', l: 'Thời lượng' },
-    { icon: 'bolt',  v: rpeOf(d.rpe).label,      u: '',     l: 'Gắng sức' },
-    { icon: 'star',  v: s.points || 0,           u: 'điểm', l: 'Điểm' },
+    { icon: 'clock', v: s.durationMin || 0,      u: t('unit.min'), l: t('stat.duration') },
+    { icon: 'bolt',  v: rpeLabel(d.rpe),          u: '',     l: t('stat.effort') },
+    { icon: 'star',  v: s.points || 0,           u: t('unit.points'), l: t('stat.points') },
   ];
 };
 
 // Câu tiêu đề feed: "<tên> đã chạy · 8.2 km" ...
 export const headline = s => {
+  const vb = actVerb(s.type);
   const a = actOf(s.type);
   const d = s.detail || {};
-  if (s.type === 'gym') return `${a.verb} ${s.title || 'gym'}`;
-  if (s.type === 'swim' && d.distanceM) return `${a.verb} ${d.distanceM} m`;
-  if (a.kind === 'distance' && d.distanceKm) return `${a.verb} ${d.distanceKm} km`;
-  return `${a.verb} ${s.durationMin || 0} phút`;
+  if (s.type === 'gym') return `${vb} ${s.title || actLabel('gym')}`;
+  if (s.type === 'swim' && d.distanceM) return `${vb} ${d.distanceM} m`;
+  if (a.kind === 'distance' && d.distanceKm) return `${vb} ${d.distanceKm} km`;
+  return `${vb} ${s.durationMin || 0} ${t('unit.min')}`;
 };
 
 // Bổ sung các field dẫn xuất + thông tin tác giả để tạo doc hoàn chỉnh (khớp firestore.rules).

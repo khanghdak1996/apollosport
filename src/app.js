@@ -11,7 +11,7 @@ import { sVol, eVol, tVol, e1rm, startOfWeek, fWeek, pct, weeklyStats, exHistory
 import { EX } from './domain/exercises.js';
 import { EXDB } from './data/exercises-db.js';
 const REST_PRESETS = [60, 90, 120, 180]; // preset thời gian nghỉ giữa set (giây)
-import { ACT, actOf, fieldsOf, RPE_LEVELS, rpeOf } from './domain/activities.js';
+import { ACT, actOf, fieldsOf, RPE_LEVELS, rpeOf, rpeLabel, rpeDesc, actLabel, flabel } from './domain/activities.js';
 import { buildGymSession, buildActivitySession, summaryStats, headline, computePoints } from './domain/session.js';
 import { advanceStreak, liveStreak, dayStr } from './domain/streak.js';
 import { evaluateBadges, BADGES } from './domain/badges.js';
@@ -24,6 +24,7 @@ import { getPrivateWeights, savePrivateWeights } from './data/repo-private.js';
 import { fbInitError, reportCloudError, setCloudErrorHandler } from './firebase.js';
 import { watchAuth, consumeRedirect, ensureUserDoc, signOutUser, deleteMyAccount } from './auth.js';
 import { saveOnboarding, updateUserDoc, isAdminUser } from './data/repo-users.js';
+import { t, useLang, setLang, onLangPersist } from './i18n.js';
 import { SignIn } from './screens/SignIn.js';
 import { Onboarding } from './screens/Onboarding.js';
 import { PickActivity } from './screens/PickActivity.js';
@@ -57,9 +58,9 @@ function ResumeBar({ workout, onResume }) {
     }}>
       <span style=${{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 500 }}>
         <span style=${{ width: 8, height: 8, borderRadius: '50%', background: '#fff', display: 'inline-block', opacity: 0.9 }}/>
-        Đang tập: ${workout.dayName}
+        ${t('aw.training', { name: workout.dayName })}
       </span>
-      <span style=${{ fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>${fT(elapsed)} · Tiếp tục</span>
+      <span style=${{ fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>${fT(elapsed)} · ${t('aw.resume')}</span>
     </button>`;
 }
 
@@ -67,7 +68,7 @@ function ResumeBar({ workout, onResume }) {
 // Thay cho việc in "kg" cứng — gym→volume, chạy→km, bơi→m, yoga/đối kháng→điểm.
 const primStat = s => {
   const stats = summaryStats(s);
-  return stats.find(x => x.icon !== 'clock' && typeof x.v === 'number') || stats.find(x => x.icon === 'star') || { v: s.points || 0, u: 'điểm' };
+  return stats.find(x => x.icon !== 'clock' && typeof x.v === 'number') || stats.find(x => x.icon === 'star') || { v: s.points || 0, u: t('unit.points') };
 };
 
 // Tổng điểm 7 ngày gần nhất (dùng cho HomeTab & CalendarTab).
@@ -77,7 +78,7 @@ const points7d = sessions => sessions.reduce((t, s) => ((Date.now() - new Date(s
 function VisibilityButtons({ value, onChange }) {
   return html`
     <div style=${{ display: 'flex', gap: 8 }}>
-      ${[{ v: 'company', k: 'globe', l: 'Đồng nghiệp' }, { v: 'private', k: 'lock', l: 'Chỉ mình tôi' }].map(o => {
+      ${[{ v: 'company', k: 'globe', l: t('visibility.company') }, { v: 'private', k: 'lock', l: t('visibility.private') }].map(o => {
         const on = (value ?? 'company') === o.v;
         return html`<button key=${o.v} onClick=${() => onChange(o.v)} class="btn-action" style=${{
           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '11px', borderRadius: r.md, cursor: 'pointer', fontSize: 13.5, fontWeight: 500,
@@ -88,7 +89,7 @@ function VisibilityButtons({ value, onChange }) {
 }
 
 // Ô chọn/xem trước ảnh (bấm để chọn từ máy, nút × để gỡ). Dùng ở SaveWorkout & SessDetail.
-function PhotoPicker({ preview, onPick, onRemove, emptyLabel = 'Thêm ảnh', height = 160, radius = r.lg, pad = '22px', iconSize = 26 }) {
+function PhotoPicker({ preview, onPick, onRemove, emptyLabel = t('photo.short'), height = 160, radius = r.lg, pad = '22px', iconSize = 26 }) {
   return html`
     <label style=${{ display: 'block', cursor: 'pointer' }}>
       <input type="file" accept="image/*" style=${{ display: 'none' }} onChange=${e => { const f = e.target.files[0]; if (f) onPick(f); }}/>
@@ -135,19 +136,19 @@ function ProgsTab({ progs, onNew, onDel, onEdit, onStart, onBack }) {
       <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div style=${{ display: 'flex', alignItems: 'center', gap: 10 }}>
           ${onBack && html`<button onClick=${onBack} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.txt2 }}><${Icons.back} size=${18}/></button>`}
-          <h2 style=${{ margin: 0, fontSize: 24, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.02em' }}>Chương trình</h2>
+          <h2 style=${{ margin: 0, fontSize: 24, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.02em' }}>${t('progs.title')}</h2>
         </div>
-        <${Btn} onClick=${onNew} cx=${{ display: 'flex', alignItems: 'center', gap: 6 }}><${Icons.plus} size=${16}/> Tạo mới</${Btn}>
+        <${Btn} onClick=${onNew} cx=${{ display: 'flex', alignItems: 'center', gap: 6 }}><${Icons.plus} size=${16}/> ${t('progs.new')}</${Btn}>
       </div>
       ${progs.length === 0
-      ? html`<${Empty} icon="journal" msg="Chưa có chương trình" sub='Nhấn "+ Tạo mới" để bắt đầu'/>`
+      ? html`<${Empty} icon="journal" msg=${t('progs.emptyMsg')} sub=${t('progs.emptySub')}/>`
       : progs.map(prog => html`
           <${Card} key=${prog.id} cx=${{ border: `1px solid ${C.bdr}` }}>
             <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <p style=${{ margin: 0, fontSize: 16, fontWeight: 500, color: '#0f172a', letterSpacing: '-0.01em' }}>${prog.name}</p>
               <div style=${{ display: 'flex', gap: 6 }}>
                 <button onClick=${() => onEdit(prog)} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.txt3, cursor: 'pointer' }}><${Icons.edit} size=${13}/></button>
-                <button onClick=${() => { if (window.confirm(`Xoá "${prog.name}"?`)) onDel(prog.id); }} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.txt3, cursor: 'pointer' }}><${Icons.trash} size=${14}/></button>
+                <button onClick=${() => { if (window.confirm(t('progs.delConfirm', { name: prog.name }))) onDel(prog.id); }} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.txt3, cursor: 'pointer' }}><${Icons.trash} size=${14}/></button>
               </div>
             </div>
             <div style=${{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -256,7 +257,7 @@ function ActiveWorkout({ workout, sessions, onChange, onFinish, onDiscard, onPic
     }}>${restLabel(t)}</button>`)}
           </div>
           <div style=${{ display: 'flex', gap: 8 }}>
-            <button onClick=${() => { if (window.confirm('Huỷ buổi tập?')) onDiscard(); }} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: r.md, padding: '8px 14px', color: C.txt2, fontSize: 12, fontWeight: 400, cursor: 'pointer' }}>Huỷ</button>
+            <button onClick=${() => { if (window.confirm(t('save.discardConfirm'))) onDiscard(); }} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: r.md, padding: '8px 14px', color: C.txt2, fontSize: 12, fontWeight: 400, cursor: 'pointer' }}>${t('common.cancel')}</button>
             <button onClick=${onFinish} class="btn-action" style=${{ background: C.green, border: 'none', borderRadius: r.md, padding: '8px 16px', color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer', boxShadow: `0 4px 12px rgba(16,185,129,0.2)` }}>✓ Xong</button>
           </div>
         </div>
@@ -285,9 +286,9 @@ function ActiveWorkout({ workout, sessions, onChange, onFinish, onDiscard, onPic
             </span>
           </div>
           <div style=${{ flex: 1 }}>
-            <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case', letterSpacing: '0.05em' }}>Thời gian nghỉ</p>
+            <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case', letterSpacing: '0.05em' }}>${t('aw.restTime')}</p>
             <p style=${{ margin: 0, fontSize: 13, fontWeight: 500, color: rest.secs === 0 ? C.green : '#0f172a' }}>
-              ${rest.secs === 0 ? 'Hết giờ! Tiếp tục tập thôi 🔥' : `Tiếp tục sau ${fT(rest.secs)}`}
+              ${rest.secs === 0 ? t('aw.restDone') : t('aw.restIn', { t: fT(rest.secs) })}
             </p>
           </div>
           <div style=${{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -310,7 +311,7 @@ function ActiveWorkout({ workout, sessions, onChange, onFinish, onDiscard, onPic
                 <${ExThumb} exId=${ex.exId} name=${ex.name} size=${32}/>
                 <div style=${{ minWidth: 0 }}>
                   <p style=${{ margin: 0, fontSize: 15, fontWeight: 600, color: ACC, letterSpacing: '-0.01em' }}>${ex.name}</p>
-                  ${onGuide && guideForExercise(ex.exId) && html`<button onClick=${() => onGuide(ex.exId)} class="btn-action" style=${{ background: 'transparent', border: 'none', color: C.txt2, fontSize: 11.5, fontWeight: 500, cursor: 'pointer', padding: '2px 0', display: 'flex', alignItems: 'center', gap: 3 }}>📖 Hướng dẫn</button>`}
+                  ${onGuide && guideForExercise(ex.exId) && html`<button onClick=${() => onGuide(ex.exId)} class="btn-action" style=${{ background: 'transparent', border: 'none', color: C.txt2, fontSize: 11.5, fontWeight: 500, cursor: 'pointer', padding: '2px 0', display: 'flex', alignItems: 'center', gap: 3 }}>📖 ${t('common.guide')}</button>`}
                 </div>
               </div>
               <div style=${{ display: 'flex', gap: 6 }}>
@@ -319,7 +320,7 @@ function ActiveWorkout({ workout, sessions, onChange, onFinish, onDiscard, onPic
                 <button onClick=${() => replEx(ei)} class="btn-action" style=${{ background: '#f1f5f9', border: `1px solid #e2e8f0`, borderRadius: r.md, padding: '6px 12px', fontSize: 12, fontWeight: 400, color: C.txt2, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}><${Icons.swap} size=${12}/> Thay</button>
               </div>
             </div>
-            ${prevSets && html`<p style=${{ margin: '0 0 12px', fontSize: 11.5, color: C.txt3 }}>Lần trước: ${prevSets.map(s => `${s.weight || 0}kg×${s.reps || 0}${s.rpe ? ` (RPE ${s.rpe})` : ''}`).join(' · ')}</p>`}
+            ${prevSets && html`<p style=${{ margin: '0 0 12px', fontSize: 11.5, color: C.txt3 }}>${t('aw.lastTime', { v: prevSets.map(s => `${s.weight || 0}kg×${s.reps || 0}${s.rpe ? ` (RPE ${s.rpe})` : ''}`).join(' · ') })}</p>`}
             ${!prevSets && html`<div style=${{ marginBottom: 12 }}/>`}
 
             <div style=${{ display: 'grid', gridTemplateColumns: '24px 1fr 1fr 56px 40px', gap: 8, marginBottom: 8 }}>
@@ -360,7 +361,7 @@ function ActiveWorkout({ workout, sessions, onChange, onFinish, onDiscard, onPic
               ${ex.sets.length > 1 && html`<button onClick=${() => delSet(ei)} class="btn-action" style=${{ background: C.redBg, border: 'none', borderRadius: r.md, padding: '8px 14px', fontSize: 12, fontWeight: 400, color: C.red, cursor: 'pointer' }}>− Set</button>`}
             </div>
             
-            <input type="text" placeholder="Ghi chú bài tập..." value=${ex.notes}
+            <input type="text" placeholder=${t('aw.exNote')} value=${ex.notes}
               onInput=${e => updEx(ei, { ...ex, notes: e.target.value })}
               style=${{ marginTop: 12, width: '100%', padding: '10px 12px', borderRadius: r.md, border: `1px solid #e2e8f0`, fontSize: 12, color: C.txt2, background: '#f8fafc' }}
             />
@@ -369,7 +370,7 @@ function ActiveWorkout({ workout, sessions, onChange, onFinish, onDiscard, onPic
 
         <div style=${{ padding: '20px 16px' }}>
           <button onClick=${addEx} class="btn-action" style=${{ width: '100%', padding: '14px', borderRadius: r.md, border: `1.5px dashed ${C.bdr2}`, background: 'transparent', color: ACC, fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <${Icons.plus} size=${14} /> Thêm bài tập
+            <${Icons.plus} size=${14} /> ${t('aw.addEx')}
           </button>
         </div>
       </div>
@@ -415,13 +416,13 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
         <button onClick=${onBack} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.txt2 }}>
           <${Icons.back} size=${18}/>
         </button>
-        <h2 style=${{ flex: 1, margin: 0, fontSize: 16, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em' }}>Lưu buổi tập</h2>
-        <${Btn} onClick=${save} cx=${{ opacity: saving ? 0.6 : 1, pointerEvents: saving ? 'none' : 'auto' }}>${saving ? 'Đang lưu...' : 'Lưu'}</${Btn}>
+        <h2 style=${{ flex: 1, margin: 0, fontSize: 16, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em' }}>${t('sw.title')}</h2>
+        <${Btn} onClick=${save} cx=${{ opacity: saving ? 0.6 : 1, pointerEvents: saving ? 'none' : 'auto' }}>${saving ? t('common.saving') : t('common.save')}</${Btn}>
       </div>
 
       <div style=${{ flex: 1, overflowY: 'auto', padding: '18px 16px', WebkitOverflowScrolling: 'touch' }}>
         <input type="text" value=${title} onInput=${e => setTitle(e.target.value)}
-          placeholder="Tên buổi tập"
+          placeholder=${t('sw.namePlaceholder')}
           style=${{ width: '100%', border: 'none', background: 'transparent', fontSize: 24, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.02em', marginBottom: 20, padding: 0 }}
         />
 
@@ -433,7 +434,7 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
 
         <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 20, alignItems: 'end' }}>
           <div>
-            <p style=${{ margin: '0 0 2px', fontSize: 11, color: C.txt3, fontWeight: 400 }}>Thời lượng (phút)</p>
+            <p style=${{ margin: '0 0 2px', fontSize: 11, color: C.txt3, fontWeight: 400 }}>${t('field.durationMin')}</p>
             <input type="number" inputMode="numeric" value=${durMin} onInput=${e => setDurMin(e.target.value)}
               class="workout-input" style=${{ width: '100%', boxSizing: 'border-box', padding: '6px 8px', borderRadius: r.md, fontSize: 16, fontWeight: 600, color: ACC }}/>
           </div>
@@ -448,7 +449,8 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
         </div>
 
         <div style=${{ borderTop: `1px solid ${C.bdr}`, paddingTop: 14, marginBottom: 16 }}>
-          <p style=${{ margin: '0 0 8px', fontSize: 11, color: C.txt3, fontWeight: 400 }}>Buổi này nặng cỡ nào?</p>
+          <p style=${{ margin: '0 0 2px', fontSize: 11, color: C.txt3, fontWeight: 400 }}>${t('rpe.field.label')}</p>
+          <p style=${{ margin: '0 0 8px', fontSize: 11, color: C.txt4, fontWeight: 400, lineHeight: 1.4 }}>${t('rpe.field.hint')}</p>
           <div style=${{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             ${RPE_LEVELS.map(lv => {
               const on = rpe === lv.level;
@@ -458,8 +460,8 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
               }}>
                 <span style=${{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, background: on ? 'rgba(255,255,255,.25)' : C.bg3, color: on ? '#fff' : C.txt3 }}>${lv.level}</span>
                 <span style=${{ flex: 1, minWidth: 0 }}>
-                  <span style=${{ display: 'block', fontSize: 13.5, fontWeight: 700, color: on ? '#fff' : C.txt1 }}>${lv.label}</span>
-                  <span style=${{ display: 'block', fontSize: 11.5, color: on ? 'rgba(255,255,255,.85)' : C.txt3 }}>${lv.desc}</span>
+                  <span style=${{ display: 'block', fontSize: 13.5, fontWeight: 700, color: on ? '#fff' : C.txt1 }}>${rpeLabel(lv.level)}</span>
+                  <span style=${{ display: 'block', fontSize: 11.5, color: on ? 'rgba(255,255,255,.85)' : C.txt3 }}>${rpeDesc(lv.level)}</span>
                 </span>
               </button>`;
             })}
@@ -468,35 +470,35 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
 
         <div style=${{ display: 'flex', alignItems: 'center', gap: 12, background: BRAND.babyBlue, borderRadius: r.lg, padding: '14px 16px', marginBottom: 16 }}>
           <div style=${{ flex: 1, minWidth: 0 }}>
-            <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 12, letterSpacing: '.1em', color: '#2E5A80', textTransform: 'uppercase' }}>Buổi này được</p>
-            <p style=${{ margin: '2px 0 0', fontFamily: F.serif, fontStyle: 'italic', fontSize: 12, color: '#3D6285' }}>${Math.round(vol)} kg · ${totalSets} set · ${rpeOf(rpe).label}</p>
+            <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 12, letterSpacing: '.1em', color: '#2E5A80', textTransform: 'uppercase' }}>${t('points.earned')}</p>
+            <p style=${{ margin: '2px 0 0', fontFamily: F.serif, fontStyle: 'italic', fontSize: 12, color: '#3D6285' }}>${Math.round(vol)} kg · ${totalSets} set · ${rpeLabel(rpe)}</p>
           </div>
-          <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 34, lineHeight: 1, color: BRAND.blue, flexShrink: 0 }}>${livePoints}<span style=${{ fontSize: 14, marginLeft: 4 }}>đ</span></p>
+          <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 34, lineHeight: 1, color: BRAND.blue, flexShrink: 0 }}>${livePoints}<span style=${{ fontSize: 14, marginLeft: 4 }}>${t('unit.pt')}</span></p>
         </div>
 
         <div style=${{ borderTop: `1px solid ${C.bdr}`, paddingTop: 14, marginBottom: 16 }}>
-          <p style=${{ margin: '0 0 6px', fontSize: 11, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Khi nào</p>
+          <p style=${{ margin: '0 0 6px', fontSize: 11, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>${t('when.title')}</p>
           <input type="datetime-local" value=${when} onInput=${e => setWhen(e.target.value)}
             class="workout-input" style=${{ width: '100%', padding: '10px 12px', borderRadius: r.md, fontSize: 14, color: ACC, fontWeight: 400 }}
           />
         </div>
 
         <div style=${{ borderTop: `1px solid ${C.bdr}`, paddingTop: 14, marginBottom: 24 }}>
-          <p style=${{ margin: '0 0 6px', fontSize: 11, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Ghi chú</p>
+          <p style=${{ margin: '0 0 6px', fontSize: 11, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>${t('save.note.title')}</p>
           <textarea value=${note} onInput=${e => setNote(e.target.value)}
-            placeholder="Buổi tập này thế nào? Cảm giác, năng lượng, điều cần nhớ..."
+            placeholder=${t('save.note.placeholder')}
             rows="4"
             class="workout-input" style=${{ width: '100%', padding: '10px 12px', borderRadius: r.md, fontSize: 14, resize: 'none' }}
           />
         </div>
 
         <div style=${{ borderTop: `1px solid ${C.bdr}`, paddingTop: 14, marginBottom: 24 }}>
-          <p style=${{ margin: '0 0 8px', fontSize: 11, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Hiển thị</p>
+          <p style=${{ margin: '0 0 8px', fontSize: 11, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>${t('visibility.title')}</p>
           <${VisibilityButtons} value=${visibility} onChange=${setVisibility}/>
         </div>
 
         <button onClick=${onDiscard} class="btn-action" style=${{ width: '100%', background: 'transparent', border: 'none', color: C.red, fontSize: 14, fontWeight: 400, cursor: 'pointer', padding: '10px 0' }}>
-          Huỷ buổi tập
+          ${t('save.discard')}
         </button>
       </div>
     </${Wrap}>`;
@@ -516,9 +518,9 @@ function CreateProg({ exList, onSave, onClose, editProg }) {
   const delExFromDay = (di, ei) => setDays(d => d.map((day, i) => i === di ? { ...day, exs: day.exs.filter((_, j) => j !== ei) } : day));
   const setSetsN = (di, ei, v) => setDays(d => d.map((day, i) => i === di ? { ...day, exs: day.exs.map((e, j) => j === ei ? { ...e, sets: Math.max(1, parseInt(v) || 1) } : e) } : day));
   const save = () => {
-    if (!name.trim()) return alert('Nhập tên chương trình!');
-    if (days.some(d => !d.name.trim())) return alert('Nhập tên cho tất cả các ngày!');
-    if (days.some(d => d.exs.length === 0)) return alert('Mỗi ngày cần ít nhất 1 bài tập!');
+    if (!name.trim()) return alert(t('cp.needName'));
+    if (days.some(d => !d.name.trim())) return alert(t('cp.needDayNames'));
+    if (days.some(d => d.exs.length === 0)) return alert(t('cp.needEx'));
     onSave({ id: editProg?.id || uid(), name: name.trim(), days: days.map(d => ({ id: d.id, name: d.name, exercises: d.exs })) });
   };
 
@@ -528,11 +530,11 @@ function CreateProg({ exList, onSave, onClose, editProg }) {
         <button onClick=${onClose} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.txt2 }}>
           <${Icons.close} size=${20}/>
         </button>
-        <h2 style=${{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a', flex: 1, letterSpacing: '-0.01em' }}>${editProg ? 'Sửa chương trình' : 'Tạo chương trình'}</h2>
-        <${Btn} onClick=${save}>Lưu</${Btn}>
+        <h2 style=${{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a', flex: 1, letterSpacing: '-0.01em' }}>${editProg ? t('cp.editTitle') : t('cp.newTitle')}</h2>
+        <${Btn} onClick=${save}>${t('common.save')}</${Btn}>
       </div>
       <div style=${{ flex: 1, overflowY: 'auto', padding: '16px', WebkitOverflowScrolling: 'touch' }}>
-        <input type="text" placeholder="Tên chương trình (VD: Push Pull Legs)"
+        <input type="text" placeholder=${t('cp.progNamePlaceholder')}
           value=${name} onInput=${e => setName(e.target.value)}
           style=${{ width: '100%', padding: '14px 16px', borderRadius: r.lg, border: `1px solid ${C.bdr}`, fontSize: 15, marginBottom: 20, background: '#ffffff', color: C.txt1, display: 'block', transition: 'border-color 0.2s' }}
           onFocus=${e => e.target.style.borderColor = ACC}
@@ -541,7 +543,7 @@ function CreateProg({ exList, onSave, onClose, editProg }) {
         ${days.map((day, di) => html`
           <div key=${day.id} style=${{ background: '#ffffff', borderRadius: r.lg, padding: 16, marginBottom: 16, border: `1px solid ${C.bdr}` }}>
             <div style=${{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
-              <input type="text" placeholder="Tên ngày (Push, Chân, Full Body...)"
+              <input type="text" placeholder=${t('cp.dayNamePlaceholder')}
                 value=${day.name} onInput=${e => setDN(di, e.target.value)}
                 style=${{ flex: 1, padding: '10px 12px', borderRadius: r.md, border: `1px solid ${C.bdr}`, fontSize: 13, background: C.bg1, color: C.txt1 }}
               />
@@ -559,7 +561,7 @@ function CreateProg({ exList, onSave, onClose, editProg }) {
               </div>`)}
             ${pf === di ? html`
               <div class="fade-in" style=${{ marginTop: 12, paddingTop: 12, borderTop: `1px solid rgba(0,0,0,0.05)` }}>
-                <input type="text" placeholder="Tìm bài tập..." value=${search}
+                <input type="text" placeholder=${t('cp.searchEx')} value=${search}
                   onInput=${e => setSearch(e.target.value)}
                   style=${{ width: '100%', padding: '10px 12px', borderRadius: r.md, border: `1px solid ${C.bdr}`, fontSize: 13, marginBottom: 8, background: C.bg1, color: C.txt1, boxSizing: 'border-box' }}
                 />
@@ -571,16 +573,16 @@ function CreateProg({ exList, onSave, onClose, editProg }) {
       borderBottom: `1px solid ${C.bdr}`,
     }}>${e.name} <span style=${{ color: C.txt3, fontSize: 11 }}>${e.g}</span></button>`)}
                 </div>
-                <button onClick=${() => { setPf(null); setSearch(''); }} style=${{ background: 'none', border: 'none', color: C.txt2, fontSize: 12, cursor: 'pointer', marginTop: 8, fontWeight: 400 }}>Huỷ</button>
+                <button onClick=${() => { setPf(null); setSearch(''); }} style=${{ background: 'none', border: 'none', color: C.txt2, fontSize: 12, cursor: 'pointer', marginTop: 8, fontWeight: 400 }}>${t('common.cancel')}</button>
               </div>`
       : html`
               <button onClick=${() => setPf(di)} class="btn-action" style=${{
           marginTop: day.exs.length ? 12 : 0, width: '100%', background: 'transparent',
           border: `1.5px dashed ${C.bdr2}`, borderRadius: r.md, padding: '11px', color: ACC, fontSize: 12, fontWeight: 400, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-        }}><${Icons.plus} size=${14} /> Thêm bài tập</button>`}
+        }}><${Icons.plus} size=${14} /> ${t('aw.addEx')}</button>`}
           </div>`)}
-        <button onClick=${addDay} class="btn-action" style=${{ width: '100%', background: '#ffffff', border: `1px solid ${C.bdr2}`, borderRadius: r.md, padding: '14px', fontSize: 13, fontWeight: 400, color: C.txt1, cursor: 'pointer', marginBottom: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><${Icons.plus} size=${16}/> Thêm ngày</button>
+        <button onClick=${addDay} class="btn-action" style=${{ width: '100%', background: '#ffffff', border: `1px solid ${C.bdr2}`, borderRadius: r.md, padding: '14px', fontSize: 13, fontWeight: 400, color: C.txt1, cursor: 'pointer', marginBottom: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><${Icons.plus} size=${16}/> ${t('cp.addDay')}</button>
       </div>
     </${Wrap}>`;
 }
@@ -618,9 +620,9 @@ function PickEx({ exList, onPick, onClose, onAddEx }) {
           <button onClick=${onClose} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.txt2 }}>
             <${Icons.close} size=${20}/>
           </button>
-          <h3 style=${{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em' }}>Chọn bài tập</h3>
+          <h3 style=${{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em' }}>${t('pe.title')}</h3>
         </div>
-        <input type="text" placeholder="Tìm bài tập..." value=${s}
+        <input type="text" placeholder=${t('cp.searchEx')} value=${s}
           onInput=${e => setS(e.target.value)}
           style=${{ width: '100%', padding: '11px 14px', borderRadius: r.lg, border: `1px solid ${C.bdr}`, fontSize: 13, background: '#ffffff', color: C.txt1, boxSizing: 'border-box', marginBottom: 10 }}
         />
@@ -628,7 +630,7 @@ function PickEx({ exList, onPick, onClose, onAddEx }) {
           <button onClick=${() => setSelG(null)} class="btn-action" style=${{
       flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 500,
       background: selG === null ? ACC : C.bg3, color: selG === null ? '#fff' : C.txt2
-    }}>Tất cả</button>
+    }}>${t('pe.all')}</button>
           ${allGroups.map(g => html`
             <button key=${g} onClick=${() => setSelG(g)} class="btn-action" style=${{
         flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 500,
@@ -637,7 +639,7 @@ function PickEx({ exList, onPick, onClose, onAddEx }) {
         </div>
       </div>
       <div style=${{ flex: 1, overflowY: 'auto', padding: '8px 16px', WebkitOverflowScrolling: 'touch' }}>
-        ${groups.length === 0 && html`<${Empty} icon="other" msg="Không tìm thấy bài tập" sub="Thử nhóm cơ khác hoặc từ khoá khác"/>`}
+        ${groups.length === 0 && html`<${Empty} icon="other" msg=${t('pe.emptyMsg')} sub=${t('pe.emptySub')}/>`}
         ${groups.map(g => html`
           <div key=${g}>
             <${Label} t=${g} mt=${12}/>
@@ -652,11 +654,11 @@ function PickEx({ exList, onPick, onClose, onAddEx }) {
               </button>`)}
           </div>`)}
         ${!showA
-      ? html`<button onClick=${() => setShowA(true)} class="btn-action" style=${{ marginTop: 20, marginBottom: 40, width: '100%', background: 'transparent', border: `1.5px dashed ${C.bdr2}`, borderRadius: r.md, padding: '14px', color: ACC, fontSize: 13, fontWeight: 400, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><${Icons.plus} size=${16}/> Tạo bài tập mới</button>`
+      ? html`<button onClick=${() => setShowA(true)} class="btn-action" style=${{ marginTop: 20, marginBottom: 40, width: '100%', background: 'transparent', border: `1.5px dashed ${C.bdr2}`, borderRadius: r.md, padding: '14px', color: ACC, fontSize: 13, fontWeight: 400, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><${Icons.plus} size=${16}/> ${t('pe.newEx')}</button>`
       : html`
             <div class="fade-in" style=${{ marginTop: 20, marginBottom: 40, background: '#ffffff', borderRadius: r.lg, padding: 16, border: `1px solid ${C.bdr}` }}>
-              <p style=${{ margin: '0 0 12px', fontSize: 13, fontWeight: 500, color: '#0f172a' }}>Bài tập mới</p>
-              <input type="text" placeholder="Tên bài tập..." value=${nn}
+              <p style=${{ margin: '0 0 12px', fontSize: 13, fontWeight: 500, color: '#0f172a' }}>${t('pe.newExTitle')}</p>
+              <input type="text" placeholder=${t('pe.exNamePlaceholder')} value=${nn}
                 onInput=${e => setNn(e.target.value)}
                 style=${{ width: '100%', padding: '11px 14px', borderRadius: r.md, border: `1px solid ${C.bdr}`, fontSize: 13, marginBottom: 12, background: C.bg1, color: C.txt1, boxSizing: 'border-box' }}
               />
@@ -671,8 +673,8 @@ function PickEx({ exList, onPick, onClose, onAddEx }) {
         }}>${g}</button>`)}
               </div>
               <div style=${{ display: 'flex', gap: 8 }}>
-                <${Btn} onClick=${addC} cx=${{ flex: 1, padding: '11px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Thêm</${Btn}>
-                <${Btn} onClick=${() => setShowA(false)} variant="ghost">Huỷ</${Btn}>
+                <${Btn} onClick=${addC} cx=${{ flex: 1, padding: '11px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>${t('common.add')}</${Btn}>
+                <${Btn} onClick=${() => setShowA(false)} variant="ghost">${t('common.cancel')}</${Btn}>
               </div>
             </div>`}
       </div>
@@ -694,21 +696,21 @@ function SessDetail({ session, onClose, canEdit = false, onSave, onChangeVisibil
   const isGym = (session.type || 'gym') === 'gym';
   const authorName = session.authorName;
   const authorPhoto = session.authorPhoto;
-  const subtitle = [isGym ? (session.detail?.progName || session.progName) : a.label, fD(session.date)].filter(Boolean).join(' · ');
+  const subtitle = [isGym ? (session.detail?.progName || session.progName) : actLabel(session.type), fD(session.date)].filter(Boolean).join(' · ');
   const cells = isGym
     ? [
-      { l: 'Tổng volume', v: `${Math.round(volOf(session))} kg`, k: 'flame' },
-      { l: 'Thời gian', v: durS(dur), k: 'clock' },
-      { l: 'Số bài tập', v: `${exs.length} bài`, k: 'gym' },
-      { l: 'Tổng set', v: `${session.detail?.totalSets ?? exs.reduce((t, e) => t + e.sets.filter(s => s.done).length, 0)} sets`, k: 'check' },
+      { l: t('stat.volume'), v: `${Math.round(volOf(session))} kg`, k: 'flame' },
+      { l: t('stat.time'), v: durS(dur), k: 'clock' },
+      { l: t('stat.exCount'), v: `${exs.length} ${t('unit.ex')}`.trim(), k: 'gym' },
+      { l: t('stat.sets'), v: `${session.detail?.totalSets ?? exs.reduce((t, e) => t + e.sets.filter(s => s.done).length, 0)} sets`, k: 'check' },
     ]
-    : summaryStats(session).map(x => ({ l: x.l || 'Chỉ số', v: `${x.v}${x.u ? ' ' + x.u : ''}`, k: x.icon }));
+    : summaryStats(session).map(x => ({ l: x.l || t('stat.generic'), v: `${x.v}${x.u ? ' ' + x.u : ''}`, k: x.icon }));
   // Các ô chi tiết còn lại (kiểu bơi, trường phái, độ cao, số ván...) không nằm trong summary.
   const SKIP_DETAIL = new Set(['durationMin', 'distanceKm', 'distanceM', 'paceMinPerKm', 'laps']);
   const d = session.detail || {};
   const detailChips = isGym ? [] : fieldsOf(session.type)
     .filter(f => f.type !== 'pace' && !SKIP_DETAIL.has(f.k) && d[f.k] != null && d[f.k] !== '')
-    .map(f => ({ l: f.label, v: `${d[f.k]}${f.unit ? ' ' + f.unit : ''}` }));
+    .map(f => ({ l: flabel(f), v: `${d[f.k]}${f.unit ? ' ' + f.unit : ''}` }));
   const laps = Array.isArray(d.laps) ? d.laps : [];
   return html`
     <${Wrap} cx=${{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 100, background: C.bg1 }}>
@@ -719,36 +721,36 @@ function SessDetail({ session, onClose, canEdit = false, onSave, onChangeVisibil
         <div style=${{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style=${{ width: 30, height: 30, borderRadius: 9, background: sportTint(a.iconKey), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><${SportIcon} k=${a.iconKey} size=${17} color=${sportColor(a.iconKey)}/></span>
           <div style=${{ minWidth: 0 }}>
-            <h2 style=${{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${session.title || a.label}</h2>
+            <h2 style=${{ margin: 0, fontSize: 18, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${session.title || actLabel(session.type)}</h2>
             <p style=${{ margin: 0, color: C.txt3, fontSize: 12 }}>${authorName ? `${authorName} · ` : ''}${subtitle}</p>
           </div>
         </div>
         ${canEdit && !editing && html`
-          <button onClick=${openEdit} class="btn-action" title="Sửa bài" style=${{ background: '#f1f5f9', border: 'none', borderRadius: 18, height: 34, padding: '0 13px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: C.txt1, fontSize: 13, fontWeight: 600, flexShrink: 0 }}><${SportIcon} k="edit" size=${14} color=${C.txt1} sw=${2}/> Sửa</button>`}
+          <button onClick=${openEdit} class="btn-action" title=${t('common.edit')} style=${{ background: '#f1f5f9', border: 'none', borderRadius: 18, height: 34, padding: '0 13px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: C.txt1, fontSize: 13, fontWeight: 600, flexShrink: 0 }}><${SportIcon} k="edit" size=${14} color=${C.txt1} sw=${2}/> ${t('common.edit')}</button>`}
         ${canEdit && !editing && onDelete && html`
-          <button onClick=${() => { if (window.confirm('Xoá bài đăng này? Số liệu (điểm, phút, buổi, chuỗi, xếp hạng) sẽ được trừ lại. Không hoàn tác được.')) onDelete(session); }} class="btn-action" title="Xoá bài" style=${{ background: '#fef2f2', border: `1px solid ${C.red}33`, borderRadius: 18, height: 34, padding: '0 13px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: C.red, fontSize: 13, fontWeight: 600, flexShrink: 0 }}><${SportIcon} k="trash" size=${14} color=${C.red} sw=${2}/> Xoá</button>`}
+          <button onClick=${() => { if (window.confirm(t('sd.delConfirm'))) onDelete(session); }} class="btn-action" title="Xoá bài" style=${{ background: '#fef2f2', border: `1px solid ${C.red}33`, borderRadius: 18, height: 34, padding: '0 13px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: C.red, fontSize: 13, fontWeight: 600, flexShrink: 0 }}><${SportIcon} k="trash" size=${14} color=${C.red} sw=${2}/> ${t('common.delete')}</button>`}
         ${!editing && !canEdit && authorPhoto && html`<img src=${authorPhoto} style=${{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}/>`}
       </div>
       <div style=${{ flex: 1, overflowY: 'auto', padding: '16px', WebkitOverflowScrolling: 'touch' }}>
         ${editing && html`
           <div style=${{ background: '#ffffff', borderRadius: r.lg, padding: 16, marginBottom: 16, border: `1px solid ${C.bdr}` }}>
-            <p style=${{ margin: '0 0 6px', fontSize: 12, fontWeight: 600, color: C.txt2 }}>Tiêu đề</p>
+            <p style=${{ margin: '0 0 6px', fontSize: 12, fontWeight: 600, color: C.txt2 }}>${t('edit.titleLabel')}</p>
             <input value=${eTitle} onInput=${e => setETitle(e.target.value)} placeholder=${a.label} style=${{ width: '100%', padding: '10px 12px', borderRadius: r.md, border: `1px solid ${C.bdr}`, fontSize: 14, boxSizing: 'border-box', marginBottom: 12, color: C.txt1, background: '#fff' }}/>
-            <p style=${{ margin: '0 0 6px', fontSize: 12, fontWeight: 600, color: C.txt2 }}>Ghi chú (nhật ký)</p>
-            <textarea value=${eNote} onInput=${e => setENote(e.target.value)} rows=${3} placeholder="Cảm nhận buổi tập, ghi chú riêng..." style=${{ width: '100%', padding: '10px 12px', borderRadius: r.md, border: `1px solid ${C.bdr}`, fontSize: 14, boxSizing: 'border-box', resize: 'vertical', color: C.txt1, background: '#fff', fontFamily: 'inherit' }}/>
+            <p style=${{ margin: '0 0 6px', fontSize: 12, fontWeight: 600, color: C.txt2 }}>${t('save.note.title')}</p>
+            <textarea value=${eNote} onInput=${e => setENote(e.target.value)} rows=${3} placeholder=${t('save.note.placeholder')} style=${{ width: '100%', padding: '10px 12px', borderRadius: r.md, border: `1px solid ${C.bdr}`, fontSize: 14, boxSizing: 'border-box', resize: 'vertical', color: C.txt1, background: '#fff', fontFamily: 'inherit' }}/>
             <p style=${{ margin: '12px 0 6px', fontSize: 12, fontWeight: 600, color: C.txt2 }}>Ảnh</p>
             <${PhotoPicker} preview=${curPhoto} radius=${r.md} pad="18px" iconSize=${24}
-              emptyLabel=${eRemovePhoto ? 'Đã gỡ ảnh — bấm để thêm ảnh mới' : 'Thêm ảnh'}
+              emptyLabel=${eRemovePhoto ? t('sd.photoRemoved') : t('photo.short')}
               onPick=${f => { setEPhotoFile(f); setEPhotoPreview(URL.createObjectURL(f)); setERemovePhoto(false); }}
               onRemove=${() => { setEPhotoFile(null); setEPhotoPreview(null); setERemovePhoto(true); }}/>
             ${onChangeVisibility && html`
-              <p style=${{ margin: '14px 0 6px', fontSize: 12, fontWeight: 600, color: C.txt2 }}>Hiển thị</p>
+              <p style=${{ margin: '14px 0 6px', fontSize: 12, fontWeight: 600, color: C.txt2 }}>${t('visibility.title')}</p>
               <${VisibilityButtons} value=${session.visibility} onChange=${v => onChangeVisibility(session.id, v)}/>
-              <p style=${{ margin: '6px 0 0', fontSize: 11.5, color: C.txt3, lineHeight: 1.5 }}>Chuyển sang "Chỉ mình tôi" sẽ gỡ buổi này khỏi bảng tin & bảng xếp hạng của đồng nghiệp.</p>`}
-            <p style=${{ margin: '12px 0 0', fontSize: 11.5, color: C.txt3, lineHeight: 1.5 }}>Sửa tiêu đề, ghi chú & ảnh. Điểm, chuỗi và xếp hạng giữ nguyên như lúc đăng.</p>
+              <p style=${{ margin: '6px 0 0', fontSize: 11.5, color: C.txt3, lineHeight: 1.5 }}>${t('sd.visNote')}</p>`}
+            <p style=${{ margin: '12px 0 0', fontSize: 11.5, color: C.txt3, lineHeight: 1.5 }}>${t('sd.editNote')}</p>
             <div style=${{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <button onClick=${() => setEditing(false)} class="btn-action" style=${{ flex: 1, padding: '10px', borderRadius: r.md, border: `1px solid ${C.bdr}`, background: '#fff', color: C.txt2, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>Huỷ</button>
-              <button onClick=${async () => { if (!window.confirm('Lưu thay đổi cho bài này?')) return; await onSave(session.id, { title: eTitle, note: eNote, photoFile: ePhotoFile, removePhoto: eRemovePhoto }); setEditing(false); }} class="btn-action" style=${{ flex: 1, padding: '10px', borderRadius: r.md, border: 'none', background: ACC, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Lưu</button>
+              <button onClick=${() => setEditing(false)} class="btn-action" style=${{ flex: 1, padding: '10px', borderRadius: r.md, border: `1px solid ${C.bdr}`, background: '#fff', color: C.txt2, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>${t('common.cancel')}</button>
+              <button onClick=${async () => { if (!window.confirm(t('sd.saveConfirm'))) return; await onSave(session.id, { title: eTitle, note: eNote, photoFile: ePhotoFile, removePhoto: eRemovePhoto }); setEditing(false); }} class="btn-action" style=${{ flex: 1, padding: '10px', borderRadius: r.md, border: 'none', background: ACC, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>${t('common.save')}</button>
             </div>
           </div>`}
         ${!editing && session.photoUrl && html`<${PhotoView} src=${session.photoUrl} alt=${session.title || ''} style=${{ width: '100%', height: 220, objectFit: 'cover', borderRadius: r.lg, marginBottom: 16, display: 'block' }}/>`}
@@ -776,7 +778,7 @@ function SessDetail({ session, onClose, canEdit = false, onSave, onChangeVisibil
           </div>`}
         ${laps.length > 0 && html`
           <div style=${{ background: '#ffffff', borderRadius: r.lg, padding: 16, marginBottom: 20, border: `1px solid ${C.bdr}` }}>
-            <p style=${{ margin: '0 0 12px', fontSize: 14, fontWeight: 600, color: ACC }}>Chi tiết chặng</p>
+            <p style=${{ margin: '0 0 12px', fontSize: 14, fontWeight: 600, color: ACC }}>${t('sd.laps')}</p>
             <div style=${{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               ${laps.map((lp, i) => html`
                 <div key=${i} style=${{ display: 'flex', gap: 14, padding: '10px 14px', background: C.bg3, borderRadius: r.md, fontSize: 13, alignItems: 'center', color: C.txt1 }}>
@@ -910,23 +912,23 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
     setWKg('');
   };
 
-  if (sessions.length === 0) return html`<div class="fade-in"><${Empty} icon="star" msg="Chưa có dữ liệu" sub="Hoàn thành buổi tập để thấy tiến bộ ở đây"/></div>`;
+  if (sessions.length === 0) return html`<div class="fade-in"><${Empty} icon="star" msg=${t('pt.emptyMsg')} sub=${t('pt.emptySub')}/></div>`;
 
   // Thẻ cân nặng cơ thể — trung lập, đưa lên phần Tổng quan (không còn nằm sau phân tích gym).
   const weightCard = html`
-      <${Label} t="Cân nặng (riêng tư 🔒)" mt=${24}/>
+      <${Label} t=${t('pt.weight')} mt=${24}/>
       <${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
         <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: lastWeight ? 12 : 0 }}>
           <div>
-            <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Gần nhất</p>
-            <p style=${{ margin: '2px 0 0', fontSize: 20, fontWeight: 600, color: ACC }}>${lastWeight ? `${lastWeight.kg} kg` : 'Chưa có dữ liệu'}</p>
+            <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>${t('pt.latest')}</p>
+            <p style=${{ margin: '2px 0 0', fontSize: 20, fontWeight: 600, color: ACC }}>${lastWeight ? `${lastWeight.kg} kg` : t('pt.noData')}</p>
             ${lastWeight && html`<p style=${{ margin: '2px 0 0', fontSize: 11, color: C.txt3 }}>${fDT(lastWeight.at)}${prevWeight ? html` · <${DeltaBadge} cur=${lastWeight.kg} prev=${prevWeight.kg}/>` : ''}</p>`}
           </div>
           <div style=${{ display: 'flex', gap: 8 }}>
             <input type="number" inputMode="decimal" placeholder="kg" value=${wKg} onInput=${e => setWKg(e.target.value)}
               class="workout-input" style=${{ width: 70, padding: '8px 10px', borderRadius: r.md, fontSize: 14, textAlign: 'center' }}
             />
-            <${Btn} onClick=${addW}>Lưu</${Btn}>
+            <${Btn} onClick=${addW}>${t('common.save')}</${Btn}>
           </div>
         </div>
         ${sortedW.length > 1 && html`
@@ -952,35 +954,35 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
 
   // Thẻ Mục tiêu tuần (Cục B) — đặt/sửa số buổi & số phút/tuần + thanh tiến độ.
   const goalCard = html`
-      <${Label} t="Mục tiêu tuần này" mt=${4}/>
+      <${Label} t=${t('pt.weeklyGoal')} mt=${4}/>
       <${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
         ${(!hasGoal && !goalEdit) ? html`
           <div style=${{ textAlign: 'center', padding: '6px 0' }}>
-            <p style=${{ margin: '0 0 10px', ...T.lead, textAlign: 'center' }}>Đặt mục tiêu để giữ thói quen đều đặn.</p>
-            <${Btn} onClick=${() => setGoalEdit(true)}>Đặt mục tiêu</${Btn}>
+            <p style=${{ margin: '0 0 10px', ...T.lead, textAlign: 'center' }}>${t('pt.goalPrompt')}</p>
+            <${Btn} onClick=${() => setGoalEdit(true)}>${t('pt.setGoal')}</${Btn}>
           </div>`
       : goalEdit ? html`
           <div style=${{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
-              <p style=${{ margin: '0 0 5px', fontSize: 11.5, color: C.txt3 }}>Số buổi / tuần</p>
+              <p style=${{ margin: '0 0 5px', fontSize: 11.5, color: C.txt3 }}>${t('pt.sessPerWeek')}</p>
               <input type="number" inputMode="numeric" value=${gSess} onInput=${e => setGSess(e.target.value)} placeholder="VD: 3" class="workout-input" style=${{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: r.md, fontSize: 14 }}/>
             </div>
             <div>
-              <p style=${{ margin: '0 0 5px', fontSize: 11.5, color: C.txt3 }}>Số phút / tuần</p>
+              <p style=${{ margin: '0 0 5px', fontSize: 11.5, color: C.txt3 }}>${t('pt.minPerWeek')}</p>
               <input type="number" inputMode="numeric" value=${gMin} onInput=${e => setGMin(e.target.value)} placeholder="VD: 150" class="workout-input" style=${{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: r.md, fontSize: 14 }}/>
             </div>
             <div style=${{ display: 'flex', gap: 8 }}>
-              <button onClick=${() => { setGoalEdit(false); setGSess(goals?.sessionsPerWeek || ''); setGMin(goals?.minutesPerWeek || ''); }} class="btn-action" style=${{ flex: 1, padding: '10px', borderRadius: r.md, border: `1px solid ${C.bdr}`, background: '#fff', color: C.txt2, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>Huỷ</button>
-              <${Btn} onClick=${saveGoals} cx=${{ flex: 1 }}>Lưu</${Btn}>
+              <button onClick=${() => { setGoalEdit(false); setGSess(goals?.sessionsPerWeek || ''); setGMin(goals?.minutesPerWeek || ''); }} class="btn-action" style=${{ flex: 1, padding: '10px', borderRadius: r.md, border: `1px solid ${C.bdr}`, background: '#fff', color: C.txt2, fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>${t('common.cancel')}</button>
+              <${Btn} onClick=${saveGoals} cx=${{ flex: 1 }}>${t('common.save')}</${Btn}>
             </div>
-            <p style=${{ margin: 0, fontSize: 11, color: C.txt3, lineHeight: 1.5 }}>Để 0 nếu không đặt mục tiêu đó. Gợi ý WHO: 150 phút/tuần.</p>
+            <p style=${{ margin: 0, fontSize: 11, color: C.txt3, lineHeight: 1.5 }}>${t('pt.goalHint')}</p>
           </div>`
         : html`
           <div style=${{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             ${goals?.sessionsPerWeek > 0 && html`
               <div>
                 <div style=${{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 5 }}>
-                  <span style=${{ color: C.txt2 }}>Buổi tập</span>
+                  <span style=${{ color: C.txt2 }}>${t('pt.sessions')}</span>
                   <strong style=${{ display: 'flex', alignItems: 'center', gap: 4, color: curWeek.count >= goals.sessionsPerWeek ? C.green : C.txt1 }}>${curWeek.count}/${goals.sessionsPerWeek}${curWeek.count >= goals.sessionsPerWeek ? html` <${SportIcon} k="check" size=${13} color=${C.green} sw=${2.4}/>` : ''}</strong>
                 </div>
                 ${bar(curWeek.count, goals.sessionsPerWeek, BRAND.blue)}
@@ -988,12 +990,12 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
             ${goals?.minutesPerWeek > 0 && html`
               <div>
                 <div style=${{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 5 }}>
-                  <span style=${{ color: C.txt2 }}>Phút vận động</span>
+                  <span style=${{ color: C.txt2 }}>${t('pt.activeMin')}</span>
                   <strong style=${{ display: 'flex', alignItems: 'center', gap: 4, color: curWeek.minutes >= goals.minutesPerWeek ? C.green : C.txt1 }}>${curWeek.minutes}/${goals.minutesPerWeek}${curWeek.minutes >= goals.minutesPerWeek ? html` <${SportIcon} k="check" size=${13} color=${C.green} sw=${2.4}/>` : ''}</strong>
                 </div>
                 ${bar(curWeek.minutes, goals.minutesPerWeek, C.green)}
               </div>`}
-            <button onClick=${() => setGoalEdit(true)} class="btn-action" style=${{ alignSelf: 'flex-start', background: 'transparent', border: 'none', color: BRAND.blue, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', padding: 0 }}>Sửa mục tiêu</button>
+            <button onClick=${() => setGoalEdit(true)} class="btn-action" style=${{ alignSelf: 'flex-start', background: 'transparent', border: 'none', color: BRAND.blue, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', padding: 0 }}>${t('pt.editGoal')}</button>
           </div>`}
       </${Card}>`;
 
@@ -1003,7 +1005,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
     if (!recs.length) return '';
     return html`
       <${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
-        <p style=${{ margin: '0 0 12px', fontSize: 14, fontWeight: 600, color: ACC, display: 'flex', alignItems: 'center', gap: 6 }}><${Icons.trophy} size=${16}/> Kỷ lục cá nhân</p>
+        <p style=${{ margin: '0 0 12px', fontSize: 14, fontWeight: 600, color: ACC, display: 'flex', alignItems: 'center', gap: 6 }}><${Icons.trophy} size=${16}/> ${t('pt.pr')}</p>
         <div style=${{ display: 'grid', gridTemplateColumns: `repeat(${recs.length}, 1fr)`, gap: 10 }}>
           ${recs.map(rc => html`<div key=${rc.key} style=${{ textAlign: 'center' }}>
             <p style=${{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>${rc.value}<span style=${{ fontSize: 11, fontWeight: 500, color: C.txt3 }}> ${rc.unit}</span></p>
@@ -1017,7 +1019,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
   const maxPts = Math.max(1, ...breakdown.map(b => b.points));
   const overview = html`
       ${!slim ? html`<div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
-        ${[{ l: 'Điểm tuần', v: wkNow.points, icon: Icons.flame }, { l: 'Phút tuần', v: wkNow.minutes, icon: Icons.clock }, { l: 'Buổi tuần', v: wkNow.count, icon: Icons.calendar }].map(t => html`
+        ${[{ l: t('pt.weekPoints'), v: wkNow.points, icon: Icons.flame }, { l: t('pt.weekMin'), v: wkNow.minutes, icon: Icons.clock }, { l: t('pt.weekSess'), v: wkNow.count, icon: Icons.calendar }].map(t => html`
           <div key=${t.l} style=${{ background: C.bg2, borderRadius: r.md, padding: '12px 8px', textAlign: 'center', border: `1px solid ${C.bdr}` }}>
             <div style=${{ display: 'flex', justifyContent: 'center', color: ACC, marginBottom: 4 }}><${t.icon} size=${18}/></div>
             <p style=${{ margin: 0, fontSize: 9, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>${t.l}</p>
@@ -1030,16 +1032,16 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
       ${!slim && breakdown.length > 0 && html`
         <${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
           <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <p style=${{ margin: 0, fontSize: 14, fontWeight: 600, color: ACC }}>Phân bổ theo môn</p>
-            <span style=${{ fontSize: 11, color: C.txt3 }}>90 ngày</span>
+            <p style=${{ margin: 0, fontSize: 14, fontWeight: 600, color: ACC }}>${t('pt.breakdown')}</p>
+            <span style=${{ fontSize: 11, color: C.txt3 }}>${t('pt.days90')}</span>
           </div>
           ${breakdown.map(b => { const a = actOf(b.type); return html`
             <div key=${b.type} style=${{ marginBottom: 10 }}>
               <div style=${{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, marginBottom: 4 }}>
                 <span>${a.emoji}</span>
                 <span style=${{ flex: 1, color: C.txt1 }}>${a.label}</span>
-                <span style=${{ color: C.txt3, fontSize: 11.5 }}>${b.count} buổi · ${b.minutes} phút</span>
-                <strong style=${{ color: ACC, minWidth: 46, textAlign: 'right' }}>${b.points} đ</strong>
+                <span style=${{ color: C.txt3, fontSize: 11.5 }}>${t('pt.countMin', { c: b.count, m: b.minutes })}</span>
+                <strong style=${{ color: ACC, minWidth: 46, textAlign: 'right' }}>${b.points} ${t('unit.pt')}</strong>
               </div>
               <div style=${{ height: 6, borderRadius: 3, background: C.bg3, overflow: 'hidden' }}>
                 <div style=${{ height: '100%', width: `${(b.points / maxPts) * 100}%`, background: a.color, borderRadius: 3 }}/>
@@ -1050,7 +1052,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
       ${!slim && weekly.length > 1 && html`
         <${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
           <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <p style=${{ margin: 0, fontSize: 14, fontWeight: 600, color: ACC }}>Điểm theo tuần</p>
+            <p style=${{ margin: 0, fontSize: 14, fontWeight: 600, color: ACC }}>${t('pt.pointsByWeek')}</p>
             <${DeltaBadge} cur=${wkNow.points} prev=${wkPrev.points}/>
           </div>
           <${BarChart} items=${weekly.map(w => ({ label: fWeek(w.wk).split('–')[0], val: w.points }))}/>
@@ -1063,12 +1065,12 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
     const a = actOf(t);
     const dp = distanceProgress(sessions, t);
     const isSwim = t === 'swim', isCycle = t === 'cycle';
-    const primL = isCycle ? 'Tốc độ tốt nhất' : 'Pace tốt nhất';
+    const primL = isCycle ? t('pt.bestSpeed') : t('pt.bestPace');
     const primV = isSwim ? (dp.bestPace100 ? `${fmtMMSS(dp.bestPace100)} /100m` : '—')
       : isCycle ? (dp.bestSpeed ? `${dp.bestSpeed} km/h` : '—')
         : (dp.bestPaceKm ? `${fmtMMSS(dp.bestPaceKm)} /km` : '—');
     const longV = isSwim ? (dp.longestM ? `${dp.longestM} m` : '—') : (dp.longestKm ? `${Math.round(dp.longestKm * 10) / 10} km` : '—');
-    const cells = [{ l: primL, v: primV }, { l: 'Dài nhất', v: longV }, { l: 'Số buổi', v: `${dp.count}` }];
+    const cells = [{ l: primL, v: primV }, { l: t('pt.longest'), v: longV }, { l: t('pt.sessCount'), v: `${dp.count}` }];
     return html`
       <${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
         <p style=${{ margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 7, fontFamily: F.display, fontWeight: 700, fontSize: 16, letterSpacing: '.04em', textTransform: 'uppercase', color: C.txt1 }}><${SportIcon} k=${a.iconKey} size=${17} color=${sportColor(a.iconKey)}/> ${a.label}</p>
@@ -1082,10 +1084,10 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
       ${prCard(t)}
       ${dp.weeks.length > 1
       ? html`<${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
-            <${Label} t=${`Quãng đường theo tuần (${isSwim ? 'm' : 'km'})`}/>
+            <${Label} t=${t('pt.distByWeek', { u: isSwim ? 'm' : 'km' })}/>
             <${BarChart} items=${dp.weeks.map(w => ({ label: fWeek(w.wk).split('–')[0], val: isSwim ? w.meters : Math.round(w.km * 10) / 10 }))}/>
           </${Card}>`
-      : html`<${Empty} icon=${a.iconKey} msg="Cần thêm buổi để thấy xu hướng"/>`}`;
+      : html`<${Empty} icon=${a.iconKey} msg=${t('pt.needMore')}/>`}`;
   };
 
   // Drill-down môn theo buổi (yoga/bóng đá/…).
@@ -1095,7 +1097,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
     const wk = weeklyActive(list).slice(-8);
     const totalMin = list.reduce((acc, s) => acc + (s.activeMinutes || s.durationMin || 0), 0);
     const totalPts = list.reduce((acc, s) => acc + (s.points || 0), 0);
-    const cells = [{ l: 'Số buổi', v: `${list.length}` }, { l: 'Tổng phút', v: `${Math.round(totalMin)}` }, { l: 'Tổng điểm', v: `${Math.round(totalPts)}` }];
+    const cells = [{ l: t('pt.sessCount'), v: `${list.length}` }, { l: t('pt.totalMin'), v: `${Math.round(totalMin)}` }, { l: t('pt.totalPts'), v: `${Math.round(totalPts)}` }];
     return html`
       <${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
         <p style=${{ margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 7, fontFamily: F.display, fontWeight: 700, fontSize: 16, letterSpacing: '.04em', textTransform: 'uppercase', color: C.txt1 }}><${SportIcon} k=${a.iconKey} size=${17} color=${sportColor(a.iconKey)}/> ${a.label}</p>
@@ -1109,16 +1111,16 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
       ${prCard(t)}
       ${wk.length > 1
       ? html`<${Card} cx=${{ border: `1px solid ${C.bdr}` }}>
-            <${Label} t="Điểm theo tuần"/>
+            <${Label} t=${t('pt.pointsByWeek')}/>
             <${BarChart} items=${wk.map(w => ({ label: fWeek(w.wk).split('–')[0], val: w.points }))}/>
           </${Card}>`
-      : html`<${Empty} icon=${a.iconKey} msg="Cần thêm buổi để thấy xu hướng"/>`}`;
+      : html`<${Empty} icon=${a.iconKey} msg=${t('pt.needMore')}/>`}`;
   };
 
   return html`
     <div class="fade-in">
       <div style=${{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, marginBottom: 16, WebkitOverflowScrolling: 'touch' }}>
-        ${[{ id: 'overview', k: 'star', label: 'Tổng quan' }, ...doneTypes.map(t => ({ id: t, k: actOf(t).iconKey, label: actOf(t).label }))].map(o => {
+        ${[{ id: 'overview', k: 'star', label: t('pt.overview') }, ...doneTypes.map(ty => ({ id: ty, k: actOf(ty).iconKey, label: actLabel(ty) }))].map(o => {
       const on = view === o.id;
       return html`
           <button key=${o.id} onClick=${() => setView(o.id)} class="btn-action" style=${{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, padding: '8px 14px', borderRadius: r.pill, cursor: 'pointer', fontSize: 13, fontWeight: 600, border: `1px solid ${on ? BRAND.blue : C.bdr}`, background: on ? C.bg3 : C.bg2, color: on ? BRAND.blue : C.txt2, whiteSpace: 'nowrap' }}>
@@ -1129,11 +1131,11 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
 
       ${view === 'overview' ? overview
       : view === 'gym' ? html`
-          <${SegToggle} mode=${mode} setMode=${setMode} opts=${[{ id: 'exercise', l: 'Theo bài tập' }, { id: 'day', l: 'Theo buổi tập' }]}/>
+          <${SegToggle} mode=${mode} setMode=${setMode} opts=${[{ id: 'exercise', l: t('pt.byExercise') }, { id: 'day', l: t('pt.bySession') }]}/>
 
           ${mode === 'exercise' ? html`
             ${exOptions.length === 0
-            ? html`<${Empty} icon="gym" msg="Chưa có dữ liệu bài tập"/>`
+            ? html`<${Empty} icon="gym" msg=${t('pt.noExData')}/>`
             : html`
                 <select value=${selExId} onChange=${e => setSelExId(e.target.value)}
                   class="workout-input" style=${{ width: '100%', padding: '12px 14px', borderRadius: r.md, fontSize: 14, fontWeight: 400, color: C.txt1, marginBottom: 16 }}>
@@ -1147,11 +1149,11 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
                   </div>
                   <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 6 }}>
                     <div>
-                      <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Tuần này</p>
+                      <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>${t('pt.thisWeek')}</p>
                       <p style=${{ margin: '2px 0 0', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>${thisWk.sets} sets · ${Math.round(thisWk.vol)} kg</p>
                     </div>
                     <div>
-                      <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Tuần trước</p>
+                      <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>${t('pt.lastWeek')}</p>
                       <p style=${{ margin: '2px 0 0', fontSize: 16, fontWeight: 600, color: C.txt2 }}>${lastWk.sets} sets · ${Math.round(lastWk.vol)} kg</p>
                     </div>
                   </div>
@@ -1161,7 +1163,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
                 <${Card} cx=${{ border: `1px solid ${C.bdr}`, display: 'flex', gap: 10 }}>
                   <div style=${{ flex: 1, textAlign: 'center' }}>
                     <div style=${{ display: 'flex', justifyContent: 'center', color: '#eab308', marginBottom: 4 }}><${Icons.trophy} size=${20}/></div>
-                    <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>PR Tạ nặng nhất</p>
+                    <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>${t('pt.prHeaviest')}</p>
                     <p style=${{ margin: '2px 0 0', fontSize: 18, fontWeight: 600, color: '#0f172a' }}>${bestW || '—'} kg</p>
                   </div>
                   <div style=${{ width: 1, background: C.bdr }}/>
@@ -1174,7 +1176,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
               `}
           `: html`
             ${dayOptions.length === 0
-            ? html`<${Empty} icon="calendar" msg="Chưa có dữ liệu buổi tập"/>`
+            ? html`<${Empty} icon="calendar" msg=${t('pt.noSessData')}/>`
             : html`
                 <select value=${selDay} onChange=${e => setSelDay(e.target.value)}
                   class="workout-input" style=${{ width: '100%', padding: '12px 14px', borderRadius: r.md, fontSize: 14, fontWeight: 400, color: C.txt1, marginBottom: 16 }}>
@@ -1188,18 +1190,18 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
                   </div>
                   <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 6 }}>
                     <div>
-                      <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Lần gần nhất</p>
+                      <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>${t('pt.mostRecent')}</p>
                       <p style=${{ margin: '2px 0 0', fontSize: 16, fontWeight: 600, color: '#0f172a' }}>${daySetsOf(dayLast)} sets · ${Math.round(dayLast?.totalVol || 0)} kg</p>
                     </div>
                     <div>
-                      <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>Lần trước đó</p>
+                      <p style=${{ margin: 0, fontSize: 10, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>${t('pt.previous')}</p>
                       <p style=${{ margin: '2px 0 0', fontSize: 16, fontWeight: 600, color: C.txt2 }}>${dayPrev ? `${daySetsOf(dayPrev)} sets · ${Math.round(dayPrev.totalVol || 0)} kg` : '—'}</p>
                     </div>
                   </div>
                   ${dayOccs.length > 1 && html`<${BarChart} items=${dayOccs.slice(-8).map(s => ({ label: fDM(s.date), val: s.totalVol || 0 }))}/>`}
                 </${Card}>
 
-                <${Label} t="Lịch sử các lần tập" mt=${20}/>
+                <${Label} t=${t('pt.history')} mt=${20}/>
                 ${dayTimeline.map((s, i) => {
               const prevS = dayOccs[dayOccs.length - 1 - i - 1];
               return html`
@@ -1256,19 +1258,19 @@ function CelebrationModal({ onClose, workout, profile, newPRs, newBadges, streak
         </div>
 
         <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 46, lineHeight: 1, letterSpacing: '.02em', textTransform: 'uppercase' }}>
-          Xong buổi<br/>${actOf(workout.type || 'gym').label}!
+          ${t('celeb.title', { sport: actLabel(workout.type || 'gym') })}
         </p>
         <p style=${{ margin: '12px 0 26px', fontFamily: F.serif, fontStyle: 'italic', fontSize: 14, color: BRAND.babyBlue }}>
           ${streak && streak.current > 1
-      ? `Chuỗi của bạn lên ${streak.current} ngày${streak.current === streak.longest ? ' — kỷ lục mới!' : ''}.`
-      : 'Buổi đầu tiên — chuỗi bắt đầu từ hôm nay.'}
+      ? t(streak.current === streak.longest ? 'celeb.streakRecord' : 'celeb.streakUp', { n: streak.current })
+      : t('celeb.streakFirst')}
         </p>
 
         <div style=${{ display: 'flex', gap: 9, width: '100%', maxWidth: 360, marginBottom: 14 }}>
           ${summaryStats(workout).slice(0, 3).map((st, i) => html`
             <div key=${i} style=${{ flex: 1, background: 'rgba(255,255,255,.14)', borderRadius: r.lg, padding: '14px 8px', textAlign: 'center', minWidth: 0 }}>
               <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 28, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>${st.v}</p>
-              <p style=${{ margin: '4px 0 0', fontSize: 10.5, letterSpacing: '.09em', fontWeight: 600, color: BRAND.babyBlue, textTransform: 'uppercase' }}>${st.u || 'điểm'}</p>
+              <p style=${{ margin: '4px 0 0', fontSize: 10.5, letterSpacing: '.09em', fontWeight: 600, color: BRAND.babyBlue, textTransform: 'uppercase' }}>${st.u || t('unit.points')}</p>
             </div>`)}
         </div>
 
@@ -1276,14 +1278,14 @@ function CelebrationModal({ onClose, workout, profile, newPRs, newBadges, streak
           <div style=${{ display: 'flex', alignItems: 'center', gap: 12, background: BRAND.yellow, borderRadius: r.lg, padding: '13px 16px', width: '100%', maxWidth: 360, marginBottom: 12 }}>
             <${SportIcon} k="medal" size=${26} color=${C.txt1} sw=${1.8}/>
             <div style=${{ minWidth: 0, textAlign: 'left' }}>
-              <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 15, letterSpacing: '.06em', color: C.txt1, textTransform: 'uppercase' }}>Huy hiệu mới</p>
+              <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 15, letterSpacing: '.06em', color: C.txt1, textTransform: 'uppercase' }}>${t('celeb.newBadges')}</p>
               <p style=${{ margin: '1px 0 0', fontSize: 11.5, color: C.txt1, opacity: .75 }}>${newBadges.map(id => BADGES[id] && BADGES[id].label).filter(Boolean).join(' · ')}</p>
             </div>
           </div>`}
 
         ${newPRs && newPRs.length > 0 && html`
           <div style=${{ background: 'rgba(255,255,255,.14)', borderRadius: r.lg, padding: '13px 16px', width: '100%', maxWidth: 360, textAlign: 'left' }}>
-            <p style=${{ margin: '0 0 8px', fontFamily: F.display, fontWeight: 700, fontSize: 13, letterSpacing: '.08em', color: BRAND.yellow, textTransform: 'uppercase' }}>PR mới</p>
+            <p style=${{ margin: '0 0 8px', fontFamily: F.display, fontWeight: 700, fontSize: 13, letterSpacing: '.08em', color: BRAND.yellow, textTransform: 'uppercase' }}>${t('celeb.newPR')}</p>
             ${newPRs.map(p => html`
               <p key=${p.exId} style=${{ margin: '0 0 3px', fontSize: 12.5, color: '#fff' }}>
                 <b>${p.name}</b> — ${p.weight} kg${p.isNewE ? ` (1RM ~${p.e1rm} kg)` : ''}
@@ -1297,7 +1299,7 @@ function CelebrationModal({ onClose, workout, profile, newPRs, newBadges, streak
       background: '#fff', border: 'none', borderRadius: 15, padding: 15, cursor: 'pointer',
       fontFamily: F.display, fontWeight: 700, fontSize: 17, letterSpacing: '.09em', color: BRAND.blue, textTransform: 'uppercase'
     }}>
-          Về bảng tin
+          ${t('celeb.toFeed')}
         </button>
       </div>
     </div>
@@ -1331,6 +1333,8 @@ function GymPair() {
   const [chatOpen, setChatOpen] = useState(false);   // trợ lý AI: mở/minimize
   const [chatMsgs, setChatMsgs] = useState([]);       // history trong phiên (không lưu Firestore)
 
+  useLang(); // root đăng ký re-render khi đổi ngôn ngữ (VI/EN) → toàn cây đổi theo
+
   useEffect(() => {
     setCloudErrorHandler(setCloudError);
     if (fbInitError) setCloudError(fbInitError);
@@ -1347,7 +1351,7 @@ function GymPair() {
         try {
           const { doc } = await ensureUserDoc(u);
           setUserDoc(doc);
-        } catch (e) { reportCloudError('Không tải được hồ sơ', e); }
+        } catch (e) { reportCloudError(t('err.loadProfile'), e); }
         isAdminUser(u.uid).then((v) => { setIsAdmin(v); if (!v) setAdminMode(false); }).catch(() => { setIsAdmin(false); setAdminMode(false); });
         setAuthUser(u);
       } else {
@@ -1368,6 +1372,15 @@ function GymPair() {
       document.documentElement.style.setProperty('--accent-glow', accent + '1A');
     }
   }, [userDoc?.accent]);
+
+  // Ngôn ngữ: khởi tạo từ hồ sơ (nếu có) khi đăng nhập; và lưu lựa chọn lên hồ sơ khi user đổi.
+  useEffect(() => {
+    const l = userDoc?.prefs?.lang;
+    if (l) setLang(l, false); // false = không ghi ngược lên cloud
+  }, [userDoc?.prefs?.lang]);
+  useEffect(() => {
+    onLangPersist(l => { if (pid) updateUserDoc(pid, { prefs: { lang: l } }).catch(() => { }); });
+  }, [pid]);
 
   // Nạp danh sách bài đã thả tim (để feed hiển thị trạng thái).
   useEffect(() => {
@@ -1443,13 +1456,13 @@ function GymPair() {
   const saveGoals = async (goals) => {
     setUserDoc(d => ({ ...d, goals }));
     try { await updateUserDoc(pid, { goals }); }
-    catch (e) { reportCloudError('Lưu mục tiêu thất bại', e); }
+    catch (e) { reportCloudError(t('err.saveGoals'), e); }
   };
   const deleteAccount = async () => {
     try {
       [`c:${pid}`, `p:${pid}`, `s:${pid}`, `a:${pid}`, `pr:${pid}`, `wt:${pid}`].forEach(k => { try { localStorage.removeItem(k); } catch { } });
       await deleteMyAccount(pid);
-    } catch (e) { setCloudError(e.message || 'Không xoá được tài khoản'); }
+    } catch (e) { setCloudError(e.message || t('err.deleteAccount')); }
   };
   const openProfile = (uidToView) => { setPgCtx({ uid: uidToView, isSelf: uidToView === pid }); setPg('user-profile'); };
   // F0 — sửa nhật ký (title/note + ảnh) của buổi tập CHÍNH MÌNH. Chỉ chữ/ảnh mô tả;
@@ -1462,7 +1475,7 @@ function GymPair() {
       if (cur?.photoUrl) deleteSessionPhoto(pid, id);
     } else if (patch.photoFile) {
       try { const blob = await compressImage(patch.photoFile); full.photoUrl = await uploadSessionPhoto(blob, pid, id); }
-      catch (e) { reportCloudError('Upload ảnh thất bại', e); full.photoUrl = cur?.photoUrl || null; }
+      catch (e) { reportCloudError(t('err.uploadPhoto'), e); full.photoUrl = cur?.photoUrl || null; }
     } else {
       full.photoUrl = cur?.photoUrl || null;
     }
@@ -1470,7 +1483,7 @@ function GymPair() {
     setPgCtx(c => (c && c.id === id) ? { ...c, ...full } : c);
     setFeedKey(k => k + 1);
     try { await updateSessionContent(pid, id, full); }
-    catch (e) { reportCloudError('Sửa buổi tập thất bại', e); }
+    catch (e) { reportCloudError(t('err.editSession'), e); }
   };
 
   // F5 — đổi công khai/riêng tư buổi tập đã đăng. Cập nhật cục bộ trước (optimistic) rồi
@@ -1483,7 +1496,7 @@ function GymPair() {
     setPgCtx(c => (c && c.id === id) ? { ...c, visibility } : c);
     setFeedKey(k => k + 1);
     try { await updateSessionVisibility({ ...cur, visibility }, visibility, meAuthor(), next); }
-    catch (e) { reportCloudError('Đổi hiển thị thất bại', e); }
+    catch (e) { reportCloudError(t('err.changeVis'), e); }
   };
 
   // Xoá bài đã đăng KÈM hoàn nguyên số liệu (điểm/phút/buổi/volume + streak + leaderboard kỳ đó).
@@ -1507,7 +1520,7 @@ function GymPair() {
     try {
       const st = await deleteSessionWithStats(session, meAuthor(), remaining);
       setUserDoc(d => ({ ...d, streak: { current: st.current, longest: st.longest, lastDate: st.lastDate } }));
-    } catch (e) { reportCloudError('Xoá bài thất bại', e); }
+    } catch (e) { reportCloudError(t('err.deletePost'), e); }
   };
   // KIỂM DUYỆT (admin): gỡ bài vi phạm của người khác. Chỉ xoá doc + ảnh (best-effort),
   // KHÔNG hoàn nguyên số liệu tác giả (xem adminDeleteSession). Chỉ chạy khi đang bật chế độ quản trị.
@@ -1518,12 +1531,12 @@ function GymPair() {
       if (post.photoUrl) deleteSessionPhoto(post.authorUid, post.id).catch(() => { });
       setFeedKey(k => k + 1);
       if (pg === 'sess-detail') { setPg(null); setPgCtx(null); }
-    } catch (e) { reportCloudError('Xoá bài (quản trị) thất bại', e); }
+    } catch (e) { reportCloudError(t('err.adminDelete'), e); }
   };
   // Lời mời vào nhóm: chấp nhận (tự vào nhóm) hoặc bỏ qua.
   const acceptClubInvite = async (inv) => {
     setInvites(list => list.filter(i => i.clubId !== inv.clubId));
-    try { await acceptInvite(inv.clubId, meAuthor()); } catch (e) { reportCloudError('Vào nhóm thất bại', e); }
+    try { await acceptInvite(inv.clubId, meAuthor()); } catch (e) { reportCloudError(t('err.joinClub'), e); }
   };
   const dismissClubInvite = async (inv) => {
     setInvites(list => list.filter(i => i.clubId !== inv.clubId));
@@ -1625,7 +1638,7 @@ function GymPair() {
     let photoUrl = meta.photoUrl || null;
     if (meta.photoFile) {
       try { const blob = await compressImage(meta.photoFile); photoUrl = await uploadSessionPhoto(blob, pid, active.id); }
-      catch (e) { reportCloudError('Upload ảnh thất bại', e); }
+      catch (e) { reportCloudError(t('err.uploadPhoto'), e); }
     }
     const stLocal = advanceStreak(userDoc.streak, date);
     const sess = buildGymSession(active, { ...meta, photoUrl, date }, meAuthor(), stLocal.current);
@@ -1647,7 +1660,7 @@ function GymPair() {
       const st = await saveSession(sess, meAuthor(), dayContext(sessions, date));
       setUserDoc(d => ({ ...d, streak: st }));
       markSessionSynced(sess.id);
-    } catch (e) { reportCloudError('Đồng bộ buổi tập thất bại', e); }
+    } catch (e) { reportCloudError(t('err.syncSession'), e); }
   };
 
   // Ghi buổi tập môn khác (không phải gym).
@@ -1658,7 +1671,7 @@ function GymPair() {
     const sess = buildActivitySession(input, meAuthor(), stLocal.current);
     if (input.photoFile) {
       try { const blob = await compressImage(input.photoFile); sess.photoUrl = await uploadSessionPhoto(blob, pid, sess.id); }
-      catch (e) { reportCloudError('Upload ảnh thất bại', e); }
+      catch (e) { reportCloudError(t('err.uploadPhoto'), e); }
     }
     const local = { ...toLocal(sess), pendingSync: true };
     const earned = awardBadges(sess, stLocal);
@@ -1673,7 +1686,7 @@ function GymPair() {
       const st = await saveSession(sess, meAuthor(), dayContext(sessions, date));
       setUserDoc(d => ({ ...d, streak: st }));
       markSessionSynced(sess.id);
-    } catch (e) { reportCloudError('Đồng bộ buổi tập thất bại', e); }
+    } catch (e) { reportCloudError(t('err.syncSession'), e); }
   };
 
   const discardWorkout = () => { db.set(`a:${pid}`, null); setActive(null); };
@@ -1688,10 +1701,10 @@ function GymPair() {
     setUserDoc(d => ({ ...d, name: fields.name, dept: fields.dept, center: fields.center, prefs: { ...(d.prefs || {}), sports: fields.sports, onboarded: true } }));
   };
 
-  if (authUser === undefined) return html`<${Wrap} cx=${{ alignItems: 'center', justifyContent: 'center', color: C.txt2, fontSize: 14 }}>Đang tải...</${Wrap}>`;
+  if (authUser === undefined) return html`<${Wrap} cx=${{ alignItems: 'center', justifyContent: 'center', color: C.txt2, fontSize: 14 }}>${t('common.loading')}</${Wrap}>`;
   if (!authUser) return html`<${SignIn}/>`;
   if (userDoc && !userDoc.prefs?.onboarded) return html`<${Onboarding} initialName=${userDoc.name} onDone=${onboard}/>`;
-  if (!ready) return html`<${Wrap} cx=${{ alignItems: 'center', justifyContent: 'center', color: C.txt2, fontSize: 14 }}>Đang tải...</${Wrap}>`;
+  if (!ready) return html`<${Wrap} cx=${{ alignItems: 'center', justifyContent: 'center', color: C.txt2, fontSize: 14 }}>${t('common.loading')}</${Wrap}>`;
 
   if (showCelebration && finishedWorkout) {
     return html`<${CelebrationModal} workout=${finishedWorkout} profile=${profile} newPRs=${newPRs} newBadges=${newBadges} streak=${celebStreak} onClose=${() => { setShowCelebration(false); setFinishedWorkout(null); setNewPRs([]); setNewBadges([]); setCelebStreak(null); setTab('feed'); }}/>`;
@@ -1699,7 +1712,7 @@ function GymPair() {
 
   if (active && showWorkout) {
     if (pg === 'pick-ex') return html`<${PickEx} exList=${exList} onPick=${e => { pgCtx && pgCtx.cb(e); setPg(null); setPgCtx(null); }} onClose=${() => { setPg(null); setPgCtx(null); }} onAddEx=${ex => { saveC([...exList, ex]); }}/>`;
-    if (pg === 'save-workout') return html`<${SaveWorkout} workout=${active} defaultVisibility=${userDoc.prefs?.defaultVisibility || 'company'} onBack=${() => setPg(null)} onDiscard=${() => { if (window.confirm('Huỷ buổi tập?')) { discardWorkout(); setPg(null); } }} onSave=${finishWorkout}/>`;
+    if (pg === 'save-workout') return html`<${SaveWorkout} workout=${active} defaultVisibility=${userDoc.prefs?.defaultVisibility || 'company'} onBack=${() => setPg(null)} onDiscard=${() => { if (window.confirm(t('save.discardConfirm'))) { discardWorkout(); setPg(null); } }} onSave=${finishWorkout}/>`;
     if (pg === 'guide-detail') return html`<${GuideDetail} guide=${pgCtx.guide} onBack=${pgCtx.back || (() => setPg(null))}/>`;
     return html`<${ActiveWorkout} workout=${active} sessions=${sessions} onChange=${saveA} onFinish=${() => setPg('save-workout')} onDiscard=${discardWorkout} onPickEx=${goPickEx} onMinimize=${() => setShowWorkout(false)} onGuide=${exId => openGuide(guideForExercise(exId), () => { setPgCtx(null); setPg(null); })}/>`;
   }
@@ -1755,14 +1768,14 @@ function GymPair() {
           <div class="scale-in" style=${{ width: '100%', maxWidth: 360, background: '#fff', borderRadius: r.lg, padding: 20, boxShadow: '0 12px 40px rgba(0,0,0,0.2)' }}>
             <div style=${{ textAlign: 'center', marginBottom: 14 }}>
               <div style=${{ fontSize: 40, marginBottom: 6 }}>📨</div>
-              <h3 style=${{ margin: 0, fontSize: 18, fontWeight: 600, color: C.txt1 }}>Bạn có lời mời vào nhóm</h3>
+              <h3 style=${{ margin: 0, fontSize: 18, fontWeight: 600, color: C.txt1 }}>${t('invite.title')}</h3>
             </div>
             ${invites.map(inv => { const a = ACT[inv.clubSport] || {}; return html`
               <div key=${inv.clubId} style=${{ border: `1px solid ${C.bdr}`, borderRadius: r.md, padding: '12px 14px', marginBottom: 10 }}>
                 <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 600, color: C.txt1 }}>${a.emoji || '👥'} ${inv.clubName}</p>
-                <p style=${{ margin: '2px 0 10px', fontSize: 12, color: C.txt3 }}>${inv.fromName ? `${inv.fromName} mời bạn` : 'Bạn được mời'}${a.label ? ` · ${a.label}` : ''}</p>
+                <p style=${{ margin: '2px 0 10px', fontSize: 12, color: C.txt3 }}>${inv.fromName ? t('invite.from', { name: inv.fromName }) : t('invite.generic')}${a.id ? ` · ${actLabel(a.id)}` : ''}</p>
                 <div style=${{ display: 'flex', gap: 8 }}>
-                  <button onClick=${() => dismissClubInvite(inv)} class="btn-action" style=${{ flex: 1, padding: '9px', borderRadius: r.md, border: `1px solid ${C.bdr}`, background: '#fff', color: C.txt2, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>Bỏ qua</button>
+                  <button onClick=${() => dismissClubInvite(inv)} class="btn-action" style=${{ flex: 1, padding: '9px', borderRadius: r.md, border: `1px solid ${C.bdr}`, background: '#fff', color: C.txt2, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>${t('common.dismiss')}</button>
                   <button onClick=${() => acceptClubInvite(inv)} class="btn-action" style=${{ flex: 1, padding: '9px', borderRadius: r.md, border: 'none', background: ACC, color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Tham gia</button>
                 </div>
               </div>`; })}
@@ -1776,8 +1789,8 @@ function GymPair() {
       `}
       ${isAdmin && adminMode && html`
         <div style=${{ background: '#7c3aed', color: '#fff', padding: '9px 16px', display: 'flex', gap: 10, alignItems: 'center', fontSize: 12.5, fontWeight: 500, flexShrink: 0 }}>
-          <span style=${{ flex: 1 }}>🛡 Chế độ quản trị đang bật — bạn có thể xoá bài & bình luận của mọi người.</span>
-          <button onClick=${() => setAdminMode(false)} class="btn-action" style=${{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 14, padding: '4px 12px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>Thoát</button>
+          <span style=${{ flex: 1 }}>${t('admin.banner')}</span>
+          <button onClick=${() => setAdminMode(false)} class="btn-action" style=${{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 14, padding: '4px 12px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>${t('common.exit')}</button>
         </div>
       `}
       <div style=${{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 20, position: 'relative' }}>
@@ -1798,7 +1811,7 @@ function GymPair() {
               onOpenGoals=${() => setPg('goals')}
               onOpenGuides=${() => setPg('guides')}
               onSettings=${() => setPg('settings')}
-              onLogWeight=${() => { const v = window.prompt('Cân nặng hôm nay (kg):'); const kg = parseFloat((v || '').replace(',', '.')); if (kg > 0) addWeight(kg); }}
+              onLogWeight=${() => { const v = window.prompt(t('pt.weightPrompt')); const kg = parseFloat((v || '').replace(',', '.')); if (kg > 0) addWeight(kg); }}
             />
             <${ProgressTab} slim=${true} sessions=${sessions} profile=${profile} weights=${weights} onAddWeight=${addWeight} hideWeight=${!!userDoc.prefs?.hideWeight} goals=${userDoc.goals} onSaveGoals=${saveGoals}/>
           </div>`}
@@ -1814,7 +1827,7 @@ function GymPair() {
       }}>＋</button>`}
 
       ${!chatOpen && html`
-        <button onClick=${() => setChatOpen(true)} class="btn-action" aria-label="Trợ lý AI" style=${{
+        <button onClick=${() => setChatOpen(true)} class="btn-action" aria-label=${t('chat.aria')} style=${{
         position: 'absolute', bottom: 78, left: 18, zIndex: 50,
         width: 52, height: 52, borderRadius: '50%', border: 'none', cursor: 'pointer',
         background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',

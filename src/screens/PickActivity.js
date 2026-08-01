@@ -2,7 +2,8 @@ import { html } from '../html.js';
 import { C, r, F, T, BRAND, sportColor, sportTint } from '../ui/theme.js';
 import { Wrap } from '../ui/primitives.js';
 import { SportIcon } from '../ui/sportIcons.js';
-import { ACTIVITIES, actOf } from '../domain/activities.js';
+import { ACTIVITIES, actOf, actLabel } from '../domain/activities.js';
+import { t } from '../i18n.js';
 
 // Chọn môn để ghi. gym -> mở chương trình; môn khác -> form LogActivity.
 export function PickActivity({ onClose, onGym, onActivity, recentTypes = [] }) {
@@ -17,14 +18,14 @@ export function PickActivity({ onClose, onGym, onActivity, recentTypes = [] }) {
           <${SportIcon} k="back" size=${18} color=${C.txt2} sw=${2}/>
         </button>
         <div style=${{ flex: 1, minWidth: 0 }}>
-          <p style=${{ margin: 0, ...T.h2 }}>BẠN VỪA TẬP GÌ?</p>
-          <p style=${{ margin: '1px 0 0', fontFamily: F.serif, fontStyle: 'italic', fontSize: 12.5, color: C.txt3 }}>Ghi lại để giữ chuỗi và cộng điểm.</p>
+          <p style=${{ margin: 0, ...T.h2 }}>${t('pick.title')}</p>
+          <p style=${{ margin: '1px 0 0', fontFamily: F.serif, fontStyle: 'italic', fontSize: 12.5, color: C.txt3 }}>${t('pick.subtitle')}</p>
         </div>
       </div>
 
       <div style=${{ flex: 1, overflowY: 'auto', padding: '18px 16px 80px', WebkitOverflowScrolling: 'touch' }}>
         ${favs.length > 0 && html`
-          <p style=${{ margin: '0 2px 9px', ...T.section }}>BẠN HAY TẬP</p>
+          <p style=${{ margin: '0 2px 9px', ...T.section }}>${t('pick.favorites')}</p>
           <div style=${{ display: 'grid', gridTemplateColumns: `repeat(${favs.length}, 1fr)`, gap: 10, marginBottom: 22 }}>
             ${favs.map(a => html`
               <button key=${a.id} onClick=${() => pick(a.id)} class="btn-action card-hover" style=${{
@@ -34,11 +35,11 @@ export function PickActivity({ onClose, onGym, onActivity, recentTypes = [] }) {
                 <span style=${{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <${SportIcon} k=${a.iconKey} size=${24} color="#fff"/>
                 </span>
-                <span style=${{ fontSize: 12.5, fontWeight: 600, color: '#fff', textAlign: 'center' }}>${a.label}</span>
+                <span style=${{ fontSize: 12.5, fontWeight: 600, color: '#fff', textAlign: 'center' }}>${actLabel(a.id)}</span>
               </button>`)}
           </div>`}
 
-        <p style=${{ margin: '0 2px 9px', ...T.section }}>TẤT CẢ MÔN</p>
+        <p style=${{ margin: '0 2px 9px', ...T.section }}>${t('pick.all')}</p>
         <div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
           ${ACTIVITIES.map(a => html`
             <button key=${a.id} onClick=${() => pick(a.id)} class="btn-action card-hover" style=${{
@@ -48,7 +49,7 @@ export function PickActivity({ onClose, onGym, onActivity, recentTypes = [] }) {
               <span style=${{ width: 44, height: 44, borderRadius: 12, background: sportTint(a.iconKey), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <${SportIcon} k=${a.iconKey} size=${24} color=${sportColor(a.iconKey)}/>
               </span>
-              <span style=${{ fontSize: 12.5, fontWeight: 500, color: C.txt1, textAlign: 'center' }}>${a.label}</span>
+              <span style=${{ fontSize: 12.5, fontWeight: 500, color: C.txt1, textAlign: 'center' }}>${actLabel(a.id)}</span>
             </button>`)}
         </div>
       </div>

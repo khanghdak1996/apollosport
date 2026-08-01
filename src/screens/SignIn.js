@@ -5,6 +5,7 @@ import { Wrap } from '../ui/primitives.js';
 import { SportIcon } from '../ui/sportIcons.js';
 import { signIn } from '../auth.js';
 import { ALLOWED_DOMAINS } from '../config.js';
+import { getLang, setLang, SUPPORTED } from '../i18n.js';
 
 // Logo Google đa sắc (inline SVG).
 const GoogleMark = () => html`
@@ -31,6 +32,15 @@ export function SignIn() {
 
   return html`
     <${Wrap} cx=${{ background: '#fff', overflow: 'hidden' }}>
+      <!-- Chọn ngôn ngữ góc trên trái (chưa đăng nhập vẫn đổi được, lưu localStorage) -->
+      <div style=${{ position: 'absolute', top: 'calc(14px + env(safe-area-inset-top))', left: 14, zIndex: 3, display: 'flex', gap: 4, background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.pill, padding: 3 }}>
+        ${SUPPORTED.map(l => html`
+          <button key=${l} onClick=${() => setLang(l)} class="btn-action" style=${{
+      padding: '4px 12px', borderRadius: r.pill, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none',
+      background: l === getLang() ? BRAND.blue : 'transparent', color: l === getLang() ? '#fff' : C.txt3,
+    }}>${l.toUpperCase()}</button>`)}
+      </div>
+
       <!-- 2 vòng tròn trang trí brand -->
       <div style=${{ position: 'absolute', width: 280, height: 280, borderRadius: '50%', background: BRAND.babyBlue, opacity: 0.55, top: -90, right: -70, pointerEvents: 'none' }}/>
       <div style=${{ position: 'absolute', width: 220, height: 220, borderRadius: '50%', background: C.bg3, top: 150, left: -110, pointerEvents: 'none' }}/>

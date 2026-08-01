@@ -1,3 +1,4 @@
+import { t } from '../i18n.js';
 // Registry đa môn thể thao.
 // kind      quyết định form nào render (strength dùng luồng gym cũ; distance/session dùng LogActivity).
 // category  quyết định CÁCH tính MET để chấm điểm (xem domain/session.js effectiveMet):
@@ -14,16 +15,20 @@
 // index  = hệ số nội suy MET (0→metMin, 1→metMax) cho môn rpe_only.
 // factor = hệ số điều chỉnh MET nền theo nỗ lực cho môn pace (±20%).
 // gymRaw = giá trị RPE thô nhân vào volume load cho gym.
+// Nhãn/mô tả (label/desc) tách sang i18n: rpeLabel(level)/rpeDesc(level) → khóa 'rpe.N.*'.
 export const RPE_LEVELS = [
-  { level: 1, label: 'Rất nhẹ',          desc: 'Hát được thoải mái',           index: 0.00, factor: 0.8, gymRaw: 1.5 },
-  { level: 2, label: 'Nhẹ',              desc: 'Nói chuyện bình thường',       index: 0.25, factor: 0.9, gymRaw: 3.5 },
-  { level: 3, label: 'Vừa',              desc: 'Nói câu dài, không hát được',  index: 0.50, factor: 1.0, gymRaw: 5.5 },
-  { level: 4, label: 'Nặng',             desc: 'Chỉ nói được câu ngắn',        index: 0.75, factor: 1.1, gymRaw: 7.5 },
-  { level: 5, label: 'Gắng sức tối đa',  desc: 'Gần như không nói được',       index: 1.00, factor: 1.2, gymRaw: 9.5 },
+  { level: 1, index: 0.00, factor: 0.8, gymRaw: 1.5 },
+  { level: 2, index: 0.25, factor: 0.9, gymRaw: 3.5 },
+  { level: 3, index: 0.50, factor: 1.0, gymRaw: 5.5 },
+  { level: 4, index: 0.75, factor: 1.1, gymRaw: 7.5 },
+  { level: 5, index: 1.00, factor: 1.2, gymRaw: 9.5 },
 ];
 const RPE_MAP = Object.fromEntries(RPE_LEVELS.map(x => [x.level, x]));
 // Mức RPE của 1 session; thiếu/không hợp lệ → mặc định Vừa (level 3).
 export const rpeOf = level => RPE_MAP[level] || RPE_MAP[3];
+// Nhãn/mô tả RPE đa ngôn ngữ (đọc theo ngôn ngữ hiện hành).
+export const rpeLabel = level => t('rpe.' + rpeOf(level).level + '.label');
+export const rpeDesc = level => t('rpe.' + rpeOf(level).level + '.desc');
 
 // ── Ô nhập dùng lại ─────────────────────────────────────────────
 // type: number | seg | select | counter | time | pace | rpe
@@ -143,6 +148,14 @@ export const ACTIVITIES = [
 export const ACT = Object.fromEntries(ACTIVITIES.map(a => [a.id, a]));
 
 export const actOf = id => ACT[id] || ACT.other;
+
+// Nhãn/động từ môn + nhãn ô nhập theo ngôn ngữ hiện hành. Thiếu khóa i18n → dùng
+// chuỗi VI trong registry làm fallback (không bao giờ vỡ). Dùng cho HIỂN THỊ;
+// tên buổi lưu mặc định vẫn dùng a.label (VI) cho dữ liệu ổn định.
+const orFallback = (key, fb) => { const v = t(key); return v === key ? fb : v; };
+export const actLabel = id => { const a = actOf(id); return orFallback('sport.' + a.id + '.label', a.label); };
+export const actVerb = id => { const a = actOf(id); return orFallback('sport.' + a.id + '.verb', a.verb); };
+export const flabel = f => (f && f.k) ? orFallback('field.' + f.k, f.label || '') : (f?.label || '');
 
 // Định nghĩa input mặc định theo kind (dự phòng cho môn chưa khai báo fields riêng).
 export const FIELDS = {
