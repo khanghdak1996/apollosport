@@ -4,13 +4,9 @@ import { C, r, ACC, F } from '../ui/theme.js';
 import { Wrap } from '../ui/primitives.js';
 import { SportIcon } from '../ui/sportIcons.js';
 import { askAI } from '../data/chat-ai.js';
+import { t } from '../i18n.js';
 
-const SUGGESTIONS = [
-  'Người mới nên bắt đầu tập gym thế nào?',
-  'Ăn gì trước và sau khi chạy bộ?',
-  'Gợi ý lịch tập 3 buổi/tuần',
-  'Cách giãn cơ tránh đau sau tập',
-];
+const SUGGESTIONS = ['chat.s1', 'chat.s2', 'chat.s3', 'chat.s4'];
 
 // Trợ lý AI tư vấn tập luyện & dinh dưỡng. History nằm ở GymPair (giữ khi minimize/đổi tab).
 // onClose = minimize (ẩn panel, KHÔNG xoá history). "Đoạn mới" mới xoá history.
@@ -25,9 +21,9 @@ export function ChatBot({ msgs, setMsgs, onClose }) {
   }, [msgs.length, sending]);
 
   const send = async (override) => {
-    const t = (override != null ? override : text).trim();
-    if (!t || sending) return;
-    const userMsg = { role: 'user', text: t };
+    const msg = (override != null ? override : text).trim();
+    if (!msg || sending) return;
+    const userMsg = { role: 'user', text: msg };
     const next = [...msgs, userMsg];
     setMsgs(next);
     setText('');
@@ -36,7 +32,7 @@ export function ChatBot({ msgs, setMsgs, onClose }) {
       const reply = await askAI(next);
       setMsgs(m => [...m, { role: 'assistant', text: reply }]);
     } catch (e) {
-      setMsgs(m => [...m, { role: 'assistant', text: e.message || 'Có lỗi xảy ra, thử lại nhé.', error: true }]);
+      setMsgs(m => [...m, { role: 'assistant', text: e.message || t('chat.error'), error: true }]);
     } finally {
       setSending(false);
     }
@@ -66,20 +62,20 @@ export function ChatBot({ msgs, setMsgs, onClose }) {
       <div style=${{ padding: '12px 14px', borderBottom: `1px solid ${C.bdr}`, background: '#fff', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
         <span style=${{ width: 34, height: 34, borderRadius: 10, background: C.bg3, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><${SportIcon} k="comment" size=${18} color=${ACC}/></span>
         <div style=${{ flex: 1, minWidth: 0 }}>
-          <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 16, color: C.txt1 }}>Trợ lý Apollo</p>
-          <p style=${{ margin: 0, fontSize: 11, color: C.txt3 }}>Tư vấn tập luyện & dinh dưỡng</p>
+          <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 16, color: C.txt1 }}>${t('chat.title')}</p>
+          <p style=${{ margin: 0, fontSize: 11, color: C.txt3 }}>${t('chat.subtitle')}</p>
         </div>
-        ${msgs.length > 0 && html`<button onClick=${newChat} class="btn-action" style=${{ background: C.bg3, border: 'none', borderRadius: r.pill, padding: '7px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: ACC, flexShrink: 0 }}>＋ Mới</button>`}
+        ${msgs.length > 0 && html`<button onClick=${newChat} class="btn-action" style=${{ background: C.bg3, border: 'none', borderRadius: r.pill, padding: '7px 12px', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: ACC, flexShrink: 0 }}>＋ ${t('chat.new')}</button>`}
         <button onClick=${onClose} class="btn-action" style=${{ background: C.bg1, border: 'none', borderRadius: '50%', width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}><${SportIcon} k="close" size=${18} color=${C.txt2}/></button>
       </div>
 
       <div ref=${scrollRef} style=${{ flex: 1, overflowY: 'auto', padding: '14px 14px', WebkitOverflowScrolling: 'touch' }}>
         ${msgs.length === 0 && html`
           <div style=${{ padding: '8px 2px 4px' }}>
-            <p style=${{ margin: '0 0 4px', fontFamily: F.display, fontWeight: 700, fontSize: 18, color: C.txt1 }}>Chào bạn 👋</p>
-            <p style=${{ margin: '0 0 16px', fontSize: 13.5, color: C.txt2, lineHeight: 1.5 }}>Mình có thể tư vấn về tập luyện và dinh dưỡng. Hỏi mình bất cứ điều gì, hoặc thử vài gợi ý dưới đây:</p>
+            <p style=${{ margin: '0 0 4px', fontFamily: F.display, fontWeight: 700, fontSize: 18, color: C.txt1 }}>${t('chat.greeting')}</p>
+            <p style=${{ margin: '0 0 16px', fontSize: 13.5, color: C.txt2, lineHeight: 1.5 }}>${t('chat.intro')}</p>
             <div style=${{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              ${SUGGESTIONS.map(s => html`<button key=${s} onClick=${() => send(s)} class="btn-action" style=${{ textAlign: 'left', background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.md, padding: '11px 13px', cursor: 'pointer', fontSize: 13.5, color: C.txt1 }}>${s}</button>`)}
+              ${SUGGESTIONS.map(s => html`<button key=${s} onClick=${() => send(t(s))} class="btn-action" style=${{ textAlign: 'left', background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.md, padding: '11px 13px', cursor: 'pointer', fontSize: 13.5, color: C.txt1 }}>${t(s)}</button>`)}
             </div>
           </div>`}
         ${msgs.map(bubble)}
@@ -89,7 +85,7 @@ export function ChatBot({ msgs, setMsgs, onClose }) {
       </div>
 
       <div style=${{ borderTop: `1px solid ${C.bdr}`, padding: '10px 12px', background: '#fff', display: 'flex', gap: 8, alignItems: 'center', paddingBottom: 'calc(10px + env(safe-area-inset-bottom))' }}>
-        <input value=${text} onInput=${e => setText(e.target.value)} onKeyDown=${e => { if (e.key === 'Enter') send(); }} placeholder="Nhập câu hỏi..." maxLength=${1000} style=${{ flex: 1, boxSizing: 'border-box', padding: '11px 14px', borderRadius: 22, border: `1px solid ${C.bdr}`, fontSize: 14, background: C.bg3, color: C.txt1 }}/>
+        <input value=${text} onInput=${e => setText(e.target.value)} onKeyDown=${e => { if (e.key === 'Enter') send(); }} placeholder=${t('chat.placeholder')} maxLength=${1000} style=${{ flex: 1, boxSizing: 'border-box', padding: '11px 14px', borderRadius: 22, border: `1px solid ${C.bdr}`, fontSize: 14, background: C.bg3, color: C.txt1 }}/>
         <button onClick=${() => send()} class="btn-action" style=${{ background: ACC, border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', flexShrink: 0, opacity: (text.trim() && !sending) ? 1 : 0.5, pointerEvents: sending ? 'none' : 'auto' }}>➤</button>
       </div>
     </${Wrap}>`;

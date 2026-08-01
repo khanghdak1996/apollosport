@@ -7,6 +7,7 @@ import { C, r, F, T, BRAND, SHADOW } from '../ui/theme.js';
 import { Empty } from '../ui/primitives.js';
 import { SportIcon } from '../ui/sportIcons.js';
 import { periodId, allEntries } from '../data/repo-leaderboard.js';
+import { t } from '../i18n.js';
 
 function Ava({ row, size, ring, ringW = 2 }) {
   const st = { width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: `${ringW}px solid ${ring}`, flexShrink: 0 };
@@ -48,11 +49,11 @@ export function LeaderboardTab({ me, onOpenProfile }) {
           <${Ava} row=${row} size=${first ? 58 : 46} ring=${first ? BRAND.yellow : '#fff'} ringW=${first ? 3 : 2}/>
         </div>
         <p style=${{ margin: 0, fontSize: first ? 11.5 : 11, fontWeight: first ? 700 : 600, color: first ? '#fff' : '#EAF3FB', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          ${row.uid === me.uid ? 'Bạn' : row.name}
+          ${row.uid === me.uid ? t('lb.you') : row.name}
         </p>
         <div style=${{ background: '#fff', borderRadius: '12px 12px 0 0', padding: pad, marginTop: 7 }}>
           <p style=${{ margin: 0, ...T.num, fontSize: first ? 28 : rank === 2 ? 21 : 20, lineHeight: 1, color: first ? BRAND.blue : C.txt1 }}>${row.points || 0}</p>
-          <p style=${{ margin: '2px 0 0', fontSize: 10, letterSpacing: '.1em', color: C.txt4 }}>HẠNG ${rank}</p>
+          <p style=${{ margin: '2px 0 0', fontSize: 10, letterSpacing: '.1em', color: C.txt4 }}>${t('lb.rank', { n: rank })}</p>
         </div>
       </div>`;
   };
@@ -62,8 +63,8 @@ export function LeaderboardTab({ me, onOpenProfile }) {
       <span style=${{ width: 26, textAlign: 'center', ...T.num, fontSize: 16, color: C.txt2 }}>${row.rank}</span>
       <${Ava} row=${row} size=${34} ring=${C.bdr}/>
       <div style=${{ flex: 1, minWidth: 0 }}>
-        <p style=${{ margin: 0, fontSize: 13.5, fontWeight: 600, color: C.txt1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${row.name}${row.uid === me.uid ? ' (bạn)' : ''}</p>
-        <p style=${{ margin: '1px 0 0', fontSize: 11, color: C.txt4 }}>${row.dept || '—'} · ${row.sessions || 0} buổi · ${row.minutes || 0} phút</p>
+        <p style=${{ margin: 0, fontSize: 13.5, fontWeight: 600, color: C.txt1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${row.name}${row.uid === me.uid ? t('lb.youParen') : ''}</p>
+        <p style=${{ margin: '1px 0 0', fontSize: 11, color: C.txt4 }}>${row.dept || '—'} · ${t('lb.sessMin', { s: row.sessions || 0, m: row.minutes || 0 })}</p>
       </div>
       <p style=${{ margin: 0, ...T.num, fontSize: 19, color: C.txt1 }}>${row.points || 0}</p>
     </div>`;
@@ -87,16 +88,16 @@ export function LeaderboardTab({ me, onOpenProfile }) {
   return html`
     <div class="fade-in">
       <div style=${{ background: BRAND.blue, padding: '18px 18px 0', color: '#fff' }}>
-        <p style=${{ margin: '0 0 3px', ...T.h1 }}>BẢNG XẾP HẠNG</p>
-        <p style=${{ margin: '0 0 12px', fontFamily: F.serif, fontStyle: 'italic', fontSize: 12, color: BRAND.babyBlue }}>Điểm quy đổi theo cường độ — công bằng giữa mọi môn.</p>
+        <p style=${{ margin: '0 0 3px', ...T.h1 }}>${t('lb.title')}</p>
+        <p style=${{ margin: '0 0 12px', fontFamily: F.serif, fontStyle: 'italic', fontSize: 12, color: BRAND.babyBlue }}>${t('lb.subtitle')}</p>
 
         <div style=${{ display: 'flex', background: 'rgba(255,255,255,.16)', borderRadius: r.md, padding: 3, marginBottom: 10 }}>
-          ${segTop('company', 'Toàn công ty', 'globe')}
-          ${segTop('dept', 'Phòng ban', 'people')}
+          ${segTop('company', t('lb.company'), 'globe')}
+          ${segTop('dept', t('lb.dept'), 'people')}
         </div>
         <div style=${{ display: 'flex', gap: 16, padding: '0 4px 14px' }}>
-          ${tabRange('week', 'Tuần này')}
-          ${tabRange('month', 'Tháng này')}
+          ${tabRange('week', t('lb.week'))}
+          ${tabRange('month', t('lb.month'))}
         </div>
 
         ${!empty && !loading && podium.length > 0 ? html`
@@ -109,11 +110,11 @@ export function LeaderboardTab({ me, onOpenProfile }) {
 
       <div style=${{ padding: '14px 16px 80px' }}>
         ${empty
-          ? html`<${Empty} icon="people" msg="Bạn chưa có phòng ban" sub="Cập nhật phòng ban trong Cài đặt để xem bảng này"/>`
+          ? html`<${Empty} icon="people" msg=${t('lb.noDeptMsg')} sub=${t('lb.noDeptSub')}/>`
           : loading
-            ? html`<p style=${{ textAlign: 'center', color: C.txt4, fontSize: 13, padding: 30 }}>Đang tải...</p>`
+            ? html`<p style=${{ textAlign: 'center', color: C.txt4, fontSize: 13, padding: 30 }}>${t('common.loading')}</p>`
             : rows.length === 0
-              ? html`<${Empty} icon="trophy" msg="Chưa có ai trong kỳ này" sub="Ghi buổi tập đầu tiên để dẫn đầu!"/>`
+              ? html`<${Empty} icon="trophy" msg=${t('lb.emptyMsg')} sub=${t('lb.emptySub')}/>`
               : html`
                 ${rest.length > 0 ? html`
                   <div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, overflow: 'hidden' }}>
@@ -125,7 +126,7 @@ export function LeaderboardTab({ me, onOpenProfile }) {
                   </div>` : ''}`}
 
         <p style=${{ margin: '14px 6px 0', fontFamily: F.serif, fontSize: 11.5, lineHeight: 1.6, color: C.txt3, textAlign: 'center' }}>
-          Bảng làm mới mỗi tuần. Bạn có thể tắt tham gia trong Cài đặt.
+          ${t('lb.footer')}
         </p>
       </div>
     </div>`;

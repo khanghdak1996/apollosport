@@ -3,8 +3,9 @@ import { html } from '../html.js';
 import { C, r, ACC, T, BRAND, sportColor } from '../ui/theme.js';
 import { Empty } from '../ui/primitives.js';
 import { SportIcon } from '../ui/sportIcons.js';
-import { ACTIVITIES } from '../domain/activities.js';
+import { ACTIVITIES, actLabel } from '../domain/activities.js';
 import { feedPage, listenNewPosts } from '../data/repo-sessions.js';
+import { t } from '../i18n.js';
 import { toggleReaction } from '../data/repo-social.js';
 import { PostCard } from './PostCard.js';
 
@@ -77,22 +78,22 @@ export function FeedTab({ me, myReactions, onReacted, onOpenComments, onOpenProf
   return html`
     <div class="fade-in">
       <div style=${{ position: 'sticky', top: 0, zIndex: 5, background: C.bg1, padding: '14px 16px 10px' }}>
-        <h2 style=${{ margin: '0 0 12px', ...T.h1 }}>BẢNG TIN</h2>
+        <h2 style=${{ margin: '0 0 12px', ...T.h1 }}>${t('feed.title')}</h2>
         <div style=${{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
-          ${chip(null, 'Tất cả')}
-          ${ACTIVITIES.map(a => chip(a.id, a.label, a.iconKey))}
+          ${chip(null, t('pe.all'))}
+          ${ACTIVITIES.map(a => chip(a.id, actLabel(a.id), a.iconKey))}
         </div>
         ${newCount > 0 && html`
           <div style=${{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
-            <button onClick=${() => reset(typeFilter)} class="btn-action" style=${{ background: ACC, color: '#fff', border: 'none', borderRadius: 20, padding: '7px 16px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', boxShadow: '0 3px 8px var(--accent-glow)' }}>↑ ${newCount} bài mới</button>
+            <button onClick=${() => reset(typeFilter)} class="btn-action" style=${{ background: ACC, color: '#fff', border: 'none', borderRadius: 20, padding: '7px 16px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', boxShadow: '0 3px 8px var(--accent-glow)' }}>${t('feed.newPosts', { n: newCount })}</button>
           </div>`}
       </div>
 
       <div style=${{ padding: '0 16px' }}>
         ${loading && items.length === 0
-          ? html`<p style=${{ textAlign: 'center', color: C.txt3, fontSize: 13, padding: 30 }}>Đang tải...</p>`
+          ? html`<p style=${{ textAlign: 'center', color: C.txt3, fontSize: 13, padding: 30 }}>${t('common.loading')}</p>`
           : items.length === 0
-            ? html`<${Empty} icon="other" msg="Chưa có bài nào" sub="Hãy là người đầu tiên chia sẻ buổi tập!"/>`
+            ? html`<${Empty} icon="other" msg=${t('feed.emptyMsg')} sub=${t('feed.emptySub')}/>`
             : items.map(p => html`<${PostCard}
                 key=${`${p.authorUid}_${p.id}`}
                 post=${p}
@@ -105,7 +106,7 @@ export function FeedTab({ me, myReactions, onReacted, onOpenComments, onOpenProf
                 moderating=${moderating}
                 onAdminDelete=${onAdminDelete}
               />`)}
-        ${!done && items.length > 0 && html`<div ref=${sentinel} style=${{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.txt3, fontSize: 12 }}>Đang tải thêm...</div>`}
+        ${!done && items.length > 0 && html`<div ref=${sentinel} style=${{ height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.txt3, fontSize: 12 }}>${t('feed.loadingMore')}</div>`}
       </div>
     </div>`;
 }

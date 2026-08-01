@@ -1,4 +1,5 @@
 import { p2 } from './format.js';
+import { t } from '../i18n.js';
 
     // Lấy danh sách bài tập của một session gym, chịu được cả schema mới (detail.exs) lẫn cũ (exs).
     export const exsOf = s => (s && s.detail && s.detail.exs) || (s && s.exs) || [];
@@ -180,12 +181,12 @@ import { p2 } from './format.js';
       const dist = m => isSwim ? { v: Math.round(m), u: 'm' } : { v: Math.round(m / 100) / 10, u: 'km' };
       const recs = [];
       if (kind === 'distance') {
-        if (longestMeters > 0) { const x = dist(longestMeters); recs.push({ key: 'longDist', label: 'Xa nhất 1 buổi', value: x.v, unit: x.u }); }
-        if (bestWeekMeters > 0) { const x = dist(bestWeekMeters); recs.push({ key: 'weekDist', label: 'Tổng tuần cao nhất', value: x.v, unit: x.u }); }
-        if (longestMin > 0) recs.push({ key: 'longMin', label: 'Buổi dài nhất', value: longestMin, unit: 'phút' });
+        if (longestMeters > 0) { const x = dist(longestMeters); recs.push({ key: 'longDist', label: t('pr.longDist'), value: x.v, unit: x.u }); }
+        if (bestWeekMeters > 0) { const x = dist(bestWeekMeters); recs.push({ key: 'weekDist', label: t('pr.weekDist'), value: x.v, unit: x.u }); }
+        if (longestMin > 0) recs.push({ key: 'longMin', label: t('pr.longMin'), value: longestMin, unit: t('unit.min') });
       } else {
-        if (longestMin > 0) recs.push({ key: 'longMin', label: 'Buổi dài nhất', value: longestMin, unit: 'phút' });
-        if (bestWeekMin > 0) recs.push({ key: 'weekMin', label: 'Tổng phút tuần cao nhất', value: bestWeekMin, unit: 'phút' });
+        if (longestMin > 0) recs.push({ key: 'longMin', label: t('pr.longMin'), value: longestMin, unit: t('unit.min') });
+        if (bestWeekMin > 0) recs.push({ key: 'weekMin', label: t('pr.weekMin'), value: bestWeekMin, unit: t('unit.min') });
       }
       return recs;
     };
