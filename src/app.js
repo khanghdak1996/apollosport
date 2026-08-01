@@ -14,7 +14,7 @@ const REST_PRESETS = [60, 90, 120, 180]; // preset thời gian nghỉ giữa set
 import { ACT, actOf, fieldsOf, RPE_LEVELS, rpeOf, rpeLabel, rpeDesc, actLabel, flabel } from './domain/activities.js';
 import { buildGymSession, buildActivitySession, summaryStats, headline, computePoints } from './domain/session.js';
 import { advanceStreak, liveStreak, dayStr } from './domain/streak.js';
-import { evaluateBadges, BADGES } from './domain/badges.js';
+import { evaluateBadges, BADGES, badgeLabel } from './domain/badges.js';
 import { db } from './data/local.js';
 import { compressImage, uploadSessionPhoto, deleteSessionPhoto } from './data/photos.js';
 import { saveSession, deleteSession as repoDeleteSession, updateSessionContent, updateSessionVisibility, deleteSessionWithStats, adminDeleteSession, dayContext, allSessionsOf } from './data/repo-sessions.js';
@@ -1279,7 +1279,7 @@ function CelebrationModal({ onClose, workout, profile, newPRs, newBadges, streak
             <${SportIcon} k="medal" size=${26} color=${C.txt1} sw=${1.8}/>
             <div style=${{ minWidth: 0, textAlign: 'left' }}>
               <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 15, letterSpacing: '.06em', color: C.txt1, textTransform: 'uppercase' }}>${t('celeb.newBadges')}</p>
-              <p style=${{ margin: '1px 0 0', fontSize: 11.5, color: C.txt1, opacity: .75 }}>${newBadges.map(id => BADGES[id] && BADGES[id].label).filter(Boolean).join(' · ')}</p>
+              <p style=${{ margin: '1px 0 0', fontSize: 11.5, color: C.txt1, opacity: .75 }}>${newBadges.map(id => BADGES[id] && badgeLabel(id)).filter(Boolean).join(' · ')}</p>
             </div>
           </div>`}
 

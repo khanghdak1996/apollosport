@@ -8,6 +8,7 @@ import { PhotoView } from '../ui/Lightbox.js';
 import { actOf } from '../domain/activities.js';
 import { summaryStats, headline } from '../domain/session.js';
 import { fDT } from '../domain/format.js';
+import { t } from '../i18n.js';
 
 function Avatar({ name, photo, color }) {
   const st = { width: 40, height: 40, borderRadius: '50%', border: `2px solid ${color}`, flexShrink: 0 };
@@ -33,14 +34,14 @@ export function PostCard({ post, reacted, onReact, onOpenComments, onOpenProfile
             <b style=${{ fontWeight: 700 }}>${post.authorName}</b><span style=${{ color: C.txt2 }}> ${headline(post)}</span>
           </p>
           <p style=${{ margin: '2px 0 0', fontSize: 11, color: C.txt4 }}>
-            ${post.dept ? post.dept + ' · ' : ''}${fDT(post.loggedAt || post.startTime)}${post.streakAtPost > 1 ? ' · chuỗi ' + post.streakAtPost + ' ngày' : ''}
+            ${post.dept ? post.dept + ' · ' : ''}${fDT(post.loggedAt || post.startTime)}${post.streakAtPost > 1 ? ' · ' + t('post.streak', { n: post.streakAtPost }) : ''}
           </p>
         </div>
         <${SportIcon} k=${a.iconKey} size=${20} color=${ring} cx=${{ flexShrink: 0 }}/>
         ${mine && onManage ? html`
-          <button onClick=${() => onManage(post)} class="btn-action" title="Sửa / xoá bài" style=${{ flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer', color: C.txt5, fontSize: 20, lineHeight: 1, padding: '0 2px', marginLeft: -4 }}>⋯</button>` : ''}
+          <button onClick=${() => onManage(post)} class="btn-action" title=${t('post.manage')} style=${{ flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer', color: C.txt5, fontSize: 20, lineHeight: 1, padding: '0 2px', marginLeft: -4 }}>⋯</button>` : ''}
         ${moderating && !mine && onAdminDelete ? html`
-          <button onClick=${() => { if (window.confirm(`Xoá bài này của ${post.authorName || 'người dùng'}? (Thao tác quản trị — không hoàn tác được.)`)) onAdminDelete(post); }} class="btn-action" title="Xoá bài (quản trị)" style=${{ flexShrink: 0, background: C.redBg, border: `1px solid ${C.redBdr}`, borderRadius: 16, height: 30, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', color: C.red, fontSize: 12, fontWeight: 600, marginLeft: -2 }}>Xoá</button>` : ''}
+          <button onClick=${() => { if (window.confirm(t('post.adminDelConfirm', { name: post.authorName || t('post.someone') }))) onAdminDelete(post); }} class="btn-action" title=${t('post.adminDelTitle')} style=${{ flexShrink: 0, background: C.redBg, border: `1px solid ${C.redBdr}`, borderRadius: 16, height: 30, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', color: C.red, fontSize: 12, fontWeight: 600, marginLeft: -2 }}>${t('common.delete')}</button>` : ''}
       </div>
 
       ${post.note ? html`<p style=${{ margin: '10px 0 0', padding: '0 16px', fontSize: 13.5, color: C.txt1, lineHeight: 1.5 }}>${post.note}</p>` : ''}

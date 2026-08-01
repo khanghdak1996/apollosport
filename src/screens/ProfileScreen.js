@@ -6,11 +6,12 @@ import { SportIcon } from '../ui/sportIcons.js';
 import { getUserDoc } from '../data/repo-users.js';
 import { allSessionsOf } from '../data/repo-sessions.js';
 import { liveStreak } from '../domain/streak.js';
-import { actOf } from '../domain/activities.js';
+import { actOf, actLabel } from '../domain/activities.js';
 import { summaryStats } from '../domain/session.js';
 import { fDT } from '../domain/format.js';
-import { BADGES } from '../domain/badges.js';
+import { BADGES, badgeLabel } from '../domain/badges.js';
 import { personalRecords, currentWeekActivity } from '../domain/stats.js';
+import { t } from '../i18n.js';
 
 export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
   const [doc, setDoc] = useState(null);
@@ -28,7 +29,7 @@ export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
   }, [uid, isSelf]);
 
   const st = doc ? liveStreak(doc.streak) : { current: 0 };
-  const t = doc?.totals || {};
+  const tot = doc?.totals || {};
   const items = allSess.slice(0, 12); // buổi gần đây (đã sắp desc theo loggedAt)
 
   // Hero: với hồ sơ CỦA MÌNH, tính thẳng từ danh sách buổi thật (allSess gồm cả buổi riêng tư)
@@ -39,9 +40,9 @@ export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
     minutes: x.minutes + (s.activeMinutes || 0),
     points: x.points + (s.points || 0),
   }), { sessions: 0, minutes: 0, points: 0 }) : null;
-  const heroSessions = derived ? derived.sessions : (t.sessions || 0);
-  const heroMinutes = derived ? derived.minutes : (t.minutes || 0);
-  const heroPoints = derived ? derived.points : (t.points || 0);
+  const heroSessions = derived ? derived.sessions : (tot.sessions || 0);
+  const heroMinutes = derived ? derived.minutes : (tot.minutes || 0);
+  const heroPoints = derived ? derived.points : (tot.points || 0);
 
   const prBlocks = [...new Set(allSess.map(s => s.type || 'gym'))]
     .map(ty => ({ ty, recs: personalRecords(allSess, ty, actOf(ty).kind) }))
@@ -70,14 +71,14 @@ export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
         <button onClick=${onBack} class="btn-action" style=${{ width: 36, height: 36, borderRadius: '50%', background: C.bg1, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
           <${SportIcon} k="back" size=${18} color=${C.txt2} sw=${2}/>
         </button>
-        <p style=${{ margin: 0, flex: 1, ...T.h2 }}>${isSelf ? 'THÀNH TÍCH CỦA BẠN' : 'HỒ SƠ'}</p>
+        <p style=${{ margin: 0, flex: 1, ...T.h2 }}>${isSelf ? t('prof.selfTitle') : t('prof.title')}</p>
       </div>
 
       <div style=${{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         ${loading
-      ? html`<p style=${{ textAlign: 'center', color: C.txt3, fontSize: 13, padding: 40 }}>Đang tải...</p>`
+      ? html`<p style=${{ textAlign: 'center', color: C.txt3, fontSize: 13, padding: 40 }}>${t('common.loading')}</p>`
       : !doc
-        ? html`<div style=${{ padding: 16 }}><${Empty} icon="other" msg="Không tìm thấy hồ sơ"/></div>`
+        ? html`<div style=${{ padding: 16 }}><${Empty} icon="other" msg=${t('prof.notFound')}/></div>`
         : html`
               <!-- Hero xanh -->
               <div style=${{ background: BRAND.blue, color: '#fff', padding: '22px 18px 20px', textAlign: 'center' }}>
@@ -86,10 +87,10 @@ export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
           : html`<div style=${{ width: 84, height: 84, borderRadius: '50%', margin: '0 auto', background: BRAND.babyBlue, color: BRAND.blue, border: `3px solid ${BRAND.yellow}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 34 }}>${(doc.name || '?').charAt(0).toUpperCase()}</div>`}
                 <p style=${{ margin: '12px 0 2px', fontSize: 20, fontWeight: 700, letterSpacing: '-0.01em' }}>${doc.name}</p>
                 <p style=${{ margin: 0, fontSize: 12.5, color: BRAND.babyBlue }}>${doc.dept || '—'}</p>
-                ${st.current > 0 && html`<div style=${{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 12, background: 'rgba(255,255,255,.16)', borderRadius: 20, padding: '6px 14px', fontSize: 13, fontWeight: 600 }}><${SportIcon} k="flame" size=${15} color=${BRAND.yellow}/> Chuỗi ${st.current} ngày</div>`}
+                ${st.current > 0 && html`<div style=${{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 12, background: 'rgba(255,255,255,.16)', borderRadius: 20, padding: '6px 14px', fontSize: 13, fontWeight: 600 }}><${SportIcon} k="flame" size=${15} color=${BRAND.yellow}/> ${t('prof.streakDays', { n: st.current })}</div>`}
 
                 <div style=${{ display: 'flex', gap: 8, marginTop: 18 }}>
-                  ${[{ v: heroSessions, l: 'Buổi tập' }, { v: heroMinutes, l: 'Phút' }, { v: heroPoints, l: 'Điểm' }, { v: doc.streak?.longest || 0, l: 'Chuỗi dài' }].map((s, i) => html`
+                  ${[{ v: heroSessions, l: t('pt.sessions') }, { v: heroMinutes, l: t('home.minutes') }, { v: heroPoints, l: t('stat.points') }, { v: doc.streak?.longest || 0, l: t('prof.longestStreak') }].map((s, i) => html`
                     <div key=${i} style=${{ flex: 1, background: 'rgba(255,255,255,.14)', borderRadius: 14, padding: '11px 6px', minWidth: 0 }}>
                       <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 22, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>${s.v}</p>
                       <p style=${{ margin: '3px 0 0', fontSize: 9.5, letterSpacing: '.07em', fontWeight: 600, color: BRAND.babyBlue, textTransform: 'uppercase' }}>${s.l}</p>
@@ -99,18 +100,18 @@ export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
 
               <div style=${{ padding: '0 16px 80px' }}>
                 ${showGoals && html`
-                  <${Section} t="MỤC TIÊU TUẦN NÀY" mt=${18}/>
+                  <${Section} t=${t('pt.weeklyGoal')} mt=${18}/>
                   <div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    ${goals.sessionsPerWeek > 0 && goalRow('Buổi tập', cw.count, goals.sessionsPerWeek, BRAND.blue)}
-                    ${goals.minutesPerWeek > 0 && goalRow('Phút vận động', cw.minutes, goals.minutesPerWeek, C.green)}
+                    ${goals.sessionsPerWeek > 0 && goalRow(t('pt.sessions'), cw.count, goals.sessionsPerWeek, BRAND.blue)}
+                    ${goals.minutesPerWeek > 0 && goalRow(t('pt.activeMin'), cw.minutes, goals.minutesPerWeek, C.green)}
                   </div>`}
 
                 ${prBlocks.length > 0 && html`
-                  <${Section} t="KỶ LỤC CÁ NHÂN" mt=${18} right=${html`<${SportIcon} k="trophy" size=${17} color=${BRAND.yellow}/>`}/>
+                  <${Section} t=${t('pt.pr')} mt=${18} right=${html`<${SportIcon} k="trophy" size=${17} color=${BRAND.yellow}/>`}/>
                   <div style=${{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     ${prBlocks.map(({ ty, recs }) => { const a = actOf(ty); return html`
                       <div key=${ty} style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, padding: '13px 15px' }}>
-                        <p style=${{ margin: '0 0 10px', fontSize: 13.5, fontWeight: 700, color: C.txt1, display: 'flex', alignItems: 'center', gap: 7 }}><${SportIcon} k=${a.iconKey} size=${16} color=${sportColor(a.iconKey)}/> ${a.label}</p>
+                        <p style=${{ margin: '0 0 10px', fontSize: 13.5, fontWeight: 700, color: C.txt1, display: 'flex', alignItems: 'center', gap: 7 }}><${SportIcon} k=${a.iconKey} size=${16} color=${sportColor(a.iconKey)}/> ${actLabel(a.id)}</p>
                         <div style=${{ display: 'grid', gridTemplateColumns: `repeat(${recs.length}, 1fr)`, gap: 8 }}>
                           ${recs.map(rc => html`<div key=${rc.key} style=${{ textAlign: 'center' }}>
                             <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 18, color: sportColor(a.iconKey) }}>${rc.value}<span style=${{ fontSize: 10, fontWeight: 500, color: C.txt3 }}> ${rc.unit}</span></p>
@@ -121,14 +122,14 @@ export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
                   </div>`}
 
                 ${(doc.badges?.length > 0) && html`
-                  <${Section} t="HUY HIỆU" mt=${18}/>
+                  <${Section} t=${t('prof.badges')} mt=${18}/>
                   <div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, padding: '14px 16px', display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                    ${doc.badges.map(b => BADGES[b] && html`<span key=${b} title=${BADGES[b].label} style=${{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: C.txt2, background: C.bg3, borderRadius: 20, padding: '5px 12px' }}><span style=${{ fontSize: 16 }}>${BADGES[b].icon}</span> ${BADGES[b].label}</span>`)}
+                    ${doc.badges.map(b => BADGES[b] && html`<span key=${b} title=${badgeLabel(b)} style=${{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: C.txt2, background: C.bg3, borderRadius: 20, padding: '5px 12px' }}><span style=${{ fontSize: 16 }}>${BADGES[b].icon}</span> ${badgeLabel(b)}</span>`)}
                   </div>`}
 
-                <${Section} t="BUỔI TẬP GẦN ĐÂY" mt=${18}/>
+                <${Section} t=${t('prof.recent')} mt=${18}/>
                 ${items.length === 0
-          ? html`<${Empty} icon="other" msg="Chưa có buổi tập công khai"/>`
+          ? html`<${Empty} icon="other" msg=${t('prof.noPublic')}/>`
           : html`<div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, overflow: 'hidden' }}>
                     ${items.map((s, i) => {
             const a = actOf(s.type);
@@ -136,7 +137,7 @@ export function ProfileScreen({ uid, isSelf = false, onBack, onView }) {
                       <div key=${`${s.authorUid}_${s.id}`} onClick=${() => onView && onView(s)} class="card-hover" style=${{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 15px', borderTop: i ? `1px solid ${C.bdr2}` : 'none', cursor: 'pointer' }}>
                         <span style=${{ width: 34, height: 34, borderRadius: 10, background: sportTint(a.iconKey), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><${SportIcon} k=${a.iconKey} size=${19} color=${sportColor(a.iconKey)}/></span>
                         <div style=${{ flex: 1, minWidth: 0 }}>
-                          <p style=${{ margin: 0, fontSize: 14, fontWeight: 600, color: C.txt1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${s.title || a.label}</p>
+                          <p style=${{ margin: 0, fontSize: 14, fontWeight: 600, color: C.txt1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${s.title || actLabel(s.type)}</p>
                           <p style=${{ margin: '2px 0 0', fontSize: 11.5, color: C.txt3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${summaryStats(s).map(x => `${x.v}${x.u ? ' ' + x.u : ''}`).join(' · ')} · ${fDT(s.loggedAt)}</p>
                         </div>
                         ${(s.visibility === 'private') ? html`<${SportIcon} k="lock" size=${14} color=${C.txt4}/>` : ''}

@@ -3,6 +3,7 @@ import {
   startAfter, getDocs, onSnapshot, increment, serverTimestamp,
 } from 'fb/firestore';
 import { db, reportCloudError } from '../firebase.js';
+import { t } from '../i18n.js';
 import { advanceStreak, computeStreak, dayStr } from '../domain/streak.js';
 import { weekId, monthId } from '../domain/period.js';
 
@@ -55,7 +56,7 @@ export async function saveSession(session, me, dayCtx = {}) {
 
 export async function deleteSession(uid, id) {
   try { await deleteDoc(doc(db, 'sessions', sid(uid, id))); }
-  catch (e) { reportCloudError('Xoá buổi tập trên cloud thất bại', e); }
+  catch (e) { reportCloudError(t('err.deleteCloudSession'), e); }
 }
 
 // KIỂM DUYỆT (admin): gỡ bài vi phạm của NGƯỜI KHÁC. Chỉ xoá doc session —
@@ -187,7 +188,7 @@ export function listenNewPosts(sinceLoggedAt, cb) {
       where('loggedAt', '>', sinceLoggedAt),
       orderBy('loggedAt', 'desc'), limit(20)),
     snap => cb(snap.docs.map(d => d.data())),
-    e => reportCloudError('Không tải được bảng tin', e)
+    e => reportCloudError(t('err.loadFeed'), e)
   );
 }
 

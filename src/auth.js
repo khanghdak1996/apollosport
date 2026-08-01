@@ -7,6 +7,7 @@ import { auth, db, reportCloudError } from './firebase.js';
 import { ALLOWED_DOMAINS, emailAllowed } from './config.js';
 import { deleteAllMySessions } from './data/repo-sessions.js';
 import { removeMyEntries } from './data/repo-leaderboard.js';
+import { t } from './i18n.js';
 
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: ALLOWED_DOMAINS[0], prompt: 'select_account' });
@@ -64,12 +65,12 @@ export const signOutUser = () => signOut(auth);
 // Xoá tài khoản: dữ liệu tập + entry xếp hạng + cân nặng riêng tư + hồ sơ, rồi xoá auth.
 // Best-effort (không có Cloud Function). Ảnh trong Storage để dọn sau bằng lifecycle rule.
 export async function deleteMyAccount(uid) {
-  try { await deleteAllMySessions(uid); } catch (e) { reportCloudError('Xoá buổi tập thất bại', e); }
+  try { await deleteAllMySessions(uid); } catch (e) { reportCloudError(t('err.deleteSessions'), e); }
   try { await removeMyEntries(uid); } catch (e) { /* bỏ qua */ }
   try { await deleteDoc(doc(db, 'users', uid, 'private', 'weights')); } catch (e) { /* có thể không tồn tại */ }
-  try { await deleteDoc(doc(db, 'users', uid)); } catch (e) { reportCloudError('Xoá hồ sơ thất bại', e); }
+  try { await deleteDoc(doc(db, 'users', uid)); } catch (e) { reportCloudError(t('err.deleteProfile'), e); }
   try { await auth.currentUser?.delete(); }
-  catch (e) { await signOut(auth); throw new Error('Đã xoá dữ liệu. Vui lòng đăng nhập lại gần đây để xoá hẳn tài khoản đăng nhập.'); }
+  catch (e) { await signOut(auth); throw new Error(t('err.reauth')); }
 }
 
 // Tạo/đồng bộ users/{uid}. Trả { doc, firstLogin }.

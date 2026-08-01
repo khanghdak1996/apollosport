@@ -10,12 +10,17 @@ import { html } from '../html.js';
 import { C, r, F, T, BRAND, SHADOW, sportColor, sportTint } from '../ui/theme.js';
 import { SportIcon } from '../ui/sportIcons.js';
 import { Section } from '../ui/primitives.js';
-import { actOf } from '../domain/activities.js';
+import { actOf, actLabel } from '../domain/activities.js';
+import { t, getLang } from '../i18n.js';
 
-const DOW = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-const MONTHS = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+const DOW_VI = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+const DOW_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const MONTHS_VI = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export function CalendarTab({ profile, sessions, streak, points = 0, rank, weights = [], onView, onAvatar, onOpenClubs, onOpenGoals, onOpenGuides, onSettings, onLogWeight }) {
+  const DOW = getLang() === 'en' ? DOW_EN : DOW_VI;
+  const MONTHS = getLang() === 'en' ? MONTHS_EN : MONTHS_VI;
   const today = new Date();
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const st = streak || { current: 0 };
@@ -47,7 +52,7 @@ export function CalendarTab({ profile, sessions, streak, points = 0, rank, weigh
   const agg = {};
   sessions.filter(s => new Date(s.date) >= since).forEach(s => {
     const key = actOf(s.type).iconKey;
-    agg[key] = agg[key] || { key, label: actOf(s.type).label, n: 0, min: 0, pts: 0 };
+    agg[key] = agg[key] || { key, label: actLabel(s.type), n: 0, min: 0, pts: 0 };
     agg[key].n += 1;
     agg[key].min += s.activeMinutes || s.durationMin || 0;
     agg[key].pts += s.points || 0;
@@ -63,9 +68,9 @@ export function CalendarTab({ profile, sessions, streak, points = 0, rank, weigh
   const wMax = spark.length ? Math.max(...spark.map(w => w.kg)) : 1;
 
   const links = [
-    { t: 'Câu lạc bộ', sub: 'Gặp đồng nghiệp cùng đam mê một môn', k: 'people', tint: C.bg3, color: BRAND.blue, on: onOpenClubs },
-    { t: 'Mục tiêu chung', sub: 'Cả công ty cùng góp để về đích chung', k: 'target', tint: C.yellowBg, color: C.yellowInk, on: onOpenGoals },
-    { t: 'Hướng dẫn tập luyện', sub: 'Kiến thức nhập môn cho từng bài tập', k: 'book', tint: C.pinkBg, color: BRAND.pink, on: onOpenGuides },
+    { t: t('cal.clubs'), sub: t('cal.clubsSub'), k: 'people', tint: C.bg3, color: BRAND.blue, on: onOpenClubs },
+    { t: t('cal.goals'), sub: t('cal.goalsSub'), k: 'target', tint: C.yellowBg, color: C.yellowInk, on: onOpenGoals },
+    { t: t('cal.guides'), sub: t('cal.guidesSub'), k: 'book', tint: C.pinkBg, color: BRAND.pink, on: onOpenGuides },
   ];
 
   return html`
@@ -79,7 +84,7 @@ export function CalendarTab({ profile, sessions, streak, points = 0, rank, weigh
             : html`<div style=${{ width: 56, height: 56, borderRadius: '50%', background: BRAND.babyBlue, border: `3px solid ${BRAND.yellow}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 22, color: BRAND.blue, flexShrink: 0 }}>${(profile.name || '?').charAt(0).toUpperCase()}</div>`}
             <div style=${{ flex: 1, minWidth: 0 }}>
               <p style=${{ margin: 0, fontSize: 17, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${profile.name}</p>
-              <p style=${{ margin: '1px 0 0', fontSize: 12, color: BRAND.babyBlue }}>${profile.dept || '—'}${rank ? ' · hạng ' + rank + ' tuần này' : ''} · Xem thành tích ›</p>
+              <p style=${{ margin: '1px 0 0', fontSize: 12, color: BRAND.babyBlue }}>${profile.dept || '—'}${rank ? ' · ' + t('cal.rankThisWeek', { n: rank }) : ''} · ${t('cal.viewStats')}</p>
             </div>
           </div>
           <button onClick=${onSettings} class="btn-action" style=${{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,.18)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
@@ -87,7 +92,7 @@ export function CalendarTab({ profile, sessions, streak, points = 0, rank, weigh
           </button>
         </div>
         <div style=${{ display: 'flex', gap: 8, marginTop: 16 }}>
-          ${[{ v: points, l: 'Điểm tuần' }, { v: monthMin, l: 'Phút tháng' }, { v: st.current + ' ngày', l: 'Chuỗi' }].map((s, i) => html`
+          ${[{ v: points, l: t('pt.weekPoints') }, { v: monthMin, l: t('cal.monthMin') }, { v: t('cal.daysN', { n: st.current }), l: t('cal.streak') }].map((s, i) => html`
             <div key=${i} style=${{ flex: 1, background: 'rgba(255,255,255,.14)', borderRadius: 14, padding: '11px 10px', minWidth: 0 }}>
               <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 24, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${s.v}</p>
               <p style=${{ margin: '3px 0 0', fontSize: 10.5, letterSpacing: '.09em', fontWeight: 600, color: BRAND.babyBlue, textTransform: 'uppercase' }}>${s.l}</p>
@@ -149,15 +154,15 @@ export function CalendarTab({ profile, sessions, streak, points = 0, rank, weigh
 
       ${breakdown.length > 0 ? html`
         <div style=${{ padding: '20px 16px 0' }}>
-          <${Section} t="PHÂN BỔ THEO MÔN" note="90 ngày" mt=${0}/>
+          <${Section} t=${t('pt.breakdown')} note=${t('pt.days90')} mt=${0}/>
           <div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, padding: '14px 16px' }}>
             ${breakdown.map(b => html`
               <div key=${b.key} style=${{ marginBottom: 13 }}>
                 <div style=${{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 6 }}>
                   <${SportIcon} k=${b.key} size=${17} color=${sportColor(b.key)}/>
                   <span style=${{ flex: 1, fontSize: 13, fontWeight: 600, color: C.txt1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${b.label}</span>
-                  <span style=${{ fontSize: 11, color: C.txt4, whiteSpace: 'nowrap' }}>${b.n} buổi · ${b.min} phút</span>
-                  <span style=${{ fontFamily: F.display, fontWeight: 700, fontSize: 15, color: C.txt1, minWidth: 44, textAlign: 'right' }}>${b.pts} đ</span>
+                  <span style=${{ fontSize: 11, color: C.txt4, whiteSpace: 'nowrap' }}>${t('pt.countMin', { c: b.n, m: b.min })}</span>
+                  <span style=${{ fontFamily: F.display, fontWeight: 700, fontSize: 15, color: C.txt1, minWidth: 44, textAlign: 'right' }}>${b.pts} ${t('unit.pt')}</span>
                 </div>
                 <div style=${{ height: 6, borderRadius: 4, background: C.bg1, overflow: 'hidden' }}>
                   <div style=${{ width: Math.round((b.pts / maxPts) * 100) + '%', height: '100%', borderRadius: 4, background: sportColor(b.key) }}/>
@@ -167,20 +172,20 @@ export function CalendarTab({ profile, sessions, streak, points = 0, rank, weigh
         </div>` : ''}
 
       <div style=${{ padding: '18px 16px 80px' }}>
-        <${Section} t="CÂN NẶNG" note="chỉ mình bạn thấy" mt=${0}/>
+        <${Section} t=${t('cal.weight')} note=${t('cal.weightNote')} mt=${0}/>
         <div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style=${{ flexShrink: 0 }}>
             <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 34, lineHeight: 1, color: C.txt1 }}>
               ${last ? String(last.kg).replace('.', ',') : '—'}<span style=${{ fontSize: 15, marginLeft: 4 }}>KG</span>
             </p>
             <p style=${{ margin: '3px 0 0', fontSize: 11, color: C.txt4 }}>
-              ${last ? last.label || '' : 'Chưa ghi'}${delta !== null ? html`<span style=${{ color: delta > 0 ? C.red : C.green, fontWeight: 600 }}> ${delta > 0 ? '▲' : '▼'} ${Math.abs(delta)}%</span>` : ''}
+              ${last ? last.label || '' : t('cal.notLogged')}${delta !== null ? html`<span style=${{ color: delta > 0 ? C.red : C.green, fontWeight: 600 }}> ${delta > 0 ? '▲' : '▼'} ${Math.abs(delta)}%</span>` : ''}
             </p>
           </div>
           <div style=${{ flex: 1, display: 'flex', alignItems: 'flex-end', gap: 4, height: 44 }}>
             ${spark.map((w, i) => html`<span key=${i} style=${{ flex: 1, height: (wMax > wMin ? 30 + ((w.kg - wMin) / (wMax - wMin)) * 70 : 60) + '%', background: BRAND.babyBlue, borderRadius: 3 }}/>`)}
           </div>
-          <button onClick=${onLogWeight} class="btn-action" style=${{ background: BRAND.blue, border: 'none', borderRadius: r.md, padding: '11px 16px', fontSize: 13.5, fontWeight: 600, color: '#fff', cursor: 'pointer', flexShrink: 0 }}>Ghi</button>
+          <button onClick=${onLogWeight} class="btn-action" style=${{ background: BRAND.blue, border: 'none', borderRadius: r.md, padding: '11px 16px', fontSize: 13.5, fontWeight: 600, color: '#fff', cursor: 'pointer', flexShrink: 0 }}>${t('cal.logWeight')}</button>
         </div>
       </div>
     </div>`;

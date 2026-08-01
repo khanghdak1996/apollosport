@@ -52,7 +52,7 @@ function SelectField({ label, value, options, placeholder, onChange, first }) {
           ${shown.length
       ? shown.map((o, i) => html`
             <div key=${o} onMouseDown=${() => { onChange(o); setOpen(false); setQ(''); }} style=${{ padding: '10px 14px', fontSize: 14, color: o === value ? BRAND.blue : C.txt1, fontWeight: o === value ? 700 : 500, cursor: 'pointer', borderTop: i ? `1px solid ${C.bdr2}` : 'none' }}>${o}</div>`)
-      : html`<div style=${{ padding: '12px 14px', fontSize: 13, color: C.txt3 }}>Không tìm thấy "${q}"</div>`}
+      : html`<div style=${{ padding: '12px 14px', fontSize: 13, color: C.txt3 }}>${t('common.notFound', { q })}</div>`}
         </div>`}
     </div>`;
 }
@@ -94,15 +94,15 @@ export function Settings({ profile, onSave, onBack, onSignOut, onDeleteAccount, 
         <button onClick=${onBack} class="btn-action" style=${{ width: 36, height: 36, borderRadius: '50%', background: C.bg1, border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
           <${SportIcon} k="back" size=${18} color=${C.txt2} sw=${2}/>
         </button>
-        <p style=${{ flex: 1, margin: 0, ...T.h2 }}>CÀI ĐẶT</p>
+        <p style=${{ flex: 1, margin: 0, ...T.h2 }}>${t('settings.title')}</p>
       </div>
 
       <div style=${{ flex: 1, overflowY: 'auto', padding: '18px 16px 40px' }}>
-        <${GroupTitle} t="Hồ sơ"/>
+        <${GroupTitle} t=${t('settings.profile')}/>
         <${Panel} cx=${{ padding: '4px 16px 16px' }}>
-          <${Field} first=${true} label="TÊN HIỂN THỊ" value=${name} onInput=${e => setName(e.target.value)} placeholder="Tên của bạn"/>
-          <${SelectField} label="PHÒNG BAN / TRUNG TÂM" value=${dept} options=${DEPARTMENTS} onChange=${setDept} placeholder="Chọn hoặc gõ để tìm…"/>
-          <button onClick=${() => onSave({ name, dept, leaderboardOptIn: inRank, hideWeight, moderating })} class="btn-action" style=${{ width: '100%', background: BRAND.blue, border: 'none', borderRadius: 13, padding: 12, fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer', marginTop: 6 }}>Lưu hồ sơ</button>
+          <${Field} first=${true} label=${t('settings.name')} value=${name} onInput=${e => setName(e.target.value)} placeholder=${t('settings.namePlaceholder')}/>
+          <${SelectField} label=${t('settings.dept')} value=${dept} options=${DEPARTMENTS} onChange=${setDept} placeholder=${t('ob.deptPlaceholder')}/>
+          <button onClick=${() => onSave({ name, dept, leaderboardOptIn: inRank, hideWeight, moderating })} class="btn-action" style=${{ width: '100%', background: BRAND.blue, border: 'none', borderRadius: 13, padding: 12, fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer', marginTop: 6 }}>${t('settings.saveProfile')}</button>
         </${Panel}>
 
         <${GroupTitle} t=${t('lang.title')}/>
@@ -110,37 +110,37 @@ export function Settings({ profile, onSave, onBack, onSignOut, onDeleteAccount, 
           <${LangPicker}/>
         </${Panel}>
 
-        <${GroupTitle} t="Quyền riêng tư"/>
+        <${GroupTitle} t=${t('settings.privacy')}/>
         <${Panel}>
-          <${Row} first=${true} t="Tham gia bảng xếp hạng" s="Điểm của bạn hiển thị trên bảng xếp hạng" on=${inRank} onToggle=${() => setInRank(!inRank)}/>
-          <${Row} t="Ẩn theo dõi cân nặng" s="Cân nặng luôn riêng tư; bật để ẩn hẳn tính năng này" on=${hideWeight} onToggle=${() => setHideWeight(!hideWeight)}/>
-          ${isAdmin ? html`<${Row} t="Chế độ quản trị" s="Bật để kiểm duyệt bài & bình luận vi phạm của người khác" on=${moderating} onToggle=${() => { const nv = !moderating; setModerating(nv); onToggleModerating && onToggleModerating(nv); }}/>` : ''}
+          <${Row} first=${true} t=${t('settings.rank')} s=${t('settings.rankSub')} on=${inRank} onToggle=${() => setInRank(!inRank)}/>
+          <${Row} t=${t('settings.hideWeight')} s=${t('settings.hideWeightSub')} on=${hideWeight} onToggle=${() => setHideWeight(!hideWeight)}/>
+          ${isAdmin ? html`<${Row} t=${t('settings.moderation')} s=${t('settings.moderationSub')} on=${moderating} onToggle=${() => { const nv = !moderating; setModerating(nv); onToggleModerating && onToggleModerating(nv); }}/>` : ''}
         </${Panel}>
 
-        <${GroupTitle} t="Tài khoản"/>
+        <${GroupTitle} t=${t('settings.account')}/>
         <${Panel} cx=${{ marginBottom: 16 }}>
           <div onClick=${onSignOut} style=${{ display: 'flex', alignItems: 'center', gap: 14, padding: '15px 0', cursor: 'pointer' }}>
-            <p style=${{ margin: 0, flex: 1, fontSize: 14.5, fontWeight: 600, color: C.txt1 }}>Đăng xuất</p>
+            <p style=${{ margin: 0, flex: 1, fontSize: 14.5, fontWeight: 600, color: C.txt1 }}>${t('settings.signOut')}</p>
             <${SportIcon} k="chevronR" size=${17} color=${C.txt5} sw=${2}/>
           </div>
-          <div onClick=${() => { if (window.confirm('Xoá toàn bộ lịch sử buổi tập? Không thể hoàn tác.')) onClearHistory && onClearHistory(); }} style=${{ display: 'flex', alignItems: 'center', gap: 14, padding: '15px 0', borderTop: `1px solid ${C.bdr2}`, cursor: 'pointer' }}>
+          <div onClick=${() => { if (window.confirm(t('settings.clearConfirm'))) onClearHistory && onClearHistory(); }} style=${{ display: 'flex', alignItems: 'center', gap: 14, padding: '15px 0', borderTop: `1px solid ${C.bdr2}`, cursor: 'pointer' }}>
             <div style=${{ flex: 1, minWidth: 0 }}>
-              <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 600, color: C.txt1 }}>Xoá lịch sử buổi tập</p>
-              <p style=${{ margin: '2px 0 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>Giữ tài khoản, chỉ xoá các buổi đã ghi.</p>
+              <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 600, color: C.txt1 }}>${t('settings.clearHistory')}</p>
+              <p style=${{ margin: '2px 0 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>${t('settings.clearHistorySub')}</p>
             </div>
             <${SportIcon} k="trash" size=${18} color=${C.txt4} sw=${1.9}/>
           </div>
-          <div onClick=${() => { if (window.confirm('Xoá tài khoản? Mọi buổi tập, điểm và hồ sơ sẽ mất vĩnh viễn.')) onDeleteAccount && onDeleteAccount(); }} style=${{ display: 'flex', alignItems: 'center', gap: 14, padding: '15px 0', borderTop: `1px solid ${C.bdr2}`, cursor: 'pointer' }}>
+          <div onClick=${() => { if (window.confirm(t('settings.deleteConfirm'))) onDeleteAccount && onDeleteAccount(); }} style=${{ display: 'flex', alignItems: 'center', gap: 14, padding: '15px 0', borderTop: `1px solid ${C.bdr2}`, cursor: 'pointer' }}>
             <div style=${{ flex: 1, minWidth: 0 }}>
-              <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 600, color: C.red }}>Xoá tài khoản</p>
-              <p style=${{ margin: '2px 0 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>Xoá vĩnh viễn mọi buổi tập, điểm và hồ sơ. Không thể hoàn tác.</p>
+              <p style=${{ margin: 0, fontSize: 14.5, fontWeight: 600, color: C.red }}>${t('settings.deleteAccount')}</p>
+              <p style=${{ margin: '2px 0 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>${t('settings.deleteAccountSub')}</p>
             </div>
             <${SportIcon} k="warn" size=${19} color=${C.red} sw=${1.9}/>
           </div>
         </${Panel}>
 
         <p style=${{ margin: 0, textAlign: 'center', fontFamily: F.serif, fontSize: 11.5, lineHeight: 1.6, color: C.txt4 }}>
-          Cân nặng và số đo của bạn không bao giờ hiển thị với đồng nghiệp.
+          ${t('settings.footer')}
         </p>
       </div>
     </div>`;

@@ -3,8 +3,9 @@
 import { html } from '../html.js';
 import { C, r, F, T, BRAND, sportColor, sportTint } from '../ui/theme.js';
 import { SportIcon } from '../ui/sportIcons.js';
-import { actOf } from '../domain/activities.js';
+import { actOf, actLabel } from '../domain/activities.js';
 import { ytSearchUrl } from '../domain/guides.js';
+import { t } from '../i18n.js';
 
 // Khối lời khuyên — dùng cho "Lỗi thường gặp" (đỏ) và "Mẹo" (vàng).
 function TipBlock({ title, items, tone }) {
@@ -40,7 +41,7 @@ export function GuideDetail({ guide, onBack }) {
         <span style=${{ width: 30, height: 30, borderRadius: 9, background: sportTint(a.iconKey), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <${SportIcon} k=${a.iconKey} size=${17} color=${sportColor(a.iconKey)}/>
         </span>
-        <p style=${{ flex: 1, margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 18, letterSpacing: '.05em', color: C.txt1, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${a.label}</p>
+        <p style=${{ flex: 1, margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 18, letterSpacing: '.05em', color: C.txt1, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${actLabel(guide.sport)}</p>
       </div>
 
       <div style=${{ flex: 1, overflowY: 'auto', padding: '18px 16px 40px' }}>
@@ -61,7 +62,7 @@ export function GuideDetail({ guide, onBack }) {
         ${videoUrl ? html`
           <a href=${videoUrl} target="_blank" rel="noopener" style=${{ display: 'flex', alignItems: 'center', gap: 11, background: BRAND.red, borderRadius: 15, padding: '13px 16px', marginBottom: 18, textDecoration: 'none' }}>
             <${SportIcon} k="video" size=${22} color="#fff" sw=${1.9}/>
-            <span style=${{ flex: 1, fontFamily: F.display, fontWeight: 700, fontSize: 16, letterSpacing: '.07em', color: '#fff', textTransform: 'uppercase' }}>Xem video hướng dẫn</span>
+            <span style=${{ flex: 1, fontFamily: F.display, fontWeight: 700, fontSize: 16, letterSpacing: '.07em', color: '#fff', textTransform: 'uppercase' }}>${t('gd.watchVideo')}</span>
             <${SportIcon} k="chevronR" size=${16} color="#fff" sw=${2}/>
           </a>` : ''}
 
@@ -70,13 +71,13 @@ export function GuideDetail({ guide, onBack }) {
               ${imgs.slice(0, 4).map((src, i) => html`
                 <div key=${i} style=${{ position: 'relative', borderRadius: r.xl, overflow: 'hidden', border: `1px solid ${C.bdr}` }}>
                   <img src=${src} loading="lazy" style=${{ width: '100%', height: 150, objectFit: 'cover', display: 'block' }}/>
-                  ${imgs.length > 1 && i < 2 ? html`<span style=${{ position: 'absolute', left: 8, bottom: 8, background: 'rgba(18,57,94,.72)', color: '#fff', fontSize: 10.5, fontWeight: 600, letterSpacing: '.04em', borderRadius: 8, padding: '3px 8px' }}>${i === 0 ? 'Bắt đầu' : 'Kết thúc'}</span>` : ''}
+                  ${imgs.length > 1 && i < 2 ? html`<span style=${{ position: 'absolute', left: 8, bottom: 8, background: 'rgba(18,57,94,.72)', color: '#fff', fontSize: 10.5, fontWeight: 600, letterSpacing: '.04em', borderRadius: 8, padding: '3px 8px' }}>${i === 0 ? t('gd.imgStart') : t('gd.imgEnd')}</span>` : ''}
                 </div>`)}
             </div>`
           : html`
             <div style=${{ height: 150, borderRadius: r.xl, background: 'repeating-linear-gradient(135deg,#E7F1FB,#E7F1FB 10px,#DDEAF7 10px,#DDEAF7 20px)', border: `1px solid ${C.bdr}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 20 }}>
               <${SportIcon} k="photo" size=${26} color=${C.txt3} sw=${1.7}/>
-              <span style=${{ fontSize: 11, color: C.txt2 }}>ảnh minh hoạ động tác</span>
+              <span style=${{ fontSize: 11, color: C.txt2 }}>${t('gd.imgPlaceholder')}</span>
             </div>`}
 
         ${(guide.sections || []).map((sec, i) => html`
@@ -87,8 +88,8 @@ export function GuideDetail({ guide, onBack }) {
 
         ${guide.steps && guide.steps.length ? html`
           <div style=${{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 14 }}>
-            <p style=${{ margin: 0, flex: 1, fontFamily: F.display, fontWeight: 700, fontSize: 18, letterSpacing: '.05em', color: C.txt1, textTransform: 'uppercase' }}>Các bước thực hiện</p>
-            <span style=${{ fontSize: 11.5, color: C.txt4, whiteSpace: 'nowrap' }}>${guide.steps.length} bước</span>
+            <p style=${{ margin: 0, flex: 1, fontFamily: F.display, fontWeight: 700, fontSize: 18, letterSpacing: '.05em', color: C.txt1, textTransform: 'uppercase' }}>${t('gd.steps')}</p>
+            <span style=${{ fontSize: 11.5, color: C.txt4, whiteSpace: 'nowrap' }}>${t('gd.stepsCount', { n: guide.steps.length })}</span>
           </div>
           ${guide.steps.map((s, i) => html`
             <div key=${i} style=${{ display: 'flex', gap: 12, marginBottom: 13 }}>
@@ -96,12 +97,12 @@ export function GuideDetail({ guide, onBack }) {
               <p style=${{ margin: 0, flex: 1, fontSize: 14, lineHeight: 1.6, color: C.txt1 }}>${stepText(s)}</p>
             </div>`)}` : ''}
 
-        ${guide.mistakes && guide.mistakes.length ? html`<div style=${{ marginTop: 18 }}><${TipBlock} title="Lỗi thường gặp" items=${guide.mistakes} tone="warn"/></div>` : ''}
-        ${guide.tips && guide.tips.length ? html`<${TipBlock} title="Mẹo" items=${guide.tips} tone="tip"/>` : ''}
-        ${guide.safety && guide.safety.length ? html`<${TipBlock} title="An toàn" items=${guide.safety} tone="warn"/>` : ''}
+        ${guide.mistakes && guide.mistakes.length ? html`<div style=${{ marginTop: 18 }}><${TipBlock} title=${t('gd.mistakes')} items=${guide.mistakes} tone="warn"/></div>` : ''}
+        ${guide.tips && guide.tips.length ? html`<${TipBlock} title=${t('gd.tips')} items=${guide.tips} tone="tip"/>` : ''}
+        ${guide.safety && guide.safety.length ? html`<${TipBlock} title=${t('gd.safety')} items=${guide.safety} tone="warn"/>` : ''}
 
         <p style=${{ margin: '14px 2px 0', fontSize: 11, lineHeight: 1.6, color: C.txt5 }}>
-          Ảnh &amp; hướng dẫn gốc: free-exercise-db (public domain). Nội dung mang tính tham khảo, không thay thế tư vấn chuyên môn.
+          ${t('gd.credit')}
         </p>
       </div>
     </div>`;

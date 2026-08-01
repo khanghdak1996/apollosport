@@ -1,6 +1,20 @@
 // Huy hiệu. Đánh giá thuần: nhận trạng thái user + buổi tập vừa lưu, trả về danh sách
 // id huy hiệu MỚI mở khoá (chưa có trong owned).
-import { actOf, ACTIVITIES } from './activities.js';
+import { actOf, ACTIVITIES, actLabel } from './activities.js';
+import { t } from '../i18n.js';
+
+// Nhãn/mô tả huy hiệu theo ngôn ngữ hiện hành (fallback về chuỗi VI trong BADGES).
+const badgeOr = (key, fb) => { const v = t(key); return v === key ? fb : v; };
+export const badgeLabel = id => {
+  const b = BADGES[id]; if (!b) return id;
+  if (b.activity) return t('badge.firstSport.label', { sport: actLabel(b.activity) });
+  return badgeOr('badge.' + id + '.label', b.label);
+};
+export const badgeDesc = id => {
+  const b = BADGES[id]; if (!b) return '';
+  if (b.activity) return t('badge.firstSport.desc', { sport: actLabel(b.activity) });
+  return badgeOr('badge.' + id + '.desc', b.desc);
+};
 
 export const BADGES = {
   first:       { id: 'first',    icon: '🎉', label: 'Buổi đầu tiên',   desc: 'Ghi lại buổi tập đầu tiên' },

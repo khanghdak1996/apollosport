@@ -5,7 +5,7 @@ import { Wrap } from '../ui/primitives.js';
 import { SportIcon } from '../ui/sportIcons.js';
 import { signIn } from '../auth.js';
 import { ALLOWED_DOMAINS } from '../config.js';
-import { getLang, setLang, SUPPORTED } from '../i18n.js';
+import { getLang, setLang, SUPPORTED, t } from '../i18n.js';
 
 // Logo Google đa sắc (inline SVG).
 const GoogleMark = () => html`
@@ -25,7 +25,7 @@ export function SignIn() {
     try {
       await signIn(); // thành công -> onAuthStateChanged ở App tự chuyển màn
     } catch (e) {
-      setError(e?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+      setError(e?.message || t('signin.fail'));
       setBusy(false);
     }
   };
@@ -57,7 +57,7 @@ export function SignIn() {
           <p style=${{ margin: '0 0 14px', fontFamily: F.display, fontWeight: 700, fontSize: 52, lineHeight: .95, letterSpacing: '.02em', color: BRAND.blue, textTransform: 'uppercase' }}>Apollo<br/>Social Sport</p>
 
           <p style=${{ margin: '0 0 34px', fontFamily: F.serif, fontSize: 15, lineHeight: 1.6, color: C.txt2 }}>
-            Cùng đồng nghiệp xây thói quen vận động — chia sẻ thành quả, giữ chuỗi, tiếp lửa cho nhau.
+            ${t('signin.tagline')}
           </p>
 
           <button onClick=${go} disabled=${busy} class="btn-action" style=${{
@@ -66,10 +66,10 @@ export function SignIn() {
       fontSize: 15, fontWeight: 600, color: C.txt1, cursor: busy ? 'default' : 'pointer',
       boxShadow: '0 8px 24px rgba(37,118,185,.1)', opacity: busy ? 0.6 : 1,
     }}>
-            <${GoogleMark}/> ${busy ? 'Đang đăng nhập...' : 'Đăng nhập với Google'}
+            <${GoogleMark}/> ${busy ? t('signin.busy') : t('signin.button')}
           </button>
 
-          <p style=${{ margin: '16px 0 0', color: C.txt4, fontSize: 12.5 }}>Chỉ dành cho tài khoản <b style=${{ color: C.txt2 }}>@${ALLOWED_DOMAINS[0]}</b></p>
+          <p style=${{ margin: '16px 0 0', color: C.txt4, fontSize: 12.5 }}>${t('signin.onlyFor')} <b style=${{ color: C.txt2 }}>@${ALLOWED_DOMAINS[0]}</b></p>
 
           ${error && html`
             <div style=${{ marginTop: 18, background: C.redBg, border: `1px solid ${C.redBdr}`, borderRadius: r.md, padding: '10px 14px', fontSize: 13, color: C.redInk, lineHeight: 1.4 }}>${error}</div>`}
