@@ -2,8 +2,9 @@ import { useState } from 'preact/hooks';
 import { html } from '../html.js';
 import { C, r, ACC } from '../ui/theme.js';
 import { Wrap, Btn, Label } from '../ui/primitives.js';
-import { ACTIVITIES } from '../domain/activities.js';
+import { ACTIVITIES, actLabel } from '../domain/activities.js';
 import { DEPARTMENTS } from '../data/departments.js';
+import { t } from '../i18n.js';
 
 const inputStyle = { width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: r.md, border: `1px solid ${C.bdr}`, fontSize: 15, color: C.txt1, background: '#fff' };
 
@@ -19,12 +20,12 @@ function DeptSelect({ value, onChange }) {
         onFocus=${() => { setOpen(true); setQ(''); }}
         onBlur=${() => setTimeout(() => setOpen(false), 120)}
         onInput=${e => setQ(e.target.value)}
-        placeholder="Chọn hoặc gõ để tìm…" style=${inputStyle}/>
+        placeholder=${t('ob.deptPlaceholder')} style=${inputStyle}/>
       ${open && html`
         <div style=${{ position: 'absolute', left: 0, right: 0, top: '100%', zIndex: 30, marginTop: 6, background: '#fff', border: `1px solid ${C.bdr}`, borderRadius: r.md, boxShadow: '0 12px 30px rgba(18,57,94,.16)', maxHeight: 240, overflowY: 'auto' }}>
           ${shown.length
       ? shown.map((o, i) => html`<div key=${o} onMouseDown=${() => { onChange(o); setOpen(false); setQ(''); }} style=${{ padding: '11px 14px', fontSize: 14, color: o === value ? ACC : C.txt1, fontWeight: o === value ? 700 : 500, cursor: 'pointer', borderTop: i ? `1px solid ${C.bdr2}` : 'none' }}>${o}</div>`)
-      : html`<div style=${{ padding: '12px 14px', fontSize: 13, color: C.txt3 }}>Không tìm thấy "${q}"</div>`}
+      : html`<div style=${{ padding: '12px 14px', fontSize: 13, color: C.txt3 }}>${t('common.notFound', { q })}</div>`}
         </div>`}
     </div>`;
 }
@@ -47,16 +48,16 @@ export function Onboarding({ initialName = '', onDone }) {
   return html`
     <${Wrap}>
       <div style=${{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '26px 18px 32px' }}>
-        <h1 style=${{ margin: '0 0 6px', fontSize: 26, fontWeight: 600, color: C.txt1, letterSpacing: '-0.02em' }}>Chào mừng!</h1>
-        <p style=${{ margin: '0 0 24px', color: C.txt2, fontSize: 14.5, lineHeight: 1.5 }}>Vài thông tin để bắt đầu. Bạn có thể đổi lại bất cứ lúc nào trong Cài đặt.</p>
+        <h1 style=${{ margin: '0 0 6px', fontSize: 26, fontWeight: 600, color: C.txt1, letterSpacing: '-0.02em' }}>${t('ob.welcome')}</h1>
+        <p style=${{ margin: '0 0 24px', color: C.txt2, fontSize: 14.5, lineHeight: 1.5 }}>${t('ob.intro')}</p>
 
-        <${Label} t="Tên hiển thị"/>
-        <input value=${name} onInput=${e => setName(e.target.value)} placeholder="Tên của bạn" style=${inputStyle}/>
+        <${Label} t=${t('ob.name')}/>
+        <input value=${name} onInput=${e => setName(e.target.value)} placeholder=${t('ob.namePlaceholder')} style=${inputStyle}/>
 
-        <${Label} t="Phòng ban / Trung tâm" mt=${18}/>
+        <${Label} t=${t('ob.dept')} mt=${18}/>
         <${DeptSelect} value=${dept} onChange=${setDept}/>
 
-        <${Label} t="Môn bạn hay tập (tuỳ chọn)" mt=${18}/>
+        <${Label} t=${t('ob.sports')} mt=${18}/>
         <div style=${{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           ${ACTIVITIES.filter(a => a.id !== 'other').map(a => {
       const on = sports.includes(a.id);
@@ -65,18 +66,18 @@ export function Onboarding({ initialName = '', onDone }) {
           padding: '8px 14px', borderRadius: 20, cursor: 'pointer', fontSize: 13, fontWeight: 500,
           border: `1px solid ${on ? a.color : C.bdr}`,
           background: on ? a.color + '1A' : '#fff', color: on ? a.color : C.txt2,
-        }}>${a.label}</button>`;
+        }}>${actLabel(a.id)}</button>`;
     })}
         </div>
 
         <div style=${{ marginTop: 26, background: C.bg3, borderRadius: r.md, padding: '14px 16px', fontSize: 13, color: C.txt2, lineHeight: 1.55 }}>
-          <b style=${{ color: C.txt1 }}>Riêng tư:</b> Cân nặng và số đo của bạn <b>luôn riêng tư</b>, không ai thấy. Buổi tập của bạn sẽ hiển thị với đồng nghiệp trong bảng tin — bạn có thể đặt riêng tư từng buổi bất cứ lúc nào.
+          <b style=${{ color: C.txt1 }}>${t('ob.privacyTitle')}</b> ${t('ob.privacyBody')}
         </div>
       </div>
 
       <div style=${{ borderTop: `1px solid ${C.bdr}`, padding: '14px 18px', background: '#fff', paddingBottom: 'calc(14px + env(safe-area-inset-bottom))' }}>
         <${Btn} onClick=${submit} cx=${{ width: '100%', padding: '14px', fontSize: 15, opacity: (!name.trim() || busy) ? 0.5 : 1, pointerEvents: (!name.trim() || busy) ? 'none' : 'auto' }}>
-          ${busy ? 'Đang lưu...' : 'Bắt đầu'}
+          ${busy ? t('ob.saving') : t('ob.start')}
         </${Btn}>
       </div>
     </${Wrap}>`;

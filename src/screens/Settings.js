@@ -6,6 +6,21 @@ import { html } from '../html.js';
 import { C, r, F, T, BRAND } from '../ui/theme.js';
 import { SportIcon } from '../ui/sportIcons.js';
 import { DEPARTMENTS } from '../data/departments.js';
+import { t, getLang, setLang, SUPPORTED } from '../i18n.js';
+
+// Chọn ngôn ngữ giao diện — mỗi nhãn tự viết bằng chính ngôn ngữ đó.
+function LangPicker() {
+  const cur = getLang();
+  return html`
+    <div style=${{ display: 'flex', gap: 8, padding: '12px 0' }}>
+      ${SUPPORTED.map(l => html`
+        <button key=${l} onClick=${() => setLang(l)} class="btn-action" style=${{
+      flex: 1, padding: '11px 0', borderRadius: r.md, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+      background: l === cur ? BRAND.blue : C.bg1, color: l === cur ? '#fff' : C.txt2,
+      border: `1px solid ${l === cur ? BRAND.blue : C.bdr}`,
+    }}>${t('lang.' + l)}</button>`)}
+    </div>`;
+}
 
 function Field({ label, value, onInput, placeholder, first }) {
   return html`
@@ -88,6 +103,11 @@ export function Settings({ profile, onSave, onBack, onSignOut, onDeleteAccount, 
           <${Field} first=${true} label="TÊN HIỂN THỊ" value=${name} onInput=${e => setName(e.target.value)} placeholder="Tên của bạn"/>
           <${SelectField} label="PHÒNG BAN / TRUNG TÂM" value=${dept} options=${DEPARTMENTS} onChange=${setDept} placeholder="Chọn hoặc gõ để tìm…"/>
           <button onClick=${() => onSave({ name, dept, leaderboardOptIn: inRank, hideWeight, moderating })} class="btn-action" style=${{ width: '100%', background: BRAND.blue, border: 'none', borderRadius: 13, padding: 12, fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer', marginTop: 6 }}>Lưu hồ sơ</button>
+        </${Panel}>
+
+        <${GroupTitle} t=${t('lang.title')}/>
+        <${Panel} cx=${{ padding: '4px 16px' }}>
+          <${LangPicker}/>
         </${Panel}>
 
         <${GroupTitle} t="Quyền riêng tư"/>
