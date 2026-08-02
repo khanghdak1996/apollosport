@@ -39,12 +39,14 @@ function weekBars(sessions) {
   return DOW.map((l, i) => ({ l, on: done.has(i) }));
 }
 
-export function HomeTab({ profile, progs, sessions, streak, onStart, onView, onSwitch, onManagePrograms, onSeeAll, weeklyGoal = 3, points = 0 }) {
+export function HomeTab({ profile, progs, sessions, streak, totalSessions, onStart, onView, onSwitch, onManagePrograms, onSeeAll, weeklyGoal = 3, points = 0 }) {
   // Tuần lịch (Thứ 2 → CN) — CÙNG nguồn với tab Cá nhân (ProgressTab) để mục tiêu tuần không lệch.
   const week = currentWeekActivity(sessions);
   const nSessions = week.count;
   const nMinutes = week.minutes;
-  const st = streak || { current: 0, atRisk: false };
+  // Ô lớn của màn: TỔNG số buổi đã tập (không phải chuỗi — vì không ai ngày nào cũng tập).
+  // Ưu tiên counter tích luỹ totals.sessions; fallback về độ dài mảng local (bị cắt còn 300).
+  const nTotal = Math.max(totalSessions || 0, sessions.length);
   const bars = weekBars(sessions);
   const pct = Math.min(100, Math.round((nSessions / Math.max(1, weeklyGoal)) * 100));
 
@@ -61,14 +63,14 @@ export function HomeTab({ profile, progs, sessions, streak, onStart, onView, onS
         </div>
       </div>
 
-      <!-- KHỐI STREAK — nhân vật chính của màn. Cảnh báo mất chuỗi GỘP VÀO ĐÂY,
-           không còn banner cam riêng ở đầu màn như bản cũ. -->
+      <!-- KHỐI TỔNG BUỔI TẬP — nhân vật chính của màn. Lịch tuần vẫn sáng lên
+           vào buổi có đi tập; ô lớn hiển thị TỔNG số buổi thay cho chuỗi liên tiếp. -->
       <div style=${{ background: BRAND.blue, borderRadius: r.xxl, padding: '20px 20px 16px', color: '#fff', marginBottom: 12 }}>
         <div style=${{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <div>
-            <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 600, fontSize: 12, letterSpacing: '.16em', color: BRAND.babyBlue }}>${t('home.streak')}</p>
+            <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 600, fontSize: 12, letterSpacing: '.16em', color: BRAND.babyBlue }}>${t('home.total')}</p>
             <p style=${{ margin: '-6px 0 0', fontFamily: F.display, fontWeight: 700, fontSize: 76, lineHeight: 1, letterSpacing: '-.01em' }}>
-              ${st.current}<span style=${{ fontSize: 24, letterSpacing: '.06em', marginLeft: 8 }}>${t('home.days')}</span>
+              ${nTotal}<span style=${{ fontSize: 24, letterSpacing: '.06em', marginLeft: 8 }}>${t('home.sessions')}</span>
             </p>
           </div>
           <${SportIcon} k="flame" size=${34} color=${BRAND.yellow} sw=${1.7}/>
@@ -81,12 +83,6 @@ export function HomeTab({ profile, progs, sessions, streak, onStart, onView, onS
               <span style=${{ width: '100%', height: 5, borderRadius: 3, background: d.on ? BRAND.yellow : 'rgba(255,255,255,.28)' }}/>
             </div>`)}
         </div>
-
-        ${st.atRisk ? html`
-          <div style=${{ display: 'flex', alignItems: 'center', gap: 9, background: BRAND.yellow, borderRadius: r.md, padding: '9px 12px', marginTop: 14 }}>
-            <${SportIcon} k="clock" size=${17} color=${C.txt1} sw=${1.9}/>
-            <p style=${{ margin: 0, fontSize: 12.5, fontWeight: 600, color: C.txt1 }}>${t('home.atRisk', { n: st.current })}</p>
-          </div>` : ''}
       </div>
 
       <!-- 3 thẻ trắng rời → MỘT dải có vách ngăn -->
