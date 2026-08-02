@@ -465,7 +465,8 @@ export const STR = {
     'gd.mistakes': 'Lỗi thường gặp',
     'gd.tips': 'Mẹo',
     'gd.safety': 'An toàn',
-    'gd.credit': 'Ảnh & hướng dẫn gốc: free-exercise-db (public domain). Nội dung mang tính tham khảo, không thay thế tư vấn chuyên môn.',
+    'gd.source': 'Nguồn tham khảo',
+    'gd.credit': 'Ảnh minh hoạ: Wikimedia Commons & free-exercise-db (giấy phép mở). Nội dung mang tính tham khảo, không thay thế tư vấn chuyên môn.',
 
     // ── PR labels (stats) + lỗi cấp thấp ────────
     'pr.longDist': 'Xa nhất 1 buổi',
@@ -971,7 +972,8 @@ export const STR = {
     'gd.mistakes': 'Common mistakes',
     'gd.tips': 'Tips',
     'gd.safety': 'Safety',
-    'gd.credit': 'Images & source guide: free-exercise-db (public domain). For reference only — not a substitute for professional advice.',
+    'gd.source': 'Reference',
+    'gd.credit': 'Illustrative images: Wikimedia Commons & free-exercise-db (open license). For reference only — not a substitute for professional advice.',
 
     // ── PR labels (stats) + low-level errors ────
     'pr.longDist': 'Farthest in one session',
