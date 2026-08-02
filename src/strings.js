@@ -68,6 +68,8 @@ export const STR = {
     // ── Trang chủ ───────────────────────────────
     'home.streak': 'CHUỖI LIÊN TIẾP',
     'home.days': 'NGÀY',
+    'home.total': 'TỔNG BUỔI TẬP',
+    'home.sessions': 'BUỔI',
     'home.atRisk': 'Tập hôm nay để giữ chuỗi {n} ngày nhé!',
     'home.weekSessions': 'Buổi tuần',
     'home.minutes': 'Phút',
@@ -572,6 +574,8 @@ export const STR = {
     // ── Home ────────────────────────────────────
     'home.streak': 'CURRENT STREAK',
     'home.days': 'DAYS',
+    'home.total': 'TOTAL SESSIONS',
+    'home.sessions': 'SESSIONS',
     'home.atRisk': 'Train today to keep your {n}-day streak!',
     'home.weekSessions': 'Sessions',
     'home.minutes': 'Minutes',
