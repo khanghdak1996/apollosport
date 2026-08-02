@@ -6,7 +6,8 @@ import { t } from '../i18n.js';
 //               rồi × hệ số RPE (0.8–1.2) để thưởng nỗ lực cá nhân.
 //   rpe_only  – MET nội suy tuyến tính giữa metMin↔metMax theo mức RPE (index).
 //   gym       – MET suy từ volume load (set×rep×kg) × RPE (metMin/metMax chỉ để clamp).
-// metMin/metMax = dải MET của môn (Compendium 2024, hiện là ước lượng tham khảo — xem checklist spec).
+// metMin/metMax = dải MET của môn, rà với Compendium 2024 (2026-08): metMin ~ biến thể nhẹ/xã giao,
+// metMax ~ biến thể thi đấu/gắng sức; RPE nội suy giữa hai đầu. Pickleball chưa có mã Compendium → ước lượng.
 // speedBands = ngưỡng tốc độ km/h → MET cho môn category=pace ([[maxKmh, met], …], phần tử cuối Infinity).
 // fields = ô nhập RIÊNG cho môn đó. Không có fields → dùng FIELDS[kind] mặc định.
 // Thêm môn mới = thêm 1 dòng ở đây, không phải đổi schema hay rules.
@@ -45,12 +46,17 @@ const RPE = { k: 'rpe', label: 'Mức độ gắng sức', type: 'rpe', def: 3, 
 const DIST_KM = { k: 'distanceKm', label: 'Quãng đường (km)', type: 'number', unit: 'km', required: true };
 
 // Ngưỡng tốc độ (km/h) → MET nền cho môn pace. Duyệt tới ngưỡng đầu tiên mà kmh < maxKmh.
-// Bơi quy đổi từ pace /100m: 3:00→6.0, 2:00→8.3, <2:00→10.0 (ước lượng — xem checklist).
+// Bơi: km/h tính theo TỔNG thời lượng buổi (gồm nghỉ giữa set) nên thấp hơn pace bơi thuần
+// nhiều — vì vậy ngưỡng đặt thấp để bám phân bố thật (recreational total-time ~0.8–2.6 km/h),
+// đồng thời nghỉ nhiều = buổi nhẹ hơn nên tốc độ thấp cũng phản ánh đúng nỗ lực. MET neo
+// Compendium 2024: leisurely 6.0, freestyle chậm 5.8 → vừa ~8.0 → nhanh 9.8, breaststroke
+// training 10.3. Calibrate 2026-08 (cũ [2.0→6.0, 3.0→8.3] khiến MỌI người bơi có nghỉ dồn
+// về sàn 6.0, không phân biệt được). ~1.4 km/h≈4:17/100m, 2.0≈3:00, 2.6≈2:18.
 const SPEED_BANDS = {
   walk:  [[4.8, 2.8], [6.4, 3.5], [Infinity, 6.0]],
   run:   [[8.85, 8.3], [10.5, 9.8], [12.1, 11.0], [Infinity, 12.8]],
   cycle: [[16, 4.0], [19, 6.8], [22, 8.0], [25, 10.0], [Infinity, 12.0]],
-  swim:  [[2.0, 6.0], [3.0, 8.3], [Infinity, 10.0]],
+  swim:  [[1.4, 6.0], [2.0, 7.0], [2.6, 8.3], [Infinity, 10.0]],
 };
 
 // MET nền theo tốc độ (km/h) của môn pace. kmh<=0 hoặc không có bands → metMin.
@@ -112,19 +118,19 @@ export const ACTIVITIES = [
     { k: 'goal', label: 'Mục tiêu', type: 'select', opts: ['Thư giãn', 'Dẻo dai', 'Sức mạnh', 'Thăng bằng'], def: 'Thư giãn', adv: true },
   ] },
 
-  { id: 'football', emoji: '⚽', label: 'Bóng đá', icon: 'ball', iconKey: 'ball', kind: 'session', category: 'rpe_only', metMin: 5.0, metMax: 10.0, color: '#22c55e', verb: 'đã chơi bóng đá', fields: [
+  { id: 'football', emoji: '⚽', label: 'Bóng đá', icon: 'ball', iconKey: 'ball', kind: 'session', category: 'rpe_only', metMin: 6.0, metMax: 10.0, color: '#22c55e', verb: 'đã chơi bóng đá', fields: [
     DUR,
     { k: 'periods', label: 'Số hiệp', type: 'counter', def: 0, max: 20 },
     RPE,
   ] },
 
-  { id: 'basketball', emoji: '🏀', label: 'Bóng rổ', icon: 'ball', iconKey: 'ball', kind: 'session', category: 'rpe_only', metMin: 4.5, metMax: 8.5, color: '#ef4444', verb: 'đã chơi bóng rổ', fields: [
+  { id: 'basketball', emoji: '🏀', label: 'Bóng rổ', icon: 'ball', iconKey: 'ball', kind: 'session', category: 'rpe_only', metMin: 5.0, metMax: 8.0, color: '#ef4444', verb: 'đã chơi bóng rổ', fields: [
     DUR,
     { k: 'periods', label: 'Số hiệp', type: 'counter', def: 0, max: 20 },
     RPE,
   ] },
 
-  { id: 'badminton', emoji: '🏸', label: 'Cầu lông', icon: 'racket', iconKey: 'racket', kind: 'session', category: 'rpe_only', metMin: 4.5, metMax: 9.0, color: '#eab308', verb: 'đã chơi cầu lông', fields: [
+  { id: 'badminton', emoji: '🏸', label: 'Cầu lông', icon: 'racket', iconKey: 'racket', kind: 'session', category: 'rpe_only', metMin: 5.5, metMax: 9.0, color: '#eab308', verb: 'đã chơi cầu lông', fields: [
     DUR,
     { k: 'games', label: 'Số ván', type: 'counter', def: 0, max: 30 },
     RPE,
@@ -136,7 +142,7 @@ export const ACTIVITIES = [
     RPE,
   ] },
 
-  { id: 'pickleball', emoji: '🥒', label: 'Pickleball', icon: 'racket', iconKey: 'racket', kind: 'session', category: 'rpe_only', metMin: 4.5, metMax: 8.0, color: '#14b8a6', verb: 'đã chơi pickleball', fields: [
+  { id: 'pickleball', emoji: '🥒', label: 'Pickleball', icon: 'racket', iconKey: 'racket', kind: 'session', category: 'rpe_only', metMin: 4.5, metMax: 7.0, color: '#14b8a6', verb: 'đã chơi pickleball', fields: [
     DUR,
     { k: 'games', label: 'Số ván', type: 'counter', def: 0, max: 30 },
     RPE,

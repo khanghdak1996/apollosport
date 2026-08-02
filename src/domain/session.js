@@ -9,11 +9,13 @@ import { tVol } from './stats.js';
 // và tránh timer quên tắt.
 export const activeMinutes = s => Math.min(180, Math.max(0, Math.round(s.durationMin || 0)));
 
-// Gym: quy đổi volume load (set×rep×kg × RPE) → MET. GYM_K cần calibrate với buổi
-// tập mẫu thật trước khi mở rộng người dùng (spec mục 17.1); GYM_MET_CAP chặn người
-// tập volume rất lớn không phá thang điểm chung.
-const GYM_K = 0.027;
-const GYM_MET_CAP = 12;
+// Gym: quy đổi volume load (set×rep×kg × RPE) → MET. GYM_K calibrate 2026-08 với ma
+// trận buổi tập thật (mới tập→leg day nặng): median ~6000kg/60p/RPE3 → ~5.6 MET (ngang
+// cardio vừa), chỉ leg-day cực nặng mới chạm trần. Trước đây K=0.027 khiến mọi buổi
+// nghiêm túc (≥~4800kg) đều dồn về trần 12 → gym bị thổi phồng, đè cardio. GYM_MET_CAP
+// giữ gym không vượt cardio tối đa (chạy nhanh ~12.8).
+const GYM_K = 0.011;
+const GYM_MET_CAP = 11;
 
 // MET hiệu dụng của 1 session — nền tảng chấm điểm, thống nhất cho mọi môn.
 //   pace     : MET nền theo tốc độ (quãng đường + thời lượng) × hệ số RPE (0.8–1.2).
