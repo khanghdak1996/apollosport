@@ -1,6 +1,6 @@
 import {
   writeBatch, doc, deleteDoc, updateDoc, collection, query, where, orderBy, limit,
-  startAfter, getDocs, onSnapshot, increment, serverTimestamp,
+  startAfter, getDoc, getDocs, setDoc, onSnapshot, increment, serverTimestamp,
 } from 'fb/firestore';
 import { db, reportCloudError } from '../firebase.js';
 import { t } from '../i18n.js';
@@ -120,6 +120,50 @@ function recomputePeriodEntry(remaining, inPeriod) {
   }
   const minutes = Object.values(byDay).reduce((t, m) => t + Math.min(m, DAY_MIN_CAP), 0);
   return { points, volumeKg, minutes, sessions: Object.keys(byDay).length };
+}
+
+// TỰ CHỮA entry leaderboard của MÌNH cho các kỳ liên quan, từ buổi tập thật (nguồn chuẩn).
+// Gọi lúc đăng nhập (cùng chỗ tự chữa users/totals) để bắt các lệch mà counter increment
+// KHÔNG cập nhật: sửa tay điểm trên console, admin gỡ bài (adminDeleteSession cố ý không hoàn
+// nguyên), hay ghi lỡ. Chỉ đọc/ghi entry của CHÍNH me.uid nên khớp firestore.rules.
+//   me: { uid, name, photoURL, dept, prefs }.  allSessions: buổi cloud của mình (isSelf).
+// Reconcile theo kỳ mà SESSION thuộc về (không chỉ "hôm nay") — buổi tuần trước sang tuần
+// mới vẫn được chữa. Chỉ GHI khi lệch (so 4 counter + streak) để tránh write thừa mỗi lần mở.
+export async function reconcileMyLeaderboard(me, allSessions, date = dayStr(new Date())) {
+  if (me.prefs?.optOutLeaderboard) return; // opt-out: entry gỡ ở removeMyEntries, không tái tạo
+  const st = computeStreak(allSessions.map(s => s.date).filter(Boolean));
+  const jobs = new Map(); // pid -> inPeriod. Gồm kỳ hiện tại + kỳ của buổi trong ~40 ngày.
+  const add = (pid, inPeriod) => { if (!jobs.has(pid)) jobs.set(pid, inPeriod); };
+  add(weekId(date), d => weekId(d) === weekId(date));
+  add(monthId(date), d => monthId(d) === monthId(date));
+  for (const s of allSessions) {
+    if (!s.date || (Date.now() - new Date(s.date + 'T00:00:00')) / 86400000 > 40) continue;
+    const w = weekId(s.date), m = monthId(s.date);
+    add(w, d => weekId(d) === w);
+    add(m, d => monthId(d) === m);
+  }
+  for (const [pid, inPeriod] of jobs) {
+    const ref = doc(db, 'leaderboard', pid, 'entries', me.uid);
+    const agg = recomputePeriodEntry(allSessions, inPeriod);
+    let snap;
+    try { snap = await getDoc(ref); } catch { continue; } // lỗi mạng → để lần sau
+    const cur = snap.exists() ? snap.data() : null;
+    if (!agg) { // kỳ này không còn buổi hợp lệ → xoá entry mồ côi (vd đã xoá hết buổi)
+      if (cur) { try { await deleteDoc(ref); } catch (e) { reportCloudError(t('err.syncLeaderboard'), e); } }
+      continue;
+    }
+    // Chỉ so 4 counter (trục xếp hạng). KHÔNG so longestStreakInPeriod vì nó bằng streak
+    // hiện tại (đổi theo ngày) → tránh ghi lại mỗi lần mở app khi user chưa post gì mới.
+    const same = cur && ['points', 'minutes', 'sessions', 'volumeKg'].every(k => Math.round(cur[k] || 0) === agg[k]);
+    if (same) continue;
+    try {
+      await setDoc(ref, {
+        uid: me.uid, name: me.name, photoURL: me.photoURL || null, dept: me.dept || '',
+        sessions: agg.sessions, minutes: agg.minutes, points: agg.points, volumeKg: agg.volumeKg,
+        longestStreakInPeriod: st.current, updatedAt: serverTimestamp(),
+      });
+    } catch (e) { reportCloudError(t('err.syncLeaderboard'), e); }
+  }
 }
 
 // Xoá 1 buổi tập KÈM hoàn nguyên số liệu (cho trường hợp đăng nhầm / test).
