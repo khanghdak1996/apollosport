@@ -17,7 +17,7 @@ import { advanceStreak, liveStreak, dayStr } from './domain/streak.js';
 import { evaluateBadges, BADGES, badgeLabel } from './domain/badges.js';
 import { db } from './data/local.js';
 import { compressImage, uploadSessionPhoto, deleteSessionPhoto } from './data/photos.js';
-import { saveSession, deleteSession as repoDeleteSession, updateSessionContent, updateSessionVisibility, deleteSessionWithStats, adminDeleteSession, dayContext, allSessionsOf } from './data/repo-sessions.js';
+import { saveSession, deleteSession as repoDeleteSession, updateSessionContent, updateSessionVisibility, deleteSessionWithStats, adminDeleteSession, dayContext, allSessionsOf, reconcileMyLeaderboard } from './data/repo-sessions.js';
 import { loadMyReactions } from './data/repo-social.js';
 import { removeMyEntries } from './data/repo-leaderboard.js';
 import { getPrivateWeights, savePrivateWeights } from './data/repo-private.js';
@@ -1614,6 +1614,13 @@ function GymPair() {
         try { await updateUserDoc(pid, { totals: real }); if (alive) setUserDoc(d => ({ ...d, totals: real })); }
         catch { /* để lần đăng nhập sau chữa tiếp */ }
       }
+
+      // Tự chữa entry leaderboard tuần/tháng của mình (giống totals ở trên) — bắt lệch do
+      // sửa tay điểm/kiểm duyệt vốn không cập nhật counter increment. Best-effort.
+      await reconcileMyLeaderboard(
+        { uid: pid, name: userDoc.name, photoURL: userDoc.photoURL || null, dept: userDoc.dept || '', prefs: userDoc.prefs },
+        cloud,
+      );
     })();
     return () => { alive = false; };
   }, [pid, userDoc]);

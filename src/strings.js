@@ -478,6 +478,7 @@ export const STR = {
     'err.reauth': 'Đã xoá dữ liệu. Vui lòng đăng nhập lại gần đây để xoá hẳn tài khoản đăng nhập.',
     'err.deleteCloudSession': 'Xoá buổi tập trên cloud thất bại',
     'err.loadFeed': 'Không tải được bảng tin',
+    'err.syncLeaderboard': 'Đồng bộ bảng xếp hạng thất bại',
 
     // ── Đăng nhập (SignIn) ──────────────────────
     'signin.tagline': 'Cùng đồng nghiệp xây thói quen vận động — chia sẻ thành quả, giữ chuỗi, tiếp lửa cho nhau.',
@@ -985,6 +986,7 @@ export const STR = {
     'err.reauth': 'Data deleted. Please sign in again recently to fully remove your login account.',
     'err.deleteCloudSession': 'Failed to delete session in cloud',
     'err.loadFeed': "Couldn't load the feed",
+    'err.syncLeaderboard': "Couldn't sync the leaderboard",
 
     // ── Sign in ─────────────────────────────────
     'signin.tagline': 'Build a movement habit with your colleagues — share wins, keep streaks, cheer each other on.',
