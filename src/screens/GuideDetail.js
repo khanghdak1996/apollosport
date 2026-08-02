@@ -101,6 +101,16 @@ export function GuideDetail({ guide, onBack }) {
         ${guide.tips && guide.tips.length ? html`<${TipBlock} title=${t('gd.tips')} items=${guide.tips} tone="tip"/>` : ''}
         ${guide.safety && guide.safety.length ? html`<${TipBlock} title=${t('gd.safety')} items=${guide.safety} tone="warn"/>` : ''}
 
+        ${guide.sourceUrl ? html`
+          <a href=${guide.sourceUrl} target="_blank" rel="noopener" style=${{ display: 'flex', alignItems: 'center', gap: 11, background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: 14, padding: '12px 14px', margin: '4px 0 2px', textDecoration: 'none' }}>
+            <${SportIcon} k="globe" size=${19} color=${BRAND.blue} sw=${1.9}/>
+            <span style=${{ flex: 1, minWidth: 0 }}>
+              <span style=${{ display: 'block', fontSize: 10.5, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase', color: C.txt3 }}>${t('gd.source')}</span>
+              <span style=${{ display: 'block', fontSize: 13.5, fontWeight: 600, color: C.txt1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${guide.sourceName || guide.sourceUrl}</span>
+            </span>
+            <${SportIcon} k="chevronR" size=${16} color=${C.txt3} sw=${2}/>
+          </a>` : ''}
+
         <p style=${{ margin: '14px 2px 0', fontSize: 11, lineHeight: 1.6, color: C.txt5 }}>
           ${t('gd.credit')}
         </p>
