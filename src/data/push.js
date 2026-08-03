@@ -8,6 +8,35 @@ import { doc, setDoc, updateDoc, deleteField } from 'fb/firestore';
 import { db, auth, reportCloudError } from '../firebase.js';
 import { PUSH, pushConfigured } from '../config.js';
 
+// Nhờ server gửi push (thả tim/bình luận/CLB/mục tiêu). Fire-and-forget: KHÔNG chặn UI,
+// KHÔNG ném lỗi. Nội dung do server soạn — client chỉ gửi loại + id + tên người thao tác.
+export async function notifyServer(payload) {
+  try {
+    if (!pushConfigured()) return;
+    const u = auth?.currentUser;
+    if (!u) return;
+    const idToken = await u.getIdToken();
+    fetch(PUSH.notifyEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken, ...payload }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch { /* im lặng */ }
+}
+
+// Thông báo CỤC BỘ (không qua server) — vd đồng hồ nghỉ gym hết giờ khi app ở nền.
+// Chỉ hiện nếu đã cấp quyền; ưu tiên qua service worker (ổn trên mobile).
+export function notifyLocal(title, body = '') {
+  try {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+    const opt = { body, icon: '/assets/icon-192.png', badge: '/assets/icon-192.png', tag: 'rest-timer', data: { url: '/' } };
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(reg => reg.showNotification(title, opt)).catch(() => { try { new Notification(title, opt); } catch {} });
+    } else { new Notification(title, opt); }
+  } catch { /* im lặng */ }
+}
+
 const SW_URL = '/firebase-messaging-sw.js';
 const LS_TOKEN = 'push:token';   // token hiện tại của thiết bị này (để gỡ khi tắt)
 const LS_ON = 'push:on';         // '1' nếu người dùng đã bật ở thiết bị này
@@ -95,10 +124,12 @@ export async function initForeground() {
   if (!m) return;
   _fgBound = true;
   onMessage(m, (payload) => {
+    const n = payload?.notification || {};
     const d = payload?.data || {};
-    if (!d.title) return;
-    navigator.serviceWorker.ready.then(reg => reg.showNotification(d.title, {
-      body: d.body || '', icon: '/assets/icon-192.png', badge: '/assets/icon-192.png',
+    const title = n.title || d.title;
+    if (!title) return;
+    navigator.serviceWorker.ready.then(reg => reg.showNotification(title, {
+      body: n.body || d.body || '', icon: '/assets/icon-192.png', badge: '/assets/icon-192.png',
       tag: d.tag || undefined, data: { url: d.url || '/' },
     })).catch(() => {});
   });

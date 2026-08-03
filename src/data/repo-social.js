@@ -3,6 +3,7 @@ import {
   onSnapshot, addDoc, increment, serverTimestamp,
 } from 'fb/firestore';
 import { db, reportCloudError } from '../firebase.js';
+import { notifyServer } from './push.js';
 
 // Thả / gỡ reaction. Ghi vào sessions/{sid}/reactions/{uid} + mirror users/{uid}/reacted/{sid}
 // + tăng/giảm reactionCount (±1) trên post. Không dùng transaction (đủ tốt cho app nội bộ).
@@ -21,6 +22,7 @@ export async function toggleReaction(sidFull, me, kind = 'heart') {
       await setDoc(rref, { uid: me.uid, kind, at: serverTimestamp() });
       await setDoc(mirror, { at: serverTimestamp(), kind }, { merge: true });
       await setDoc(postRef, { reactionCount: increment(1) }, { merge: true });
+      notifyServer({ type: 'reaction', sessionId: sidFull, actorName: me.name });
       return true;
     }
   } catch (e) {
@@ -55,6 +57,7 @@ export async function addComment(sidFull, me, text) {
       text: t.slice(0, 500), createdAt: serverTimestamp(),
     });
     await setDoc(doc(db, 'sessions', sidFull), { commentCount: increment(1) }, { merge: true });
+    notifyServer({ type: 'comment', sessionId: sidFull, actorName: me.name, preview: t });
   } catch (e) { reportCloudError('Gửi bình luận thất bại', e); }
 }
 

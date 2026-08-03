@@ -21,6 +21,7 @@ import { saveSession, deleteSession as repoDeleteSession, updateSessionContent, 
 import { loadMyReactions } from './data/repo-social.js';
 import { removeMyEntries } from './data/repo-leaderboard.js';
 import { getPrivateWeights, savePrivateWeights } from './data/repo-private.js';
+import { notifyLocal } from './data/push.js';
 import { fbInitError, reportCloudError, setCloudErrorHandler } from './firebase.js';
 import { watchAuth, consumeRedirect, ensureUserDoc, signOutUser, deleteMyAccount } from './auth.js';
 import { saveOnboarding, updateUserDoc, isAdminUser } from './data/repo-users.js';
@@ -174,7 +175,7 @@ function ActiveWorkout({ workout, sessions, onChange, onFinish, onDiscard, onPic
       setRest(r => {
         if (!r) return null;
         const secsLeft = Math.max(0, Math.round((r.endTime - Date.now()) / 1000));
-        if (secsLeft === 0 && !r.beeped) { beep(); return { ...r, secs: 0, beeped: true }; }
+        if (secsLeft === 0 && !r.beeped) { beep(); if (document.hidden) notifyLocal(t('push.restDone')); return { ...r, secs: 0, beeped: true }; }
         return { ...r, secs: secsLeft };
       });
     };

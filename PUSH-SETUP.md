@@ -28,21 +28,23 @@ App đẩy thông báo qua **Firebase Cloud Messaging (FCM)**. Làm theo 2 chặ
 
 ---
 
-## Chặng 2 — CHƯA code (server gửi push). Cần khi muốn thực sự đẩy thông báo.
+## Chặng 2 — ĐÃ code (server gửi push). Bạn chỉ cần đặt env + deploy.
 
-**Sẽ dựng:**
-- `api/notify.js` — Vercel serverless: verify token người gọi (như `api/chat.js`), tra token người nhận qua Firestore REST, gửi FCM HTTP v1. Dependency-free (ký JWT service account bằng `crypto` có sẵn).
-- `api/cron-streak.js` — Vercel Cron (chạy ~19:00 mỗi ngày): tìm ai còn chuỗi mà chưa tập hôm nay → nhắc "sắp mất chuỗi".
-- Nối trigger trong `src/data/repo-social.js`: sau khi thả tim / bình luận thành công → gọi `/api/notify` (fire-and-forget) báo chủ bài.
-- `vercel.json`: thêm lịch cron.
+**Đã dựng:**
+- `api/_lib/fcm.js` — mint OAuth từ service account (ký JWT bằng `crypto`), đọc Firestore REST, gửi FCM v1. Dependency-free, KHÔNG bị Vercel route (thư mục `_`).
+- `api/notify.js` — verify token người gọi (như `api/chat.js`), **soạn nội dung ở server** theo loại, tra token người nhận qua service account rồi gửi. Các loại: `reaction`, `comment`, `clubInvite`, `clubPost`, `goalPost`.
+- Trigger client (fire-and-forget `notifyServer`): thả tim & bình luận (`repo-social.js`), mời CLB (`repo-clubs.js`), thông báo CLB/mục tiêu (`repo-posts.js`).
+- Đồng hồ nghỉ gym hết giờ → `notifyLocal` (thông báo **cục bộ**, không qua server) khi app ở nền.
+- ❌ Bỏ nhắc "mất chuỗi" (không dùng cron) theo yêu cầu → **không đụng `vercel.json`**.
 
-**Prerequisite bạn làm trước khi code chặng 2:**
+**Việc bạn cần làm để kích hoạt:**
 1. **Service account:** Firebase Console → Project settings → **Service accounts** → **Generate new private key** → tải file JSON.
 2. Thêm biến môi trường trên **Vercel** (Settings → Environment Variables) — **KHÔNG commit**:
    - `FIREBASE_PROJECT_ID` = `apollo-sport-social`
    - `FIREBASE_SA_CLIENT_EMAIL` = trường `client_email` trong JSON
-   - `FIREBASE_SA_PRIVATE_KEY` = trường `private_key` (giữ nguyên các `\n`; Vercel cho dán multiline)
-   - `CRON_SECRET` = một chuỗi ngẫu nhiên (bảo vệ endpoint cron)
-3. FCM gửi push **miễn phí** — KHÔNG cần bật Blaze/Cloud Functions vì trigger chạy trên Vercel serverless sẵn có.
+   - `FIREBASE_SA_PRIVATE_KEY` = trường `private_key` (dán nguyên cả `-----BEGIN...-----`, giữ các `\n`; Vercel cho dán multiline)
+3. Deploy lại (đổi env cần redeploy). FCM gửi push **miễn phí** — KHÔNG cần Blaze.
 
-Xong prerequisite thì báo mình để code chặng 2.
+**Kiểm thử chặng 2:** máy A đăng nhập user A (đã bật push), máy/tab B là user B → B thả tim/bình luận bài của A → A nhận thông báo. Chưa đặt env thì `/api/notify` trả 500 "chưa cấu hình service account" (client nuốt lỗi, app vẫn chạy bình thường).
+
+**Còn để lại (TODO nhỏ):** chưa dọn token chết phía server (token gỡ app trả 'stale' — mới đếm, chưa xoá khỏi Firestore). Deep-link mở đúng bài/nhóm chưa làm (noti mở về trang chủ) vì app điều hướng bằng state, chưa có route URL.

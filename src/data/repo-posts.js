@@ -3,6 +3,7 @@ import {
 } from 'fb/firestore';
 import { db } from '../firebase.js';
 import { compressImage, uploadAnnouncementPhoto, deleteAnnouncementPhoto } from './photos.js';
+import { notifyServer } from './push.js';
 
 // Feed thông báo dùng chung cho club & goal. parent = ['clubs', id] hoặc ['goals', id].
 // Chỉ chủ/người-tạo/app-admin được đăng (rules gác); mọi người đọc.
@@ -28,6 +29,8 @@ export async function addAnnouncement(parent, me, text, imageFile) {
   const data = { authorUid: me.uid, authorName: me.name || '', text: text.trim(), createdAt: serverTimestamp() };
   if (imageUrl) { data.imageUrl = imageUrl; data.imageId = imageId; }
   await setDoc(ref, data);
+  // Báo thành viên nhóm / người góp mục tiêu có thông báo mới (server soạn nội dung).
+  notifyServer({ type: parent[0] === 'clubs' ? 'clubPost' : 'goalPost', id: parent[1], postId: ref.id, actorName: me.name, preview: text });
   return { id: ref.id, ...data };
 }
 

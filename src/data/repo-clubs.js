@@ -3,6 +3,7 @@ import {
   query, where, orderBy, limit, startAfter, increment, serverTimestamp,
 } from 'fb/firestore';
 import { db, reportCloudError } from '../firebase.js';
+import { notifyServer } from './push.js';
 
 const uid8 = () => Math.random().toString(36).slice(2, 10);
 
@@ -109,6 +110,7 @@ export async function inviteToClub(club, toUser, fromUser) {
     clubId: club.id, clubName: club.name, clubSport: club.sport,
     createdAt: serverTimestamp(),
   });
+  notifyServer({ type: 'clubInvite', clubId: club.id, toUid: toUser.uid, actorName: fromUser.name });
 }
 // Lời mời đang chờ của tôi (1 truy vấn collection-group).
 export async function myInvites(uid) {
