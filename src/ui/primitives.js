@@ -31,20 +31,6 @@ export const StatStrip = ({ items }) => html`
       </div>`)}
   </div>`;
 
-export const Hero = ({ children, cx }) => html`
-  <div style=${{ background: BRAND.blue, borderRadius: r.xxl, padding: '20px 20px 16px', color: C.onBlue, ...cx }}>${children}</div>`;
-
-export const Pill = ({ children, tone = 'quiet', cx }) => {
-  const tones = {
-    quiet: { background: C.bg2, color: C.txt2, border: `1px solid ${C.bdr}` },
-    active: { background: BRAND.blue, color: '#fff', border: `1px solid ${BRAND.blue}` },
-    info: { background: C.bg3, color: BRAND.blue, border: 'none' },
-    warn: { background: BRAND.yellow, color: C.txt1, border: 'none' },
-    good: { background: C.greenBg, color: C.green, border: 'none' },
-  };
-  return html`<span style=${{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: r.pill, fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', ...tones[tone], ...cx }}>${children}</span>`;
-};
-
 // LƯU Ý: icon giờ là KEY (vd "trophy"), không phải emoji.
 export const Empty = ({ icon = 'other', msg, sub }) => html`
   <${Card} cx=${{ textAlign: 'center', padding: '38px 20px', borderStyle: 'dashed', borderColor: '#C7D8E6' }}>

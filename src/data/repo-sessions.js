@@ -236,21 +236,6 @@ export function listenNewPosts(sinceLoggedAt, cb) {
   );
 }
 
-// Lịch sử của 1 người. isSelf=true -> lấy cả buổi riêng tư; xem người khác -> chỉ 'company'
-// (rules chặn đọc buổi private của người khác, nên query phải lọc visibility).
-export async function historyOf(uid, { cursor = null, isSelf = false } = {}) {
-  const parts = [collection(db, 'sessions'), where('authorUid', '==', uid)];
-  if (!isSelf) parts.push(where('visibility', '==', 'company'));
-  parts.push(orderBy('loggedAt', 'desc'), limit(PAGE));
-  if (cursor) parts.push(startAfter(cursor));
-  const snap = await getDocs(query(...parts));
-  return {
-    items: snap.docs.map(d => d.data()),
-    cursor: snap.docs[snap.docs.length - 1] || null,
-    done: snap.docs.length < PAGE,
-  };
-}
-
 // Toàn bộ buổi tập của 1 người (cap 400, đủ cho tính kỷ lục cá nhân trên hồ sơ).
 // isSelf=true → cả buổi riêng tư; xem người khác → chỉ 'company' (khớp rules).
 export async function allSessionsOf(uid, { isSelf = false } = {}) {

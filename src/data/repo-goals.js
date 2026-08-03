@@ -41,11 +41,6 @@ export async function setMyGoalProgress(goalId, me, value) {
   });
 }
 
-// Rời mục tiêu (mục tiêu opt-in): xoá bản đóng góp của mình.
-export async function removeMyGoalProgress(goalId, uid) {
-  await deleteDoc(doc(db, 'goals', goalId, 'progress', uid));
-}
-
 export async function deleteGoal(goalId) {
   try {
     for (const sub of ['progress', 'posts']) {

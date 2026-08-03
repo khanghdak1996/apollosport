@@ -61,9 +61,6 @@ export const T = {
 };
 
 // ── Màu nhấn theo người dùng ────────────────────────────────────────────────
-// Giữ tính năng "mỗi người một màu" nhưng GIỚI HẠN trong palette brand.
-// Gán: ACCENTS[hash(uid) % ACCENTS.length]
-export const ACCENTS = [BRAND.blue, '#1B5E96', '#4A93CE', BRAND.pink, BRAND.red, BRAND.yellow];
 export const ACC = 'var(--accent)';
 
 // Màu theo môn — dùng cho chấm lịch, nhãn, vòng viền avatar

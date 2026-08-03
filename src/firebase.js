@@ -1,6 +1,6 @@
 import { initializeApp } from 'fb/app';
 import { getFirestore, connectFirestoreEmulator } from 'fb/firestore';
-import { getAuth, onAuthStateChanged, connectAuthEmulator } from 'fb/auth';
+import { getAuth, connectAuthEmulator } from 'fb/auth';
 import { getStorage, connectStorageEmulator } from 'fb/storage';
 
 // Production dùng CHÍNH domain app làm authDomain (proxy /__/auth/* -> firebaseapp.com khai
@@ -57,11 +57,3 @@ try {
   fbInitError = `Khởi tạo Firebase thất bại: ${e?.code || e?.message || e}`;
   console.warn('Firebase init failed, app will run local-only', e);
 }
-
-// Alias tương thích ngược cho lớp data cũ (data/cloud.js). fbReady resolve khi đã có user.
-export const fbDb = db;
-export const fbStorage = storage;
-export const fbReady = new Promise((resolve) => {
-  if (!auth) return resolve(false);
-  const unsub = onAuthStateChanged(auth, (u) => { if (u) { unsub(); resolve(true); } });
-});

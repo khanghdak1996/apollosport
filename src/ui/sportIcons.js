@@ -60,9 +60,3 @@ export const SportIcon = ({ k = 'other', size = 20, color = 'currentColor', sw =
   <svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke=${color}
        stroke-width=${sw} stroke-linecap="round" stroke-linejoin="round" style=${cx}
        dangerouslySetInnerHTML=${{ __html: SPORT_PATHS[k] || SPORT_PATHS.other }} />`;
-
-// Ô vuông bo góc bọc icon — dùng ở list "Gần đây", chọn môn, feed.
-export const SportChip = ({ k, size = 34, icon = 19, color, tint, radius = 10 }) => html`
-  <span style=${{ width: size, height: size, borderRadius: radius, background: tint, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-    <${SportIcon} k=${k} size=${icon} color=${color}/>
-  </span>`;
