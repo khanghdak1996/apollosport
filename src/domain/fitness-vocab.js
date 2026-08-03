@@ -44,11 +44,6 @@ export const LEVEL_VI = {
 
 export const FORCE_VI = { pull: 'kéo', push: 'đẩy', static: 'tĩnh (giữ)' };
 export const MECHANIC_VI = { compound: 'đa khớp', isolation: 'cô lập (1 nhóm cơ)' };
-export const CATEGORY_VI = {
-  strength: 'sức mạnh', cardio: 'tim mạch', stretching: 'giãn cơ',
-  plyometrics: 'bật nhảy', powerlifting: 'powerlifting',
-  'olympic weightlifting': 'cử tạ Olympic', strongman: 'strongman',
-};
 
 // Helpers — luôn trả tiếng Việt, fallback về nguyên gốc nếu chưa có trong map.
 export const vMuscle = m => MUSCLE_VI[m] || m;
