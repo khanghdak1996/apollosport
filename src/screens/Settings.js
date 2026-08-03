@@ -1,12 +1,13 @@
 // src/screens/Settings.js — bản redesign. THAY TOÀN BỘ file cũ.
 // Khác bản cũ: 4 nhóm có tiêu đề in hoa, toggle 46x28, và "Xoá lịch sử" chuyển
 // từ tab Cá nhân về đây.
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { html } from '../html.js';
 import { C, r, F, T, BRAND } from '../ui/theme.js';
 import { SportIcon } from '../ui/sportIcons.js';
 import { DEPARTMENTS } from '../data/departments.js';
 import { t, getLang, setLang, SUPPORTED } from '../i18n.js';
+import { pushStatus, enablePush, disablePush } from '../data/push.js';
 
 // Chọn ngôn ngữ giao diện — mỗi nhãn tự viết bằng chính ngôn ngữ đó.
 function LangPicker() {
@@ -87,6 +88,23 @@ export function Settings({ profile, onSave, onBack, onSignOut, onDeleteAccount, 
   const [inRank, setInRank] = useState(profile.leaderboardOptIn !== false);
   const [hideWeight, setHideWeight] = useState(!!profile.hideWeight);
   const [moderating, setModerating] = useState(!!profile.moderating);
+  const [pushOn, setPushOn] = useState(false);
+
+  useEffect(() => { pushStatus().then(s => setPushOn(s === 'on')); }, []);
+
+  const onTogglePush = async () => {
+    const s = await pushStatus();
+    if (s === 'unconfigured') return window.alert(t('settings.pushUnconfigured'));
+    if (s === 'unsupported') return window.alert(t('settings.pushUnsupported'));
+    if (s === 'denied') return window.alert(t('settings.pushDenied'));
+    if (s === 'on') { await disablePush(); setPushOn(false); return; }
+    const res = await enablePush();
+    if (res.ok) { setPushOn(true); return; }
+    setPushOn(false);
+    if (res.reason === 'denied') window.alert(t('settings.pushDenied'));
+    else if (res.reason === 'unsupported') window.alert(t('settings.pushUnsupported'));
+    else if (res.reason === 'unconfigured') window.alert(t('settings.pushUnconfigured'));
+  };
 
   return html`
     <div style=${{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -113,6 +131,7 @@ export function Settings({ profile, onSave, onBack, onSignOut, onDeleteAccount, 
         <${GroupTitle} t=${t('settings.privacy')}/>
         <${Panel}>
           <${Row} first=${true} t=${t('settings.rank')} s=${t('settings.rankSub')} on=${inRank} onToggle=${() => setInRank(!inRank)}/>
+          <${Row} t=${t('settings.push')} s=${t('settings.pushSub')} on=${pushOn} onToggle=${onTogglePush}/>
           <${Row} t=${t('settings.hideWeight')} s=${t('settings.hideWeightSub')} on=${hideWeight} onToggle=${() => setHideWeight(!hideWeight)}/>
           ${isAdmin ? html`<${Row} t=${t('settings.moderation')} s=${t('settings.moderationSub')} on=${moderating} onToggle=${() => { const nv = !moderating; setModerating(nv); onToggleModerating && onToggleModerating(nv); }}/>` : ''}
         </${Panel}>
