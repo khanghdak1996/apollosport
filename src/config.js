@@ -12,7 +12,7 @@ export const emailAllowed = (email) =>
 // Đây là khoá PUBLIC (giống Firebase web apiKey) nên commit được, không phải bí mật.
 // Bỏ trống = tính năng push tắt (toggle sẽ báo chưa cấu hình). Xem PUSH-SETUP.md.
 export const PUSH = {
-  vapidKey: '',
+  vapidKey: 'BCGrK5kmUpj9gBp8Elvs6FZcQpKrpywEEBUne2y4dZMfyyCuq-PJLhI1pxdqsqc7Cubfquwz3w5RBVa5VR_V25g',
   // Endpoint serverless gửi push (chặng 2). Cùng domain nên để đường dẫn tương đối.
   notifyEndpoint: '/api/notify',
 };
