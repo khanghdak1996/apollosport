@@ -34,9 +34,9 @@ export async function updateUserDoc(uid, fields) {
 }
 
 // Lưu kết quả onboarding lần đầu.
-export async function saveOnboarding(uid, { name, dept, center, prefs }) {
+export async function saveOnboarding(uid, { name, dept, center, gender, prefs }) {
   await setDoc(doc(db, 'users', uid), {
-    name, dept: dept || '', center: center || '',
+    name, dept: dept || '', center: center || '', gender: gender || '',
     prefs: { ...prefs, onboarded: true },
     lastActiveAt: serverTimestamp(),
   }, { merge: true });

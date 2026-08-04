@@ -1,6 +1,6 @@
 // Suy dẫn thuần từ một session (mọi type). Feed/lịch/streak/xếp hạng chỉ đọc các
 // field cấp trên + hàm ở đây, không cần biết cấu trúc gym bên trong detail.
-import { actOf, fieldsOf, rpeOf, rpeLabel, actLabel, actVerb, metForSpeed } from './activities.js';
+import { actOf, fieldsOf, rpeOf, rpeLabel, actLabel, actVerb, metForSpeed, dotsCoeff } from './activities.js';
 import { t } from '../i18n.js';
 import { uid } from './format.js';
 import { tVol } from './stats.js';
@@ -9,13 +9,20 @@ import { tVol } from './stats.js';
 // và tránh timer quên tắt.
 export const activeMinutes = s => Math.min(180, Math.max(0, Math.round(s.durationMin || 0)));
 
-// Gym: quy đổi volume load (set×rep×kg × RPE) → MET. GYM_K calibrate 2026-08 với ma
-// trận buổi tập thật (mới tập→leg day nặng): median ~6000kg/60p/RPE3 → ~5.6 MET (ngang
-// cardio vừa), chỉ leg-day cực nặng mới chạm trần. Trước đây K=0.027 khiến mọi buổi
-// nghiêm túc (≥~4800kg) đều dồn về trần 12 → gym bị thổi phồng, đè cardio. GYM_MET_CAP
-// giữ gym không vượt cardio tối đa (chạy nhanh ~12.8).
-const GYM_K = 0.011;
+// Gym: quy đổi volume load (set×rep×kg × RPE × hệ số DOTS) → MET. GYM_MET_CAP giữ gym
+// không vượt cardio tối đa (chạy nhanh ~12.8).
+// GYM_K neo 2026-08 (chặng DOTS): chọn để NAM 70kg (hệ số DOTS ~0.7512) giữ NGUYÊN điểm
+// như trước chặng DOTS (K cũ 0.011): 0.011 / 0.7512 ≈ 0.0146. Nhờ vậy nhóm nam ~70kg
+// (đa số hiện tại) không xáo trộn, còn người nhẹ hơn / nữ được hệ số cao hơn → điểm tăng
+// đúng phần bất công cũ. Median ~6000kg/60p/RPE3 nam 70kg ≈ 6.0 MET (ngang cardio vừa),
+// chỉ leg-day cực nặng mới chạm trần. Xem thêm activities.js dotsCoeff.
+const GYM_K = 0.0146;
 const GYM_MET_CAP = 11;
+// Hệ số DOTS "trung tính" khi buổi tập chưa có cân nặng+giới (session cũ, hoặc user chưa
+// backfill). = DOTS của nam 70kg (~0.751) → nhân GYM_K 0.0146 ≈ 0.011 (K trước chặng DOTS),
+// nên buổi thiếu dữ liệu chấm y như hệ cũ, không thổi phồng. Người nhập đủ dữ liệu (nhất là
+// nữ / người nhẹ) mới lệch khỏi mốc này theo hướng công bằng hơn.
+const NEUTRAL_DOTS = dotsCoeff(70, 'male');
 
 // MET hiệu dụng của 1 session — nền tảng chấm điểm, thống nhất cho mọi môn.
 //   pace     : MET nền theo tốc độ (quãng đường + thời lượng) × hệ số RPE (0.8–1.2).
@@ -32,7 +39,11 @@ export const effectiveMet = s => {
     return metForSpeed(s.type, kmh) * rpe.factor;
   }
   if (a.category === 'gym') {
-    const load = (s.detail?.totalVol || 0) * rpe.gymRaw;
+    // dots = hệ số DOTS (cân nặng+giới), CHỈ có trên object chấm điểm tạm lúc dựng/preview —
+    // KHÔNG lưu vào doc (cân nặng là dữ liệu riêng tư, buổi tập hiển thị cho công ty; hệ số
+    // này suy ngược ra cân nặng được). Thiếu → NEUTRAL_DOTS (chấm như hệ cũ, không hồi tố).
+    const coeff = s.detail?.dots ?? NEUTRAL_DOTS;
+    const load = (s.detail?.totalVol || 0) * rpe.gymRaw * coeff;
     const met = load * GYM_K / Math.max(1, activeMinutes(s));
     return Math.min(GYM_MET_CAP, Math.max(a.metMin || 0, met));
   }
@@ -120,8 +131,13 @@ export const headline = s => {
   return `${vb} ${s.durationMin || 0} ${t('unit.min')}`;
 };
 
+// Cân nặng+giới → hệ số DOTS cho gym; thiếu một trong hai → null (chấm coeff 1 = tuyệt đối cũ).
+export const gymDotsFor = body => (body?.weightKg > 0 && body?.sex) ? dotsCoeff(body.weightKg, body.sex) : null;
+
 // Bổ sung các field dẫn xuất + thông tin tác giả để tạo doc hoàn chỉnh (khớp firestore.rules).
-export function finalizeSession(base, author, streakAtPost = 0) {
+// gymDots (nếu có) chỉ dùng để CHẤM ĐIỂM buổi gym, KHÔNG lưu vào doc (bảo mật cân nặng — xem
+// effectiveMet). Điểm chốt một lần ở đây rồi đóng băng vào s.points; không tính lại về sau.
+export function finalizeSession(base, author, streakAtPost = 0, gymDots = null) {
   const s = {
     ...base,
     authorUid: author.uid,
@@ -134,12 +150,15 @@ export function finalizeSession(base, author, streakAtPost = 0) {
     schemaV: 1,
   };
   s.activeMinutes = activeMinutes(s);
-  s.points = computePoints(s);
+  // Object chấm điểm tạm có detail.dots; s trả về KHÔNG chứa dots.
+  const scoreView = gymDots != null ? { ...s, detail: { ...s.detail, dots: gymDots } } : s;
+  s.points = computePoints(scoreView);
   return s;
 }
 
 // Dựng session gym từ workout đang tập + meta (title/note/photo/date/visibility/durationMin).
-export function buildGymSession(active, meta, author, streakAtPost = 0) {
+// body = { weightKg, sex } của tác giả để chấm điểm theo DOTS (không lưu vào doc). Thiếu → tuyệt đối cũ.
+export function buildGymSession(active, meta, author, streakAtPost = 0, body = null) {
   const now = Date.now();
   const start = active.startTime;
   const rawMin = meta.durationMin != null ? meta.durationMin : Math.round((now - start) / 60000);
@@ -159,7 +178,7 @@ export function buildGymSession(active, meta, author, streakAtPost = 0) {
     visibility: meta.visibility || 'company',
     detail: { progId: active.progId, progName: active.progName, dayName: active.dayName, totalVol, totalSets, exs, rpe: parseInt(meta.rpe) || 3 },
   };
-  return finalizeSession(base, author, streakAtPost);
+  return finalizeSession(base, author, streakAtPost, gymDotsFor(body));
 }
 
 // Gom các ô nhập của form thành object detail SẠCH (bỏ ô rỗng, ép kiểu theo field).

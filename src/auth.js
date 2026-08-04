@@ -83,6 +83,7 @@ export async function ensureUserDoc(user) {
       uid: user.uid, email: user.email, name,
       photoURL: user.photoURL || null,
       dept: '', center: '', title: '',
+      gender: '', // '' | 'male' | 'female' — dùng cho hệ số DOTS chấm điểm gym (user cũ để trống, backfill tay)
       accent: pickAccent(user.uid),
       prefs: { defaultVisibility: 'company', optOutLeaderboard: false, hideWeight: true, onboarded: false },
       streak: { current: 0, longest: 0, lastDate: null },

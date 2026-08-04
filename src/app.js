@@ -12,7 +12,7 @@ import { EX } from './domain/exercises.js';
 import { EXDB } from './data/exercises-db.js';
 const REST_PRESETS = [60, 90, 120, 180]; // preset thời gian nghỉ giữa set (giây)
 import { ACT, actOf, fieldsOf, RPE_LEVELS, rpeOf, rpeLabel, rpeDesc, actLabel, flabel } from './domain/activities.js';
-import { buildGymSession, buildActivitySession, summaryStats, headline, computePoints } from './domain/session.js';
+import { buildGymSession, buildActivitySession, summaryStats, headline, computePoints, gymDotsFor } from './domain/session.js';
 import { advanceStreak, liveStreak, dayStr } from './domain/streak.js';
 import { evaluateBadges, BADGES, badgeLabel } from './domain/badges.js';
 import { db } from './data/local.js';
@@ -378,7 +378,7 @@ function ActiveWorkout({ workout, sessions, onChange, onFinish, onDiscard, onPic
     </${Wrap}>`;
 }
 
-function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard, onSave }) {
+function SaveWorkout({ workout, gymDots = null, defaultVisibility = 'company', onBack, onDiscard, onSave }) {
   const [title, setTitle] = useState(workout.dayName);
   const [note, setNote] = useState('');
   const [photoFile, setPhotoFile] = useState(null);
@@ -395,8 +395,9 @@ function SaveWorkout({ workout, defaultVisibility = 'company', onBack, onDiscard
 
   const vol = tVol(workout.exs);
   const totalSets = workout.exs.reduce((t, e) => t + e.sets.filter(s => s.done).length, 0);
-  // Điểm quy đổi live cho buổi gym (volume load × RPE). Đồng bộ với các môn ở LogActivity.
-  const livePoints = computePoints({ type: 'gym', durationMin: parseFloat(durMin) || 0, detail: { totalVol: vol, rpe } });
+  // Điểm quy đổi live cho buổi gym (volume load × RPE × hệ số DOTS theo cân nặng+giới nếu có).
+  // gymDots chỉ để hiển thị preview, KHÔNG đi vào doc (bảo mật cân nặng — xem session.js).
+  const livePoints = computePoints({ type: 'gym', durationMin: parseFloat(durMin) || 0, detail: { totalVol: vol, rpe, ...(gymDots != null ? { dots: gymDots } : {}) } });
 
   const save = async () => {
     const t = title.trim() || workout.dayName;
@@ -1547,10 +1548,14 @@ function GymPair() {
   const openGuide = (guide, back) => { if (!guide) return; setPgCtx({ guide, back }); setPg('guide-detail'); };
 
   // Tác giả cho các buổi tập (khớp firestore.rules + repo).
+  // KHÔNG nhét cân nặng/giới vào đây: object này còn dùng cho club/leaderboard — tránh rò rỉ.
   const meAuthor = () => ({
     uid: pid, name: userDoc.name, photoURL: userDoc.photoURL || null,
     dept: userDoc.dept || '', streak: userDoc.streak, prefs: userDoc.prefs,
   });
+  // Cân nặng mới nhất + giới của mình → chấm điểm gym theo DOTS (chỉ dùng local, không lưu vào doc).
+  const latestWeightKg = () => weights.length ? (weights.reduce((a, b) => (b.at || 0) > (a.at || 0) ? b : a).kg || 0) : 0;
+  const myBody = () => ({ weightKg: latestWeightKg(), sex: userDoc?.gender || '' });
   // Bổ sung field top-level tương thích để các component gym cũ đọc được (local dùng, cloud sạch).
   const toLocal = (sess) => sess.type === 'gym'
     ? { ...sess, exs: exsOf(sess), totalVol: volOf(sess), progName: sess.detail?.progName, dayName: sess.detail?.dayName }
@@ -1649,7 +1654,7 @@ function GymPair() {
       catch (e) { reportCloudError(t('err.uploadPhoto'), e); }
     }
     const stLocal = advanceStreak(userDoc.streak, date);
-    const sess = buildGymSession(active, { ...meta, photoUrl, date }, meAuthor(), stLocal.current);
+    const sess = buildGymSession(active, { ...meta, photoUrl, date }, meAuthor(), stLocal.current, myBody());
     const local = { ...toLocal(sess), pendingSync: true };
     const updatedSessions = [local, ...sessions].slice(0, 300);
     const { updated, newly } = computePRs(sess, prs);
@@ -1703,10 +1708,12 @@ function GymPair() {
 
   const onboard = async (fields) => {
     await saveOnboarding(pid, {
-      name: fields.name, dept: fields.dept, center: fields.center,
+      name: fields.name, dept: fields.dept, center: fields.center, gender: fields.gender,
       prefs: { ...(userDoc.prefs || {}), sports: fields.sports },
     });
-    setUserDoc(d => ({ ...d, name: fields.name, dept: fields.dept, center: fields.center, prefs: { ...(d.prefs || {}), sports: fields.sports, onboarded: true } }));
+    // Cân nặng vào kho riêng tư (addWeight tự lưu local + cloud). Chỉ lưu nếu nhập hợp lệ.
+    if (fields.weightKg > 0) addWeight(fields.weightKg);
+    setUserDoc(d => ({ ...d, name: fields.name, dept: fields.dept, center: fields.center, gender: fields.gender || '', prefs: { ...(d.prefs || {}), sports: fields.sports, onboarded: true } }));
   };
 
   if (authUser === undefined) return html`<${Wrap} cx=${{ alignItems: 'center', justifyContent: 'center', color: C.txt2, fontSize: 14 }}>${t('common.loading')}</${Wrap}>`;
@@ -1720,7 +1727,7 @@ function GymPair() {
 
   if (active && showWorkout) {
     if (pg === 'pick-ex') return html`<${PickEx} exList=${exList} onPick=${e => { pgCtx && pgCtx.cb(e); setPg(null); setPgCtx(null); }} onClose=${() => { setPg(null); setPgCtx(null); }} onAddEx=${ex => { saveC([...exList, ex]); }}/>`;
-    if (pg === 'save-workout') return html`<${SaveWorkout} workout=${active} defaultVisibility=${userDoc.prefs?.defaultVisibility || 'company'} onBack=${() => setPg(null)} onDiscard=${() => { if (window.confirm(t('save.discardConfirm'))) { discardWorkout(); setPg(null); } }} onSave=${finishWorkout}/>`;
+    if (pg === 'save-workout') return html`<${SaveWorkout} workout=${active} gymDots=${gymDotsFor(myBody())} defaultVisibility=${userDoc.prefs?.defaultVisibility || 'company'} onBack=${() => setPg(null)} onDiscard=${() => { if (window.confirm(t('save.discardConfirm'))) { discardWorkout(); setPg(null); } }} onSave=${finishWorkout}/>`;
     if (pg === 'guide-detail') return html`<${GuideDetail} guide=${pgCtx.guide} onBack=${pgCtx.back || (() => setPg(null))}/>`;
     return html`<${ActiveWorkout} workout=${active} sessions=${sessions} onChange=${saveA} onFinish=${() => setPg('save-workout')} onDiscard=${discardWorkout} onPickEx=${goPickEx} onMinimize=${() => setShowWorkout(false)} onGuide=${exId => openGuide(guideForExercise(exId), () => { setPgCtx(null); setPg(null); })}/>`;
   }
@@ -1743,6 +1750,7 @@ function GymPair() {
       name: userDoc.name || '',
       dept: userDoc.dept || '',
       center: userDoc.center || '',
+      gender: userDoc.gender || '',
       leaderboardOptIn: !(userDoc.prefs?.optOutLeaderboard),
       hideWeight: !!userDoc.prefs?.hideWeight,
       moderating: adminMode,
@@ -1752,7 +1760,7 @@ function GymPair() {
         onBack=${() => setPg(null)}
         onSave=${async (v) => {
       const prevOptIn = !(userDoc.prefs?.optOutLeaderboard);
-      await saveProfileFields({ name: v.name, dept: v.dept });
+      await saveProfileFields({ name: v.name, dept: v.dept, gender: v.gender || '' });
       const prefs = { ...(userDoc.prefs || {}), optOutLeaderboard: !v.leaderboardOptIn, hideWeight: v.hideWeight };
       await updateUserDoc(pid, { prefs });
       setUserDoc(d => ({ ...d, prefs: { ...d.prefs, optOutLeaderboard: !v.leaderboardOptIn, hideWeight: v.hideWeight } }));

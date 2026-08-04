@@ -31,6 +31,23 @@ export const rpeOf = level => RPE_MAP[level] || RPE_MAP[3];
 export const rpeLabel = level => t('rpe.' + rpeOf(level).level + '.label');
 export const rpeDesc = level => t('rpe.' + rpeOf(level).level + '.desc');
 
+// ── Hệ số DOTS (chuẩn hoá tạ theo cân nặng + giới) ──────────────────────────
+// Chấm gym bằng volume TUYỆT ĐỐI thiên vị người nặng/khoẻ (thường là nam): nam 70kg
+// đương nhiên nâng tổng tạ nhiều hơn nữ 55kg. Chỉ chia cho cân nặng (linear/allometric)
+// vẫn ưu ái nam vì nam khoẻ hơn TRÊN MỖI KG (nam bench 1×BW dễ hơn nữ bench 1×BW). DOTS —
+// đa thức bậc 4 với hằng số riêng nam/nữ, chuẩn powerlifting hiện đại thay Wilks — bù đúng
+// cả cỡ người lẫn phần sức/kg theo giới, nên hai người "khó ngang nhau" ra hệ số gần nhau.
+// Ta dùng nó THUẦN như hệ số nhân vào volume load cho gym (xem session.js effectiveMet).
+const DOTS_M = [-307.75076, 24.0900756, -0.1918759221, 0.0007391293, -0.000001093];
+const DOTS_F = [-57.96288, 13.6175032, -0.1126655495, 0.0005158568, -0.0000010706];
+// Hệ số DOTS theo cân nặng (kg) + giới ('female' → nữ, còn lại → nam). Kẹp cân nặng vào
+// dải hợp lệ của công thức [40,210] để tránh mẫu số âm ở biên.
+export const dotsCoeff = (bwKg, sex) => {
+  const c = sex === 'female' ? DOTS_F : DOTS_M;
+  const bw = Math.min(210, Math.max(40, bwKg || 0));
+  return 500 / (c[0] + c[1] * bw + c[2] * bw ** 2 + c[3] * bw ** 3 + c[4] * bw ** 4);
+};
+
 // ── Ô nhập dùng lại ─────────────────────────────────────────────
 // type: number | seg | select | counter | time | pace | rpe
 //   number   – ô số (unit hiển thị hậu tố)

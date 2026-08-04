@@ -32,6 +32,24 @@ function Field({ label, value, onInput, placeholder, first }) {
     </div>`;
 }
 
+// Chọn giới tính (Nam/Nữ) — dùng cho hệ số DOTS chấm điểm gym công bằng theo cân nặng+giới.
+function GenderPick({ value, onChange, first }) {
+  const opts = [['male', t('gender.male')], ['female', t('gender.female')]];
+  return html`
+    <div style=${{ padding: '13px 0', borderTop: first ? 'none' : `1px solid ${C.bdr2}` }}>
+      <p style=${{ margin: '0 0 6px', ...T.label }}>${t('gender.label')}</p>
+      <div style=${{ display: 'flex', gap: 8 }}>
+        ${opts.map(([v, lbl]) => html`
+          <button key=${v} onClick=${() => onChange(v)} class="btn-action" style=${{
+      flex: 1, padding: '10px 0', borderRadius: r.md, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+      background: v === value ? BRAND.blue : C.bg1, color: v === value ? '#fff' : C.txt2,
+      border: `1px solid ${v === value ? BRAND.blue : C.bdr}`,
+    }}>${lbl}</button>`)}
+      </div>
+      <p style=${{ margin: '6px 2px 0', fontSize: 11.5, lineHeight: 1.45, color: C.txt4 }}>${t('gender.hint')}</p>
+    </div>`;
+}
+
 // Dropdown chọn từ danh sách + ô tìm kiếm (gõ để lọc, cuộn để xem hết).
 function SelectField({ label, value, options, placeholder, onChange, first }) {
   const [open, setOpen] = useState(false);
@@ -85,6 +103,7 @@ const Panel = ({ children, cx }) => html`<div style=${{ background: C.bg2, borde
 export function Settings({ profile, onSave, onBack, onSignOut, onDeleteAccount, onClearHistory, isAdmin, onToggleModerating }) {
   const [name, setName] = useState(profile.name || '');
   const [dept, setDept] = useState(profile.dept || '');
+  const [gender, setGender] = useState(profile.gender || '');
   const [inRank, setInRank] = useState(profile.leaderboardOptIn !== false);
   const [hideWeight, setHideWeight] = useState(!!profile.hideWeight);
   const [moderating, setModerating] = useState(!!profile.moderating);
@@ -120,7 +139,8 @@ export function Settings({ profile, onSave, onBack, onSignOut, onDeleteAccount, 
         <${Panel} cx=${{ padding: '4px 16px 16px' }}>
           <${Field} first=${true} label=${t('settings.name')} value=${name} onInput=${e => setName(e.target.value)} placeholder=${t('settings.namePlaceholder')}/>
           <${SelectField} label=${t('settings.dept')} value=${dept} options=${DEPARTMENTS} onChange=${setDept} placeholder=${t('ob.deptPlaceholder')}/>
-          <button onClick=${() => onSave({ name, dept, leaderboardOptIn: inRank, hideWeight, moderating })} class="btn-action" style=${{ width: '100%', background: BRAND.blue, border: 'none', borderRadius: 13, padding: 12, fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer', marginTop: 6 }}>${t('settings.saveProfile')}</button>
+          <${GenderPick} value=${gender} onChange=${setGender}/>
+          <button onClick=${() => onSave({ name, dept, gender, leaderboardOptIn: inRank, hideWeight, moderating })} class="btn-action" style=${{ width: '100%', background: BRAND.blue, border: 'none', borderRadius: 13, padding: 12, fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer', marginTop: 6 }}>${t('settings.saveProfile')}</button>
         </${Panel}>
 
         <${GroupTitle} t=${t('lang.title')}/>

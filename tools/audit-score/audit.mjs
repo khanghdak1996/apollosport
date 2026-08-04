@@ -31,19 +31,23 @@ registerHooks({
 });
 
 const { effectiveMet, computePoints, activeMinutes } = await import('../../src/domain/session.js');
-const { actOf, metForSpeed, rpeOf } = await import('../../src/domain/activities.js');
+const { actOf, metForSpeed, rpeOf, dotsCoeff } = await import('../../src/domain/activities.js');
 
 // Dựng object session tối thiểu mà effectiveMet/computePoints cần.
 //   pace (không bơi): metric = distanceKm | bơi: metric = distanceM | gym: metric = totalVol
-function mk(type, metric, durationMin, rpe) {
+// Gym có thể kèm (bw, sex) → gắn detail.dots (hệ số DOTS) đúng như app chấm điểm.
+function mk(type, metric, durationMin, rpe, bw, sex) {
   const a = actOf(type), detail = { rpe };
   if (a.category === 'pace') detail[type === 'swim' ? 'distanceM' : 'distanceKm'] = metric;
-  else if (a.category === 'gym') detail.totalVol = metric;
+  else if (a.category === 'gym') {
+    detail.totalVol = metric;
+    if (bw > 0 && sex) detail.dots = dotsCoeff(bw, sex);
+  }
   return { type, durationMin, detail };
 }
 
-function decode(label, type, metric, durationMin, rpe) {
-  const s = mk(type, metric, durationMin, rpe);
+function decode(label, type, metric, durationMin, rpe, bw, sex) {
+  const s = mk(type, metric, durationMin, rpe, bw, sex);
   const a = actOf(type), met = effectiveMet(s), p = computePoints(s), min = activeMinutes(s);
   let why = '';
   if (a.category === 'pace') {
@@ -52,8 +56,9 @@ function decode(label, type, metric, durationMin, rpe) {
     why = `${kmh.toFixed(2)} km/h → MET nền ${metForSpeed(type, kmh)} × RPE${rpe} (×${rpeOf(rpe).factor})`;
   } else if (a.category === 'gym') {
     // Probe qua chính hàm thật: gấp đôi volume mà MET không đổi ⇒ đang chạm trần.
-    const capped = effectiveMet(mk(type, metric * 2, durationMin, rpe)) === met;
-    why = `vol ${metric}kg × gymRaw ${rpeOf(rpe).gymRaw}${capped ? ' — CHẠM TRẦN' : ''}`;
+    const capped = effectiveMet(mk(type, metric * 2, durationMin, rpe, bw, sex)) === met;
+    const dotsNote = (bw > 0 && sex) ? ` × DOTS ${dotsCoeff(bw, sex).toFixed(3)} (${sex} ${bw}kg)` : '';
+    why = `vol ${metric}kg × gymRaw ${rpeOf(rpe).gymRaw}${dotsNote}${capped ? ' — CHẠM TRẦN' : ''}`;
   } else {
     why = `nội suy metMin ${a.metMin}↔metMax ${a.metMax} theo RPE${rpe} (index ${rpeOf(rpe).index})`;
   }
@@ -61,10 +66,11 @@ function decode(label, type, metric, durationMin, rpe) {
 }
 
 // ── Chấm 1 buổi tuỳ ý từ CLI ────────────────────────────────────────────────
-const [, , type, metricArg, minArg, rpeArg] = process.argv;
+//   node ... gym 5000 45 2 55 female   # <vol> <phút> <rpe> [<cân nặng> <giới>]
+const [, , type, metricArg, minArg, rpeArg, bwArg, sexArg] = process.argv;
 if (type) {
   const metric = metricArg === '-' ? 0 : parseFloat(metricArg);
-  decode(`${type}`, type, metric, parseFloat(minArg), parseInt(rpeArg) || 3);
+  decode(`${type}`, type, metric, parseFloat(minArg), parseInt(rpeArg) || 3, parseFloat(bwArg) || 0, sexArg);
   process.exit(0);
 }
 

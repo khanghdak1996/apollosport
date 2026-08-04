@@ -33,15 +33,21 @@ function DeptSelect({ value, onChange }) {
 export function Onboarding({ initialName = '', onDone }) {
   const [name, setName] = useState(initialName);
   const [dept, setDept] = useState('');
+  const [gender, setGender] = useState('');
+  const [weight, setWeight] = useState('');
   const [sports, setSports] = useState([]);
   const [busy, setBusy] = useState(false);
 
   const toggle = (id) => setSports(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
 
+  const weightKg = parseFloat(weight) || 0;
+  // Cân nặng + giới bắt buộc: dùng cho hệ số DOTS chấm điểm gym công bằng theo cân nặng+giới.
+  const ready = name.trim() && gender && weightKg > 0 && !busy;
+
   const submit = async () => {
-    if (!name.trim() || busy) return;
+    if (!ready) return;
     setBusy(true);
-    try { await onDone({ name: name.trim(), dept: dept.trim(), center: '', sports }); }
+    try { await onDone({ name: name.trim(), dept: dept.trim(), center: '', gender, weightKg, sports }); }
     finally { setBusy(false); }
   };
 
@@ -56,6 +62,21 @@ export function Onboarding({ initialName = '', onDone }) {
 
         <${Label} t=${t('ob.dept')} mt=${18}/>
         <${DeptSelect} value=${dept} onChange=${setDept}/>
+
+        <${Label} t=${t('gender.label')} mt=${18}/>
+        <div style=${{ display: 'flex', gap: 8 }}>
+          ${[['male', t('gender.male')], ['female', t('gender.female')]].map(([v, lbl]) => html`
+            <button key=${v} onClick=${() => setGender(v)} class="btn-action" style=${{
+      flex: 1, padding: '12px 0', borderRadius: r.md, fontSize: 15, fontWeight: 600, cursor: 'pointer',
+      border: `1px solid ${v === gender ? ACC : C.bdr}`,
+      background: v === gender ? ACC + '1A' : '#fff', color: v === gender ? ACC : C.txt2,
+    }}>${lbl}</button>`)}
+        </div>
+
+        <${Label} t=${t('ob.weight')} mt=${18}/>
+        <input type="number" inputmode="decimal" value=${weight} onInput=${e => setWeight(e.target.value)}
+          placeholder=${t('ob.weightPlaceholder')} style=${inputStyle}/>
+        <p style=${{ margin: '6px 2px 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>${t('ob.weightHint')}</p>
 
         <${Label} t=${t('ob.sports')} mt=${18}/>
         <div style=${{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -76,7 +97,7 @@ export function Onboarding({ initialName = '', onDone }) {
       </div>
 
       <div style=${{ borderTop: `1px solid ${C.bdr}`, padding: '14px 18px', background: '#fff', paddingBottom: 'calc(14px + env(safe-area-inset-bottom))' }}>
-        <${Btn} onClick=${submit} cx=${{ width: '100%', padding: '14px', fontSize: 15, opacity: (!name.trim() || busy) ? 0.5 : 1, pointerEvents: (!name.trim() || busy) ? 'none' : 'auto' }}>
+        <${Btn} onClick=${submit} cx=${{ width: '100%', padding: '14px', fontSize: 15, opacity: ready ? 1 : 0.5, pointerEvents: ready ? 'auto' : 'none' }}>
           ${busy ? t('ob.saving') : t('ob.start')}
         </${Btn}>
       </div>
