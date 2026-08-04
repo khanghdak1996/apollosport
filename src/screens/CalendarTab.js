@@ -11,6 +11,7 @@ import { C, r, F, T, BRAND, SHADOW, sportColor, sportTint } from '../ui/theme.js
 import { SportIcon } from '../ui/sportIcons.js';
 import { Section } from '../ui/primitives.js';
 import { actOf, actLabel } from '../domain/activities.js';
+import { hrs } from '../domain/format.js';
 import { t, getLang } from '../i18n.js';
 
 const DOW_VI = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
@@ -18,7 +19,7 @@ const DOW_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MONTHS_VI = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
 const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-export function CalendarTab({ profile, sessions, streak, points = 0, rank, weights = [], onView, onAvatar, onOpenClubs, onOpenGoals, onOpenGuides, onSettings, onLogWeight }) {
+export function CalendarTab({ profile, sessions, streak, totals = {}, rank, weights = [], onView, onAvatar, onOpenClubs, onOpenGoals, onOpenGuides, onSettings, onLogWeight }) {
   const DOW = getLang() === 'en' ? DOW_EN : DOW_VI;
   const MONTHS = getLang() === 'en' ? MONTHS_EN : MONTHS_VI;
   const today = new Date();
@@ -40,12 +41,6 @@ export function CalendarTab({ profile, sessions, streak, points = 0, rank, weigh
     byDay[k] = byDay[k] || [];
     if (!byDay[k].includes(key)) byDay[k].push(key);
   });
-
-  const inMonth = sessions.filter(s => {
-    const d = new Date(s.date);
-    return d.getFullYear() === y && d.getMonth() === m;
-  });
-  const monthMin = Math.round(inMonth.reduce((t, s) => t + (s.activeMinutes || s.durationMin || 0), 0));
 
   // Phân bổ theo môn — 90 ngày, chuẩn hoá theo môn cao nhất = 100%
   const since = new Date(today); since.setDate(today.getDate() - 90);
@@ -85,6 +80,7 @@ export function CalendarTab({ profile, sessions, streak, points = 0, rank, weigh
             <div style=${{ flex: 1, minWidth: 0 }}>
               <p style=${{ margin: 0, fontSize: 17, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${profile.name}</p>
               <p style=${{ margin: '1px 0 0', fontSize: 12, color: BRAND.babyBlue }}>${profile.dept || '—'}${rank ? ' · ' + t('cal.rankThisWeek', { n: rank }) : ''} · ${t('cal.viewStats')}</p>
+              ${st.current > 0 && html`<div style=${{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 6, background: 'rgba(255,255,255,.16)', borderRadius: 20, padding: '3px 10px', fontSize: 12, fontWeight: 600 }}><${SportIcon} k="flame" size=${13} color=${BRAND.yellow}/> ${t('cal.daysN', { n: st.current })}</div>`}
             </div>
           </div>
           <button onClick=${onSettings} class="btn-action" style=${{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,.18)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
@@ -92,7 +88,7 @@ export function CalendarTab({ profile, sessions, streak, points = 0, rank, weigh
           </button>
         </div>
         <div style=${{ display: 'flex', gap: 8, marginTop: 16 }}>
-          ${[{ v: points, l: t('pt.weekPoints') }, { v: monthMin, l: t('cal.monthMin') }, { v: t('cal.daysN', { n: st.current }), l: t('cal.streak') }].map((s, i) => html`
+          ${[{ v: totals.sessions || 0, l: t('stat.totalSess') }, { v: hrs(totals.minutes), l: t('stat.totalHours') }, { v: totals.points || 0, l: t('stat.totalPoints') }].map((s, i) => html`
             <div key=${i} style=${{ flex: 1, background: 'rgba(255,255,255,.14)', borderRadius: 14, padding: '11px 10px', minWidth: 0 }}>
               <p style=${{ margin: 0, fontFamily: F.display, fontWeight: 700, fontSize: 24, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>${s.v}</p>
               <p style=${{ margin: '3px 0 0', fontSize: 10.5, letterSpacing: '.09em', fontWeight: 600, color: BRAND.babyBlue, textTransform: 'uppercase' }}>${s.l}</p>

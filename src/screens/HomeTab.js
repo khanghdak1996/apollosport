@@ -11,7 +11,7 @@ import { StatStrip, Section } from '../ui/primitives.js';
 import { actOf, actLabel } from '../domain/activities.js';
 import { summaryStats } from '../domain/session.js';
 import { currentWeekActivity } from '../domain/stats.js';
-import { fD, durS } from '../domain/format.js';
+import { fD, durS, hrs } from '../domain/format.js';
 import { t, getLang } from '../i18n.js';
 
 const primStat = s => {
@@ -39,16 +39,15 @@ function weekBars(sessions) {
   return DOW.map((l, i) => ({ l, on: done.has(i) }));
 }
 
-export function HomeTab({ profile, progs, sessions, streak, totalSessions, onStart, onView, onSwitch, onManagePrograms, onSeeAll, weeklyGoal = 3, points = 0 }) {
-  // Tuần lịch (Thứ 2 → CN) — CÙNG nguồn với tab Cá nhân (ProgressTab) để mục tiêu tuần không lệch.
+export function HomeTab({ profile, progs, sessions, streak, totalSessions, onStart, onView, onSwitch, onManagePrograms, onSeeAll, weeklyGoal = 3 }) {
+  // Tuần này (T2→CN) — MỘT nguồn duy nhất currentWeekActivity cho cả 3 ô (buổi/giờ/điểm), khớp
+  // ProgressTab & mục tiêu tuần. (Trước đây ô Điểm lấy points7d = 7 ngày trượt → lệch 2 ô kia.)
   const week = currentWeekActivity(sessions);
-  const nSessions = week.count;
-  const nMinutes = week.minutes;
   // Ô lớn của màn: TỔNG số buổi đã tập (không phải chuỗi — vì không ai ngày nào cũng tập).
   // Ưu tiên counter tích luỹ totals.sessions; fallback về độ dài mảng local (bị cắt còn 300).
   const nTotal = Math.max(totalSessions || 0, sessions.length);
   const bars = weekBars(sessions);
-  const pct = Math.min(100, Math.round((nSessions / Math.max(1, weeklyGoal)) * 100));
+  const pct = Math.min(100, Math.round((week.count / Math.max(1, weeklyGoal)) * 100));
 
   return html`
     <div class="fade-in" style=${{ padding: '0 16px 80px' }}>
@@ -88,9 +87,9 @@ export function HomeTab({ profile, progs, sessions, streak, totalSessions, onSta
       <!-- 3 thẻ trắng rời → MỘT dải có vách ngăn -->
       <div style=${{ marginBottom: 12 }}>
         <${StatStrip} items=${[
-          { v: nSessions, l: t('home.weekSessions') },
-          { v: nMinutes, l: t('home.minutes') },
-          { v: points, l: t('stat.points') },
+          { v: week.count, l: t('stat.weekSess') },
+          { v: hrs(week.minutes), l: t('stat.weekHours') },
+          { v: week.points, l: t('stat.weekPoints') },
         ]}/>
       </div>
 
@@ -98,13 +97,13 @@ export function HomeTab({ profile, progs, sessions, streak, totalSessions, onSta
       <div style=${{ background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, padding: '14px 16px', marginBottom: 12 }}>
         <div style=${{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 9 }}>
           <p style=${{ margin: 0, ...T.section }}>${t('home.weeklyGoal')}</p>
-          <p style=${{ margin: 0, fontSize: 12, color: C.txt2 }}>${nSessions}<span style=${{ color: C.txt4 }}>${t('home.ofSessions', { n: weeklyGoal })}</span></p>
+          <p style=${{ margin: 0, fontSize: 12, color: C.txt2 }}>${week.count}<span style=${{ color: C.txt4 }}>${t('home.ofSessions', { n: weeklyGoal })}</span></p>
         </div>
         <div style=${{ height: 7, borderRadius: 4, background: C.bg3, overflow: 'hidden' }}>
           <div style=${{ width: pct + '%', height: '100%', background: BRAND.blue, borderRadius: 4, transition: 'width .4s' }}/>
         </div>
         <p style=${{ margin: '9px 0 0', ...T.lead }}>
-          ${pct >= 100 ? t('home.goalDone') : t('home.goalLeft', { n: Math.max(0, weeklyGoal - nSessions) })}
+          ${pct >= 100 ? t('home.goalDone') : t('home.goalLeft', { n: Math.max(0, weeklyGoal - week.count) })}
         </p>
       </div>
 

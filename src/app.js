@@ -6,7 +6,7 @@ import { SportIcon } from './ui/sportIcons.js';
 import { PhotoView } from './ui/Lightbox.js';
 import { Wrap, Card, Empty, Label, Btn } from './ui/primitives.js';
 import { beep } from './ui/sound.js';
-import { uid, p2, fT, fD, durS, restLabel, fDM, fDT } from './domain/format.js';
+import { uid, p2, fT, fD, durS, restLabel, fDM, fDT, hrs } from './domain/format.js';
 import { sVol, eVol, tVol, e1rm, startOfWeek, fWeek, pct, weeklyStats, exHistory, lastExSets, trainedExIds, titleOptions, sessionsByTitle, computePRs, exsOf, volOf, weeklyActive, sportBreakdown, distanceProgress, personalRecords, currentWeekActivity } from './domain/stats.js';
 import { EX } from './domain/exercises.js';
 import { EXDB } from './data/exercises-db.js';
@@ -72,8 +72,6 @@ const primStat = s => {
   return stats.find(x => x.icon !== 'clock' && typeof x.v === 'number') || stats.find(x => x.icon === 'star') || { v: s.points || 0, u: t('unit.points') };
 };
 
-// Tổng điểm 7 ngày gần nhất (dùng cho HomeTab & CalendarTab).
-const points7d = sessions => sessions.reduce((t, s) => ((Date.now() - new Date(s.date)) / 86400000 <= 7 ? t + (s.points || 0) : t), 0);
 
 // Nút chọn quyền hiển thị buổi tập (Đồng nghiệp / Chỉ mình tôi). Dùng ở SaveWorkout & SessDetail.
 function VisibilityButtons({ value, onChange }) {
@@ -1021,7 +1019,7 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
   const maxPts = Math.max(1, ...breakdown.map(b => b.points));
   const overview = html`
       ${!slim ? html`<div style=${{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
-        ${[{ l: t('pt.weekPoints'), v: wkNow.points, icon: Icons.flame }, { l: t('pt.weekMin'), v: wkNow.minutes, icon: Icons.clock }, { l: t('pt.weekSess'), v: wkNow.count, icon: Icons.calendar }].map(t => html`
+        ${[{ l: t('stat.weekSess'), v: curWeek.count, icon: Icons.calendar }, { l: t('stat.weekHours'), v: hrs(curWeek.minutes), icon: Icons.clock }, { l: t('stat.weekPoints'), v: curWeek.points, icon: Icons.flame }].map(t => html`
           <div key=${t.l} style=${{ background: C.bg2, borderRadius: r.md, padding: '12px 8px', textAlign: 'center', border: `1px solid ${C.bdr}` }}>
             <div style=${{ display: 'flex', justifyContent: 'center', color: ACC, marginBottom: 4 }}><${t.icon} size=${18}/></div>
             <p style=${{ margin: 0, fontSize: 9, color: C.txt3, fontWeight: 400, textTransform: 'sentence-case' }}>${t.l}</p>
@@ -1810,7 +1808,7 @@ function GymPair() {
         </div>
       `}
       <div style=${{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 20, position: 'relative' }}>
-        ${tab === 'home' && html`<${HomeTab} profile=${{ ...profile, photoURL: profile.img }} progs=${progs} sessions=${sessions} streak=${liveStreak(userDoc.streak)} totalSessions=${userDoc.totals?.sessions || 0} onStart=${startWorkout} onView=${openSess} onSwitch=${() => setPg('settings')} onManagePrograms=${() => setPg('progs')} onSeeAll=${() => setTab('me')} weeklyGoal=${userDoc.goals?.sessionsPerWeek || 3} points=${points7d(sessions)}/>`}
+        ${tab === 'home' && html`<${HomeTab} profile=${{ ...profile, photoURL: profile.img }} progs=${progs} sessions=${sessions} streak=${liveStreak(userDoc.streak)} totalSessions=${userDoc.totals?.sessions || 0} onStart=${startWorkout} onView=${openSess} onSwitch=${() => setPg('settings')} onManagePrograms=${() => setPg('progs')} onSeeAll=${() => setTab('me')} weeklyGoal=${userDoc.goals?.sessionsPerWeek || 3}/>`}
         ${tab === 'feed' && html`<${FeedTab} me=${meAuthor()} myReactions=${myReactions} onOpenComments=${openComments} onOpenProfile=${openProfile} onManage=${openSess} moderating=${isAdmin && adminMode} onAdminDelete=${adminDeletePost} refreshKey=${feedKey}/>`}
         ${tab === 'rank' && html`<${LeaderboardTab} me=${meAuthor()} onOpenProfile=${openProfile}/>`}
         ${tab === 'me' && html`
@@ -1819,7 +1817,7 @@ function GymPair() {
               profile=${{ ...profile, photoURL: profile.img, dept: userDoc.dept }}
               sessions=${sessions}
               streak=${liveStreak(userDoc.streak)}
-              points=${points7d(sessions)}
+              totals=${userDoc.totals || {}}
               weights=${weights}
               onView=${openSess}
               onAvatar=${() => openProfile(pid)}
