@@ -1,11 +1,42 @@
 import { useState, useEffect } from 'preact/hooks';
 import { html } from '../html.js';
-import { C, r, ACC } from '../ui/theme.js';
+import { C, r, ACC, sportColor } from '../ui/theme.js';
 import { Wrap, Empty } from '../ui/primitives.js';
 import { Icons } from '../ui/icons.js';
+import { SportIcon } from '../ui/sportIcons.js';
+import { PhotoView } from '../ui/Lightbox.js';
+import { actOf } from '../domain/activities.js';
+import { headline } from '../domain/session.js';
 import { fDT } from '../domain/format.js';
 import { listenComments, addComment, editComment, deleteComment } from '../data/repo-social.js';
 import { t } from '../i18n.js';
+
+// Thanh ngữ cảnh: cho biết ĐANG bình luận vào bài NÀO (tránh cảm giác "trang trống").
+// Không có nút tương tác — chỉ để đối chiếu đúng bài. Cùng nguồn hiển thị với PostCard.
+function PostContext({ post }) {
+  const a = actOf(post.type);
+  const ring = sportColor(a.iconKey);
+  const avatar = post.authorPhoto
+    ? html`<img src=${post.authorPhoto} style=${{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${ring}`, flexShrink: 0 }}/>`
+    : html`<div style=${{ width: 36, height: 36, borderRadius: '50%', border: `2px solid ${ring}`, background: C.bg3, color: ring, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>${(post.authorName || '?').charAt(0).toUpperCase()}</div>`;
+  const ell = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
+  return html`
+    <div style=${{ display: 'flex', gap: 10, alignItems: 'center', padding: '10px 16px', background: C.bg2, borderBottom: `1px solid ${C.bdr}`, flexShrink: 0 }}>
+      ${avatar}
+      <div style=${{ flex: 1, minWidth: 0 }}>
+        <p style=${{ margin: 0, fontSize: 13, lineHeight: 1.35, ...ell }}>
+          <b style=${{ fontWeight: 700, color: C.txt1 }}>${post.authorName}</b><span style=${{ color: C.txt2 }}> ${headline(post)}</span>
+        </p>
+        <p style=${{ margin: '1px 0 0', fontSize: 11, color: C.txt4, ...ell }}>
+          ${post.dept ? post.dept + ' · ' : ''}${fDT(post.loggedAt || post.startTime)}
+        </p>
+        ${post.note ? html`<p style=${{ margin: '2px 0 0', fontSize: 12, color: C.txt3, fontStyle: 'italic', ...ell }}>${post.note}</p>` : ''}
+      </div>
+      ${post.photoUrl
+        ? html`<${PhotoView} src=${post.photoUrl} alt=${post.title || ''} style=${{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0, background: C.bg3 }}/>`
+        : html`<${SportIcon} k=${a.iconKey} size=${22} color=${ring} cx=${{ flexShrink: 0 }}/>`}
+    </div>`;
+}
 
 export function CommentsSheet({ post, me, canModerate, onClose }) {
   const sidFull = `${post.authorUid}_${post.id}`;
@@ -48,6 +79,8 @@ export function CommentsSheet({ post, me, canModerate, onClose }) {
         <button onClick=${onClose} class="btn-action" style=${{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.txt2 }}><${Icons.back} size=${18}/></button>
         <h2 style=${{ margin: 0, fontSize: 17, fontWeight: 600, color: C.txt1 }}>${t('cmt.title')}</h2>
       </div>
+
+      <${PostContext} post=${post}/>
 
       <div style=${{ flex: 1, overflowY: 'auto', padding: '14px 16px', WebkitOverflowScrolling: 'touch' }}>
         ${comments.length === 0

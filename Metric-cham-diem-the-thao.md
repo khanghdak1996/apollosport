@@ -2,11 +2,11 @@
 
 *Phạm vi: chạy bộ/đi bộ/đạp xe, gym/tập tạ, yoga/thể dục nhẹ — nhập liệu 100% thủ công, dùng cho leaderboard nội bộ.*
 
-> **📌 Trạng thái ĐÃ TRIỂN KHAI (2026-07-31):** Đây là tài liệu thiết kế (nhiều vòng đề xuất). Bản **đã code** trong app khác vài chỗ so với các vòng khám phá bên dưới — chốt cuối:
+> **📌 Trạng thái ĐÃ TRIỂN KHAI (2026-07-31, cập nhật 2026-08-04):** Đây là tài liệu thiết kế (nhiều vòng đề xuất). Bản **đã code** trong app khác vài chỗ so với các vòng khám phá bên dưới — chốt cuối:
 > - Công thức: **điểm = MET hiệu dụng × giờ × 10** (RPE 5 mức).
 > - Môn có tốc độ (chạy/đi/đạp/bơi): **bắt buộc quãng đường → tự tính tốc độ → MET nền × hệ số RPE (0.8–1.2)**. KHÔNG dùng dropdown pace-band thủ công (mục 4/10 chỉ là ý tưởng trung gian, đã bỏ).
-> - Môn không có tốc độ: nội suy `metMin↔metMax` theo RPE. Gym: volume load × RPE.
-> - Code: `src/domain/session.js` (`effectiveMet`, `computePoints`) + `src/domain/activities.js` (`RPE_LEVELS`, `speedBands`, `metForSpeed`).
+> - Môn không có tốc độ: nội suy `metMin↔metMax` theo RPE. Gym: **volume load × RPE × hệ số DOTS (cân nặng + giới)** — xem **Vòng 4** để biết vì sao & cách tính.
+> - Code: `src/domain/session.js` (`effectiveMet`, `computePoints`) + `src/domain/activities.js` (`RPE_LEVELS`, `speedBands`, `metForSpeed`, `dotsCoeff`).
 
 ## TL;DR
 
@@ -374,3 +374,52 @@ Chưa có hệ số chính xác — cần làm trước khi launch:
 - [ ] Calibrate hệ số `k` cho gym theo hướng dẫn mục 17.1.
 - [ ] Áp dụng giới hạn chống gian lận (mục 6, Vòng 1): trần thời lượng/buổi theo môn, giảm dần lợi suất điểm sau ~3.000 MET-phút/tuần, cảnh báo nếu `pace_band` và `rpe_level` lệch nhau quá xa.
 - [ ] User-test bảng 5 mức RPE với vài người dùng thật trước khi launch toàn app — kiểm tra xem mô tả có đủ rõ để tự chọn nhanh không.
+
+---
+
+# Vòng 4 — Chuẩn hoá điểm gym theo cân nặng + giới tính (DOTS)
+
+*Triển khai 2026-08-04. Vá bất công của công thức gym: volume load TUYỆT ĐỐI thiên vị người nặng/khoẻ (thường là nam).*
+
+## 21. Vấn đề
+
+Điểm gym (mục 12 nhánh 3 / mục 17 nhánh gym) chấm theo **volume load tuyệt đối** (tổng kg tạ nâng). Nam 70kg đương nhiên nâng tổng tạ nhiều hơn nữ 55kg ở cùng độ nỗ lực → điểm cao hơn một cách bất công. Đây là môn DUY NHẤT bị lệch, vì nó là môn duy nhất chấm bằng *tải trọng ngoài tuyệt đối*; cardio/thể thao dùng **MET** — vốn đã chuẩn hoá theo cân nặng (MET là chỉ số chuyển hoá trên mỗi kg) nên đã công bằng.
+
+**Lưu ý quan trọng:** chỉ *chia cho cân nặng* (linear `vol/bw`, hay allometric `vol/bw^0.67`) VẪN ưu ái nam, vì nam khoẻ hơn **trên mỗi kg** (nam bench 1×bodyweight dễ hơn nữ bench 1×bodyweight). Muốn khép phần chênh này phải có hệ số theo **giới**, không chỉ cân nặng.
+
+## 22. Giải pháp: hệ số DOTS
+
+Nhân volume load với **hệ số DOTS** — đa thức bậc 4 theo cân nặng, có hằng số riêng nam/nữ (chuẩn powerlifting hiện đại, thay Wilks). DOTS chuẩn hoá đồng thời cả *cỡ người* lẫn *sức/kg theo giới*, nên hai người "khó ngang nhau" ra hệ số gần nhau. Dùng THUẦN như hệ số nhân, không phải điểm sức mạnh tuyệt đối.
+
+```
+MET gym = clamp( metMin,  totalVol × rpe_raw_for_gym × dotsCoeff(bw, sex) × GYM_K / phút,  GYM_MET_CAP )
+điểm    = MET gym × giờ × 10
+```
+
+`dotsCoeff(bwKg, sex) = 500 / (a + b·bw + c·bw² + d·bw³ + e·bw⁴)` với hằng số:
+
+| | a | b | c | d | e |
+|---|---|---|---|---|---|
+| Nam | −307.75076 | 24.0900756 | −0.1918759221 | 0.0007391293 | −0.000001093 |
+| Nữ | −57.96288 | 13.6175032 | −0.1126655495 | 0.0005158568 | −0.0000010706 |
+
+Hệ số tham chiếu: nam 70kg ≈ 0.751, nữ 55kg ≈ 1.173, nữ 70kg ≈ 1.011 (nữ nặng hơn → hệ số THẤP hơn, không thổi phồng điểm).
+
+## 23. Calibrate & fallback
+
+- **`GYM_K` 0.011 → 0.0146**: neo để **nam 70kg giữ NGUYÊN điểm** như trước chặng DOTS (`0.011 / 0.751 ≈ 0.0146`). Nhờ vậy nhóm nam ~70kg (đa số hiện tại) không xáo trộn; nữ/người nhẹ được hệ số cao hơn → điểm tăng đúng phần bất công cũ. `GYM_MET_CAP = 11` giữ nguyên.
+- **`NEUTRAL_DOTS = dotsCoeff(70, 'male')`**: khi buổi tập THIẾU cân nặng/giới (session cũ, hoặc user chưa nhập) → dùng hệ số trung tính này ⇒ chấm y như hệ cũ, **KHÔNG hồi tố** điểm buổi cũ.
+
+## 24. Bảo mật & data model
+
+- **Không lưu hệ số vào doc:** cân nặng là dữ liệu tuyệt mật (`users/{uid}/private/weights`, chỉ chủ đọc), mà session hiển thị cho cả công ty và hệ số DOTS suy ngược ra cân nặng được. Vì vậy hệ số **chỉ sống trên object chấm điểm tạm** lúc dựng/preview; doc lưu **duy nhất `points` đã chốt**. Audit tính lại bằng cách nhập tay cân nặng+giới, không đọc từ session.
+- **Field mới `gender`** (`'' | 'male' | 'female'`) ở `users/{uid}` (Firestore schemaless — user cũ chưa có field này, phải backfill tay/onboard). Cân nặng dùng lại kho riêng tư sẵn có.
+- **Thu thập:** Onboarding bắt buộc nhập cân nặng + giới cho user mới; Settings sửa giới tính. Chiều cao **không** dùng (không có cơ sở trong chấm sức mạnh).
+
+## 25. Code & công cụ
+
+- `src/domain/activities.js`: `dotsCoeff(bwKg, sex)` + hằng số `DOTS_M/DOTS_F`.
+- `src/domain/session.js`: nhánh gym của `effectiveMet` nhân `s.detail?.dots ?? NEUTRAL_DOTS`; `buildGymSession`/`finalizeSession` nhận `body = {weightKg, sex}` → tính hệ số lúc post (không lưu). `GYM_K = 0.0146`.
+- Audit: `node tools/audit-score/audit.mjs gym <vol> <phút> <rpe> <cân nặng> <giới>` (vd `gym 5000 45 2 55 female`).
+
+**Giới hạn đã biết:** DOTS chỉ biết cân nặng + giới, không phân biệt mỡ/cơ, và không bắt được khác biệt theo *nhóm cơ* (nữ có thể khoẻ tương đối hơn ở thân dưới, nam ở thân trên) — đây là hệ số toàn buổi, chấp nhận sai số trung bình để đổi lấy đơn giản.
