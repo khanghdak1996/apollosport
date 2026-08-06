@@ -1,8 +1,14 @@
 // Vercel serverless — gửi thông báo đẩy (FCM). Client gọi sau khi thả tim / bình luận /
 // mời CLB / đăng thông báo nhóm-mục tiêu. NỘI DUNG soạn ở SERVER (client chỉ gửi loại + id)
 // để không cho gửi thông báo tuỳ ý. Verify Firebase ID token như api/chat.js.
+//
+// CHỐNG GIẢ MẠO (không tin client):
+//  1) TÊN người gửi lấy từ users/{caller}.name theo uid đăng nhập — KHÔNG dùng actorName body.
+//  2) reaction/comment phải TỒN TẠI thật trong Firestore (đúng của caller) mới gửi — chống bịa
+//     "X đã thả tim" khi không hề thả. preview bình luận lấy từ chính doc, không tin body.
+//  3) Cooldown per (caller, mục tiêu) chống spam đẩy do bật/tắt tim liên tục.
 // Người nhận + token đọc bằng service account (bỏ qua rules). Xem api/_lib/fcm.js + PUSH-SETUP.md.
-const { getAccessToken, fsGet, fsListIds, tokensForUsers, sendToTokens } = require('./_lib/fcm.js');
+const { getAccessToken, fsGet, fsListIds, fsPatch, tokensForUsers, sendToTokens } = require('./_lib/fcm.js');
 
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || 'AIzaSyBUUbB149e2J_mZHulhbcYtXyUy2JbhN0k';
 const ALLOWED_DOMAIN = 'apollo.edu.vn';
@@ -11,14 +17,28 @@ const ALLOWED_ORIGINS = [
   'http://localhost:8137', 'http://127.0.0.1:8137',
   'http://localhost:8146', 'http://127.0.0.1:8146',
 ];
+const COOLDOWN_MS = 4000; // khoảng nghỉ tối thiểu giữa 2 push cùng mục tiêu từ 1 người
 
 function send(res, status, obj) { res.status(status).json(obj); }
 const clip = (s, n) => (typeof s === 'string' ? s : '').replace(/\s+/g, ' ').trim().slice(0, n);
 
+// Cho phép gửi push cho (caller, tag) này không? Ghi mốc thời gian để chặn spam bật/tắt.
+// Fail-open: lỗi đọc/ghi mốc KHÔNG được chặn thông báo thật (ưu tiên khả dụng).
+async function rateOk(caller, tag, at) {
+  if (!tag) return true;
+  const id = `${caller}_${tag}`.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 200);
+  try {
+    const d = await fsGet(`notifyRate/${id}`, at);
+    const last = (d && Number(d.at)) || 0;
+    if (Date.now() - last < COOLDOWN_MS) return false;
+    await fsPatch(`notifyRate/${id}`, { at: Date.now() }, at);
+    return true;
+  } catch { return true; }
+}
+
 // Xây "job" push theo loại: trả { uids:[người nhận], title, body, url, tag } hoặc null.
-// caller = uid người gọi (để loại chính họ khỏi người nhận). at = access token.
-async function buildJob(type, b, caller, at) {
-  const actor = clip(b.actorName, 40) || 'Ai đó';
+// caller = uid người gọi (server-verified). actor = TÊN THẬT theo users/{caller}.name. at = access token.
+async function buildJob(type, b, caller, actor, at) {
   const url = '/';
   switch (type) {
     case 'reaction':
@@ -27,9 +47,17 @@ async function buildJob(type, b, caller, at) {
       const s = await fsGet(`sessions/${b.sessionId}`, at);
       if (!s || !s.authorUid || s.authorUid === caller) return null; // không tự báo mình
       const what = clip(s.title, 40) || 'buổi tập';
-      if (type === 'reaction')
+      if (type === 'reaction') {
+        // Phải có doc reaction thật của caller trên bài này (reactions/{caller}).
+        const r = await fsGet(`sessions/${b.sessionId}/reactions/${caller}`, at);
+        if (!r || r.uid !== caller) return null;
         return { uids: [s.authorUid], title: `${actor} đã thả tim`, body: `bài "${what}" của bạn`, url, tag: `react:${b.sessionId}` };
-      const preview = clip(b.preview, 80);
+      }
+      // comment: phải có doc bình luận thật của caller (client gửi kèm commentId). preview lấy từ doc.
+      if (!b.commentId) return null;
+      const c = await fsGet(`sessions/${b.sessionId}/comments/${b.commentId}`, at);
+      if (!c || c.uid !== caller) return null;
+      const preview = clip(c.text, 80);
       return { uids: [s.authorUid], title: `${actor} đã bình luận`, body: preview || `bài "${what}" của bạn`, url, tag: `cmt:${b.sessionId}` };
     }
     case 'clubInvite': {
@@ -88,8 +116,15 @@ module.exports = async function handler(req, res) {
 
   try {
     const at = await getAccessToken();
-    const job = await buildJob(body.type, body, caller, at);
+    // TÊN người gửi lấy từ hồ sơ theo uid đăng nhập (chống giả mạo tên qua body).
+    const callerDoc = await fsGet(`users/${caller}`, at);
+    const actor = clip(callerDoc && callerDoc.name, 40) || 'Ai đó';
+
+    const job = await buildJob(body.type, body, caller, actor, at);
     if (!job || !job.uids.length) return send(res, 200, { sent: 0 });
+
+    // Chống spam: cùng người + cùng mục tiêu trong cooldown → bỏ qua (đã có push gần đây).
+    if (!(await rateOk(caller, job.tag, at))) return send(res, 200, { sent: 0, throttled: true });
 
     const tokens = await tokensForUsers(job.uids, at);
     if (!tokens.length) return send(res, 200, { sent: 0 });

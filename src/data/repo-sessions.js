@@ -1,56 +1,32 @@
 import {
   writeBatch, doc, deleteDoc, updateDoc, collection, query, where, orderBy, limit,
-  startAfter, getDoc, getDocs, setDoc, onSnapshot, increment, serverTimestamp,
+  startAfter, getDocs, onSnapshot, serverTimestamp,
 } from 'fb/firestore';
 import { db, reportCloudError } from '../firebase.js';
 import { t } from '../i18n.js';
 import { advanceStreak, computeStreak, dayStr } from '../domain/streak.js';
-import { weekId, monthId } from '../domain/period.js';
+import { requestRescore } from './score.js';
 
 const PAGE = 15;
-const DAY_MIN_CAP = 120; // phút tối đa tính điểm/xếp hạng mỗi ngày
 
 const sid = (uid, id) => `${uid}_${id}`;
 
-// Lưu 1 batch: session + tổng/streak trên user + entry tuần & tháng cho leaderboard.
-// me: { uid, name, photoURL, dept, streak, prefs }. dayCtx: { alreadyCountedToday, minutesToday }.
-// Trả streak mới để cập nhật userDoc cục bộ.
+// Lưu buổi tập + cập nhật streak cục bộ trên user doc. totals + entry leaderboard KHÔNG ghi ở
+// client nữa — Cloud Function onSessionWrite tính lại từ buổi tập THẬT (server-authoritative,
+// chống bịa điểm qua F12). dayCtx giữ cho tương thích chữ ký gọi (không còn dùng).
+// me: { uid, name, photoURL, dept, streak, prefs }. Trả streak mới để cập nhật userDoc cục bộ.
 export async function saveSession(session, me, dayCtx = {}) {
   const b = writeBatch(db);
   b.set(doc(db, 'sessions', sid(me.uid, session.id)), session);
 
   const st = advanceStreak(me.streak, session.date);
-  const volKg = session.type === 'gym' ? Math.round(session.detail?.totalVol || 0) : 0;
-
   b.set(doc(db, 'users', me.uid), {
     streak: st,
     lastActiveAt: serverTimestamp(),
-    totals: {
-      sessions: increment(1),
-      minutes: increment(session.activeMinutes),
-      points: increment(session.points),
-      volumeKg: increment(volKg),
-    },
   }, { merge: true });
 
-  const counted = session.visibility === 'company' && session.activeMinutes >= 5;
-  if (counted && !me.prefs?.optOutLeaderboard) {
-    const addSession = dayCtx.alreadyCountedToday ? 0 : 1;
-    const capMin = Math.max(0, Math.min(session.activeMinutes, DAY_MIN_CAP - (dayCtx.minutesToday || 0)));
-    for (const pid of [weekId(session.date), monthId(session.date)]) {
-      b.set(doc(db, 'leaderboard', pid, 'entries', me.uid), {
-        uid: me.uid, name: me.name, photoURL: me.photoURL || null, dept: me.dept || '',
-        sessions: increment(addSession),
-        minutes: increment(capMin),
-        points: increment(session.points),
-        volumeKg: increment(volKg),
-        longestStreakInPeriod: st.current,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
-    }
-  }
-
   await b.commit();
+  requestRescore([session.date]); // server tính lại totals + leaderboard từ buổi thật (fire-and-forget)
   return st;
 }
 
@@ -76,137 +52,28 @@ export async function updateSessionContent(uid, id, patch) {
   await updateDoc(doc(db, 'sessions', sid(uid, id)), data);
 }
 
-// F5 — Đổi công khai/riêng tư của MỘT buổi đã đăng, KÈM reconcile leaderboard tuần & tháng.
-// totals (điểm/phút/buổi) đếm MỌI buổi bất kể visibility → KHÔNG đổi ở đây; chỉ entry
-// leaderboard (chỉ tính 'company') cần tính lại. allSessions = danh sách buổi CỤC BỘ
-// SAU khi đã đổi visibility của bài này (để recompute self-correcting). Rules cho chủ bài
-// update visibility (authorUid/loggedAt/date/counters giữ nguyên).
+// F5 — Đổi công khai/riêng tư của MỘT buổi đã đăng. Chỉ ghi field visibility; entry leaderboard
+// (chỉ tính 'company') do Cloud Function tính lại. allSessions giữ cho tương thích (không dùng).
 export async function updateSessionVisibility(session, visibility, me, allSessions) {
-  const b = writeBatch(db);
-  b.update(doc(db, 'sessions', sid(me.uid, session.id)), { visibility });
-
-  if (!me.prefs?.optOutLeaderboard) {
-    const st = computeStreak(allSessions.map(s => s.date).filter(Boolean));
-    const periods = [
-      [weekId(session.date), d => weekId(d) === weekId(session.date)],
-      [monthId(session.date), d => monthId(d) === monthId(session.date)],
-    ];
-    for (const [pid, inPeriod] of periods) {
-      const ref = doc(db, 'leaderboard', pid, 'entries', me.uid);
-      const agg = recomputePeriodEntry(allSessions, inPeriod);
-      if (!agg) { b.delete(ref); continue; }
-      b.set(ref, {
-        uid: me.uid, name: me.name, photoURL: me.photoURL || null, dept: me.dept || '',
-        sessions: agg.sessions, minutes: agg.minutes, points: agg.points, volumeKg: agg.volumeKg,
-        longestStreakInPeriod: st.current, updatedAt: serverTimestamp(),
-      });
-    }
-  }
-  await b.commit();
+  await updateDoc(doc(db, 'sessions', sid(me.uid, session.id)), { visibility });
+  requestRescore([session.date]); // leaderboard chỉ tính 'company' → đổi visibility phải tính lại
 }
 
-// Tính lại entry leaderboard của MỘT kỳ từ các buổi tập cục bộ còn lại (sau khi xoá 1 bài).
-// Khớp công thức tổng hợp ở saveSession: điểm cộng dồn, phút cap 120/ngày, sessions = số NGÀY có tập.
-function recomputePeriodEntry(remaining, inPeriod) {
-  const counted = remaining.filter(s =>
-    (s.visibility ?? 'company') === 'company' && (s.activeMinutes || 0) >= 5 && inPeriod(s.date));
-  if (counted.length === 0) return null;
-  const byDay = {};
-  let points = 0, volumeKg = 0;
-  for (const s of counted) {
-    points += s.points || 0;
-    volumeKg += (s.type === 'gym') ? Math.round(s.detail?.totalVol || s.totalVol || 0) : 0;
-    byDay[s.date] = (byDay[s.date] || 0) + (s.activeMinutes || 0);
-  }
-  const minutes = Object.values(byDay).reduce((t, m) => t + Math.min(m, DAY_MIN_CAP), 0);
-  return { points, volumeKg, minutes, sessions: Object.keys(byDay).length };
-}
-
-// TỰ CHỮA entry leaderboard của MÌNH cho các kỳ liên quan, từ buổi tập thật (nguồn chuẩn).
-// Gọi lúc đăng nhập (cùng chỗ tự chữa users/totals) để bắt các lệch mà counter increment
-// KHÔNG cập nhật: sửa tay điểm trên console, admin gỡ bài (adminDeleteSession cố ý không hoàn
-// nguyên), hay ghi lỡ. Chỉ đọc/ghi entry của CHÍNH me.uid nên khớp firestore.rules.
-//   me: { uid, name, photoURL, dept, prefs }.  allSessions: buổi cloud của mình (isSelf).
-// Reconcile theo kỳ mà SESSION thuộc về (không chỉ "hôm nay") — buổi tuần trước sang tuần
-// mới vẫn được chữa. Chỉ GHI khi lệch (so 4 counter + streak) để tránh write thừa mỗi lần mở.
-export async function reconcileMyLeaderboard(me, allSessions, date = dayStr(new Date())) {
-  if (me.prefs?.optOutLeaderboard) return; // opt-out: entry gỡ ở removeMyEntries, không tái tạo
-  const st = computeStreak(allSessions.map(s => s.date).filter(Boolean));
-  const jobs = new Map(); // pid -> inPeriod. Gồm kỳ hiện tại + kỳ của buổi trong ~40 ngày.
-  const add = (pid, inPeriod) => { if (!jobs.has(pid)) jobs.set(pid, inPeriod); };
-  add(weekId(date), d => weekId(d) === weekId(date));
-  add(monthId(date), d => monthId(d) === monthId(date));
-  for (const s of allSessions) {
-    if (!s.date || (Date.now() - new Date(s.date + 'T00:00:00')) / 86400000 > 40) continue;
-    const w = weekId(s.date), m = monthId(s.date);
-    add(w, d => weekId(d) === w);
-    add(m, d => monthId(d) === m);
-  }
-  for (const [pid, inPeriod] of jobs) {
-    const ref = doc(db, 'leaderboard', pid, 'entries', me.uid);
-    const agg = recomputePeriodEntry(allSessions, inPeriod);
-    let snap;
-    try { snap = await getDoc(ref); } catch { continue; } // lỗi mạng → để lần sau
-    const cur = snap.exists() ? snap.data() : null;
-    if (!agg) { // kỳ này không còn buổi hợp lệ → xoá entry mồ côi (vd đã xoá hết buổi)
-      if (cur) { try { await deleteDoc(ref); } catch (e) { reportCloudError(t('err.syncLeaderboard'), e); } }
-      continue;
-    }
-    // Chỉ so 4 counter (trục xếp hạng). KHÔNG so longestStreakInPeriod vì nó bằng streak
-    // hiện tại (đổi theo ngày) → tránh ghi lại mỗi lần mở app khi user chưa post gì mới.
-    const same = cur && ['points', 'minutes', 'sessions', 'volumeKg'].every(k => Math.round(cur[k] || 0) === agg[k]);
-    if (same) continue;
-    try {
-      await setDoc(ref, {
-        uid: me.uid, name: me.name, photoURL: me.photoURL || null, dept: me.dept || '',
-        sessions: agg.sessions, minutes: agg.minutes, points: agg.points, volumeKg: agg.volumeKg,
-        longestStreakInPeriod: st.current, updatedAt: serverTimestamp(),
-      });
-    } catch (e) { reportCloudError(t('err.syncLeaderboard'), e); }
-  }
-}
-
-// Xoá 1 buổi tập KÈM hoàn nguyên số liệu (cho trường hợp đăng nhầm / test).
-// - Xoá doc + giảm totals của user (điểm/phút/buổi/volume).
-// - Tính lại streak từ các buổi còn lại (giống nút "Tính lại chuỗi").
-// - Tính lại entry leaderboard tuần & tháng của bài bị xoá từ các buổi còn lại (self-correcting).
-// remaining = danh sách buổi tập CỤC BỘ đã bỏ bài này (bản mirror có totalVol top-level).
-// Trả streak mới để cập nhật userDoc cục bộ. Lưu ý: KHÔNG hoàn nguyên PR (giữ nguyên) và huy hiệu.
+// Xoá 1 buổi tập KÈM tính lại streak cục bộ (cho trường hợp đăng nhầm / test).
+// totals + entry leaderboard do Cloud Function tính lại từ buổi còn lại (server-authoritative).
+// remaining = danh sách buổi tập CỤC BỘ đã bỏ bài này. Trả streak mới để cập nhật userDoc cục bộ.
 export async function deleteSessionWithStats(session, me, remaining) {
   const b = writeBatch(db);
   b.delete(doc(db, 'sessions', sid(me.uid, session.id)));
 
   const st = computeStreak(remaining.map(s => s.date).filter(Boolean));
-  const volKg = session.type === 'gym' ? Math.round(session.detail?.totalVol || session.totalVol || 0) : 0;
   b.set(doc(db, 'users', me.uid), {
     streak: { current: st.current, longest: st.longest, lastDate: st.lastDate },
     lastActiveAt: serverTimestamp(),
-    totals: {
-      sessions: increment(-1),
-      minutes: increment(-(session.activeMinutes || 0)),
-      points: increment(-(session.points || 0)),
-      volumeKg: increment(-volKg),
-    },
   }, { merge: true });
 
-  if (!me.prefs?.optOutLeaderboard) {
-    const periods = [
-      [weekId(session.date), d => weekId(d) === weekId(session.date)],
-      [monthId(session.date), d => monthId(d) === monthId(session.date)],
-    ];
-    for (const [pid, inPeriod] of periods) {
-      const ref = doc(db, 'leaderboard', pid, 'entries', me.uid);
-      const agg = recomputePeriodEntry(remaining, inPeriod);
-      if (!agg) { b.delete(ref); continue; }
-      b.set(ref, {
-        uid: me.uid, name: me.name, photoURL: me.photoURL || null, dept: me.dept || '',
-        sessions: agg.sessions, minutes: agg.minutes, points: agg.points, volumeKg: agg.volumeKg,
-        longestStreakInPeriod: st.current, updatedAt: serverTimestamp(),
-      });
-    }
-  }
-
   await b.commit();
+  requestRescore([session.date]); // xoá buổi → server tính lại (kèm date để xoá entry mồ côi nếu kỳ hết buổi)
   return st;
 }
 

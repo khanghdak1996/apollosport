@@ -77,6 +77,48 @@ async function fsListIds(parentPath, coll, at, cap = 1000) {
   return ids;
 }
 
+// JS thường → giá trị kiểu Firestore (đệ quy: số/chuỗi/bool/null/mảng/map lồng như totals).
+function encVal(v) {
+  if (v === null || v === undefined) return { nullValue: null };
+  if (typeof v === 'number') return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
+  if (typeof v === 'boolean') return { booleanValue: v };
+  if (typeof v === 'string') return { stringValue: v };
+  if (Array.isArray(v)) return { arrayValue: { values: v.map(encVal) } };
+  if (typeof v === 'object') return { mapValue: { fields: Object.fromEntries(Object.entries(v).map(([k, x]) => [k, encVal(x)])) } };
+  return { nullValue: null };
+}
+
+// Ghi/ghi đè các field của 1 doc (PATCH + updateMask theo key top-level). Service account bỏ qua
+// rules → dùng để ghi leaderboard/totals server-authoritative (client bị rules cấm ghi).
+async function fsPatch(path, fields, at) {
+  const u = new URL(`${FS_BASE}/${path}`);
+  for (const k of Object.keys(fields)) u.searchParams.append('updateMask.fieldPaths', k);
+  const r = await fetch(u, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${at}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: Object.fromEntries(Object.keys(fields).map(k => [k, encVal(fields[k])])) }),
+  });
+  if (!r.ok) throw new Error(`fsPatch ${path} → ${r.status}`);
+}
+
+// Xoá 1 doc (vd entry leaderboard mồ côi khi user hết buổi trong kỳ). 404 coi như đã xoá.
+async function fsDelete(path, at) {
+  const r = await fetch(`${FS_BASE}/${path}`, { method: 'DELETE', headers: { Authorization: `Bearer ${at}` } });
+  if (!r.ok && r.status !== 404) throw new Error(`fsDelete ${path} → ${r.status}`);
+}
+
+// Chạy structured query ở gốc documents. Trả mảng doc đã unwrap (kèm _name = đường dẫn đầy đủ).
+async function fsQuery(structuredQuery, at) {
+  const r = await fetch(`${FS_BASE}:runQuery`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${at}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ structuredQuery }),
+  });
+  if (!r.ok) throw new Error(`fsQuery → ${r.status}`);
+  const rows = await r.json();
+  return (rows || []).filter((x) => x.document).map((x) => ({ _name: x.document.name, ...unwrap(x.document.fields || {}) }));
+}
+
 // Gom tất cả FCM token của 1 tập uid (đọc users/{uid}/private/push.tokens map).
 async function tokensForUsers(uids, at) {
   const out = new Set();
@@ -127,4 +169,4 @@ async function sendToTokens(tokens, msg, at) {
   return { sent, stale };
 }
 
-module.exports = { getAccessToken, fsGet, fsListIds, tokensForUsers, sendToTokens };
+module.exports = { getAccessToken, fsGet, fsListIds, fsPatch, fsDelete, fsQuery, tokensForUsers, sendToTokens };
