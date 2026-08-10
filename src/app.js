@@ -9,7 +9,7 @@ import { beep } from './ui/sound.js';
 import { uid, p2, fT, fD, durS, restLabel, fDM, fDT, hrs } from './domain/format.js';
 import { sVol, eVol, tVol, e1rm, startOfWeek, fWeek, pct, weeklyStats, exHistory, lastExSets, trainedExIds, titleOptions, sessionsByTitle, computePRs, exsOf, volOf, weeklyActive, sportBreakdown, distanceProgress, personalRecords, currentWeekActivity } from './domain/stats.js';
 import { EX } from './domain/exercises.js';
-import { EXDB } from './data/exercises-db.js';
+import { useEXDB } from './data/exercises-db-lazy.js';
 const REST_PRESETS = [60, 90, 120, 180]; // preset thời gian nghỉ giữa set (giây)
 import { ACT, actOf, fieldsOf, RPE_LEVELS, rpeOf, rpeLabel, rpeDesc, actLabel, flabel } from './domain/activities.js';
 import { buildGymSession, buildActivitySession, summaryStats, headline, computePoints, gymDotsFor } from './domain/session.js';
@@ -17,9 +17,10 @@ import { advanceStreak, liveStreak, dayStr } from './domain/streak.js';
 import { evaluateBadges, BADGES, badgeLabel } from './domain/badges.js';
 import { db } from './data/local.js';
 import { compressImage, uploadSessionPhoto, deleteSessionPhoto } from './data/photos.js';
-import { saveSession, deleteSession as repoDeleteSession, updateSessionContent, updateSessionVisibility, deleteSessionWithStats, adminDeleteSession, dayContext, allSessionsOf, reconcileMyLeaderboard } from './data/repo-sessions.js';
+import { saveSession, deleteSession as repoDeleteSession, updateSessionContent, updateSessionVisibility, deleteSessionWithStats, adminDeleteSession, dayContext, allSessionsOf } from './data/repo-sessions.js';
 import { loadMyReactions } from './data/repo-social.js';
 import { removeMyEntries } from './data/repo-leaderboard.js';
+import { requestRescore } from './data/score.js';
 import { getPrivateWeights, savePrivateWeights } from './data/repo-private.js';
 import { notifyLocal } from './data/push.js';
 import { fbInitError, reportCloudError, setCloudErrorHandler } from './firebase.js';
@@ -35,16 +36,19 @@ import { CalendarTab } from './screens/CalendarTab.js';
 import { FeedTab } from './screens/FeedTab.js';
 import { LeaderboardTab } from './screens/LeaderboardTab.js';
 import { CommentsSheet } from './screens/CommentsSheet.js';
-import { ChatBot } from './screens/ChatBot.js';
-import { Settings } from './screens/Settings.js';
 import { ProfileScreen } from './screens/ProfileScreen.js';
-import { GuidesScreen } from './screens/GuidesScreen.js';
-import { GuideDetail } from './screens/GuideDetail.js';
-import { ClubsScreen } from './screens/ClubsScreen.js';
-import { ClubDetail } from './screens/ClubDetail.js';
-import { GoalsScreen } from './screens/GoalsScreen.js';
 import { myInvites, acceptInvite, dismissInvite } from './data/repo-clubs.js';
-import { guideForExercise, guidesForSport, richGuides } from './domain/guides.js';
+// ── Tải động: các màn/cluster nặng chỉ nạp khi mở, không gói vào initial load của app ──
+import { LazyScreen } from './ui/Lazy.js';
+import { useGuides, useGuidesWhen, ensureGuides } from './domain/guides-lazy.js';
+// loader ổn định (module scope) cho từng màn lazy — KHÔNG khai báo inline trong render (sẽ nạp lại).
+const loadChatBot      = () => import('./screens/ChatBot.js');
+const loadSettings     = () => import('./screens/Settings.js');
+const loadGuidesScreen = () => import('./screens/GuidesScreen.js');
+const loadGuideDetail  = () => import('./screens/GuideDetail.js');
+const loadClubsScreen  = () => import('./screens/ClubsScreen.js');
+const loadClubDetail   = () => import('./screens/ClubDetail.js');
+const loadGoalsScreen  = () => import('./screens/GoalsScreen.js');
 
 function ResumeBar({ workout, onResume }) {
   const [elapsed, setElapsed] = useState(() => Math.floor((Date.now() - workout.startTime) / 1000));
@@ -163,6 +167,7 @@ function ProgsTab({ progs, onNew, onDel, onEdit, onStart, onBack }) {
 }
 
 function ActiveWorkout({ workout, sessions, onChange, onFinish, onDiscard, onPickEx, onMinimize, onGuide }) {
+  const gm = useGuides(); // nạp domain/guides.js nền khi vào màn tập; nút "hướng dẫn" hiện khi sẵn sàng
   const [elapsed, setElapsed] = useState(() => Math.floor((Date.now() - workout.startTime) / 1000));
   const [rest, setRest] = useState(null);
   const [restTime, setRestTime] = useState(90);
@@ -310,7 +315,7 @@ function ActiveWorkout({ workout, sessions, onChange, onFinish, onDiscard, onPic
                 <${ExThumb} exId=${ex.exId} name=${ex.name} size=${32}/>
                 <div style=${{ minWidth: 0 }}>
                   <p style=${{ margin: 0, fontSize: 15, fontWeight: 600, color: ACC, letterSpacing: '-0.01em' }}>${ex.name}</p>
-                  ${onGuide && guideForExercise(ex.exId) && html`<button onClick=${() => onGuide(ex.exId)} class="btn-action" style=${{ background: 'transparent', border: 'none', color: C.txt2, fontSize: 11.5, fontWeight: 500, cursor: 'pointer', padding: '2px 0', display: 'flex', alignItems: 'center', gap: 3 }}>📖 ${t('common.guide')}</button>`}
+                  ${onGuide && gm && gm.guideForExercise(ex.exId) && html`<button onClick=${() => onGuide(ex.exId)} class="btn-action" style=${{ background: 'transparent', border: 'none', color: C.txt2, fontSize: 11.5, fontWeight: 500, cursor: 'pointer', padding: '2px 0', display: 'flex', alignItems: 'center', gap: 3 }}>📖 ${t('common.guide')}</button>`}
                 </div>
               </div>
               <div style=${{ display: 'flex', gap: 6 }}>
@@ -590,7 +595,8 @@ function CreateProg({ exList, onSave, onClose, editProg }) {
 // Icon tròn nhỏ trước tên bài tập. Dùng ảnh tư thế kết thúc (1.jpg) từ thư viện EXDB;
 // bài tự tạo (không có trong EXDB) → fallback chữ cái đầu.
 function ExThumb({ exId, name, size = 34 }) {
-  const img = EXDB[exId] && EXDB[exId].images && EXDB[exId].images[1];
+  const EXDB = useEXDB(); // null tới khi exercises-db nạp xong → hiện fallback chữ cái, rồi re-render
+  const img = EXDB && EXDB[exId] && EXDB[exId].images && EXDB[exId].images[1];
   const base = { width: size, height: size, borderRadius: '50%', flexShrink: 0, border: `1px solid ${C.bdr}`, background: C.bg3 };
   if (img) return html`<img src=${img} loading="lazy" alt="" style=${{ ...base, objectFit: 'cover', display: 'block' }}/>`;
   return html`<div style=${{ ...base, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.txt3, fontSize: Math.round(size * 0.42), fontWeight: 600 }}>${(name || '?').charAt(0).toUpperCase()}</div>`;
@@ -1322,6 +1328,8 @@ function GymPair() {
   const [tab, setTab] = useState('home');
   const [pg, setPg] = useState(null);
   const [pgCtx, setPgCtx] = useState(null);
+  // Nạp domain/guides.js khi vào route cần hướng dẫn (không nạp lúc mở app); null tới khi sẵn sàng.
+  const gm = useGuidesWhen(pg === 'log-activity' || pg === 'guides');
   const [ready, setReady] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [finishedWorkout, setFinishedWorkout] = useState(null);
@@ -1605,7 +1613,10 @@ function GymPair() {
         return merged;
       });
 
-      // Tự chữa totals từ TẤT CẢ buổi thật (gồm cả buổi riêng tư).
+      // totals số chuẩn trên cloud + entry leaderboard do SERVER tính (server-authoritative, xem
+      // /api/score): client không còn tự ghi totals/leaderboard nữa (chống bịa điểm F12). Ở đây chỉ
+      // so lệch: nếu totals tính từ buổi thật KHÁC totals đang lưu → cập nhật CỤC BỘ cho mượt +
+      // nhờ server tính lại (tự chữa/backfill). Có guard `drift` để KHÔNG lặp vô hạn (deps userDoc).
       const real = cloud.reduce((t, s) => ({
         sessions: t.sessions + 1,
         minutes: t.minutes + (s.activeMinutes || 0),
@@ -1615,16 +1626,9 @@ function GymPair() {
       const cur = userDoc.totals || {};
       const drift = ['sessions', 'minutes', 'points', 'volumeKg'].some(k => Math.round(cur[k] || 0) !== real[k]);
       if (drift) {
-        try { await updateUserDoc(pid, { totals: real }); if (alive) setUserDoc(d => ({ ...d, totals: real })); }
-        catch { /* để lần đăng nhập sau chữa tiếp */ }
+        if (alive) setUserDoc(d => ({ ...d, totals: real }));
+        requestRescore();
       }
-
-      // Tự chữa entry leaderboard tuần/tháng của mình (giống totals ở trên) — bắt lệch do
-      // sửa tay điểm/kiểm duyệt vốn không cập nhật counter increment. Best-effort.
-      await reconcileMyLeaderboard(
-        { uid: pid, name: userDoc.name, photoURL: userDoc.photoURL || null, dept: userDoc.dept || '', prefs: userDoc.prefs },
-        cloud,
-      );
     })();
     return () => { alive = false; };
   }, [pid, userDoc]);
@@ -1727,7 +1731,7 @@ function GymPair() {
     if (pg === 'pick-ex') return html`<${PickEx} exList=${exList} onPick=${e => { pgCtx && pgCtx.cb(e); setPg(null); setPgCtx(null); }} onClose=${() => { setPg(null); setPgCtx(null); }} onAddEx=${ex => { saveC([...exList, ex]); }}/>`;
     if (pg === 'save-workout') return html`<${SaveWorkout} workout=${active} gymDots=${gymDotsFor(myBody())} defaultVisibility=${userDoc.prefs?.defaultVisibility || 'company'} onBack=${() => setPg(null)} onDiscard=${() => { if (window.confirm(t('save.discardConfirm'))) { discardWorkout(); setPg(null); } }} onSave=${finishWorkout}/>`;
     if (pg === 'guide-detail') return html`<${GuideDetail} guide=${pgCtx.guide} onBack=${pgCtx.back || (() => setPg(null))}/>`;
-    return html`<${ActiveWorkout} workout=${active} sessions=${sessions} onChange=${saveA} onFinish=${() => setPg('save-workout')} onDiscard=${discardWorkout} onPickEx=${goPickEx} onMinimize=${() => setShowWorkout(false)} onGuide=${exId => openGuide(guideForExercise(exId), () => { setPgCtx(null); setPg(null); })}/>`;
+    return html`<${ActiveWorkout} workout=${active} sessions=${sessions} onChange=${saveA} onFinish=${() => setPg('save-workout')} onDiscard=${discardWorkout} onPickEx=${goPickEx} onMinimize=${() => setShowWorkout(false)} onGuide=${async exId => { const g = await ensureGuides(); openGuide(g.guideForExercise(exId), () => { setPgCtx(null); setPg(null); }); }}/>`;
   }
   if (pg === 'create-prog') return html`<${CreateProg} exList=${exList} editProg=${pgCtx} onSave=${p => { saveP(pgCtx ? progs.map(x => x.id === p.id ? p : x) : [...progs, p]); setPg(null); setPgCtx(null); }} onClose=${() => { setPg(null); setPgCtx(null); }}/>`;
   if (pg === 'sess-detail') return html`<${SessDetail} session=${pgCtx} canEdit=${pgCtx.authorUid === pid} onSave=${editSession} onChangeVisibility=${changeVisibility} onDelete=${deletePost} onClose=${() => { setPg(null); setPgCtx(null); }}/>`;
@@ -1735,7 +1739,7 @@ function GymPair() {
   if (pg === 'pick-activity') return html`<${PickActivity} recentTypes=${(userDoc.prefs?.sports) || []} onClose=${() => setPg(null)} onGym=${() => setPg('progs')} onActivity=${type => { setPgCtx({ type }); setPg('log-activity'); }}/>`;
   if (pg === 'log-activity') {
     const t = pgCtx.type;
-    const sportGuide = guidesForSport(t)[0] || null;
+    const sportGuide = gm ? (gm.guidesForSport(t)[0] || null) : null; // null tới khi guides nạp xong
     return html`<${LogActivity} type=${t} defaultVisibility=${userDoc.prefs?.defaultVisibility || 'company'} onBack=${() => { setPg('pick-activity'); setPgCtx(null); }} onSave=${logActivity} hasGuide=${!!sportGuide} onOpenGuide=${() => openGuide(sportGuide, () => { setPgCtx({ type: t }); setPg('log-activity'); })}/>`;
   }
   if (pg === 'comments') return html`<${CommentsSheet} post=${pgCtx} me=${meAuthor()} canModerate=${isAdmin && adminMode} onClose=${() => { setPg(null); setPgCtx(null); }}/>`;
@@ -1743,7 +1747,7 @@ function GymPair() {
   const openSess = s => { setPg('sess-detail'); setPgCtx(s); };
   const openComments = p => { setPg('comments'); setPgCtx(p); };
 
-  if (pg === 'settings') return html`<${Settings}
+  if (pg === 'settings') return html`<${LazyScreen} loader=${loadSettings} name="Settings"
         profile=${{
       name: userDoc.name || '',
       dept: userDoc.dept || '',
@@ -1769,11 +1773,11 @@ function GymPair() {
         onSignOut=${() => signOutUser()}
         onDeleteAccount=${deleteAccount}/>`;
   if (pg === 'user-profile') return html`<${ProfileScreen} uid=${pgCtx.uid} isSelf=${pgCtx.isSelf} onBack=${() => { setPg(null); setPgCtx(null); }} onView=${openSess}/>`;
-  if (pg === 'guides') return html`<${GuidesScreen} guides=${richGuides()} onBack=${() => setPg(null)} onOpen=${g => openGuide(g, () => setPg('guides'))}/>`;
-  if (pg === 'guide-detail') return html`<${GuideDetail} guide=${pgCtx.guide} onBack=${pgCtx.back || (() => setPg(null))}/>`;
-  if (pg === 'clubs') return html`<${ClubsScreen} me=${meAuthor()} onBack=${() => setPg(null)} onOpenClub=${cid => { setPgCtx({ clubId: cid }); setPg('club-detail'); }}/>`;
-  if (pg === 'club-detail') return html`<${ClubDetail} clubId=${pgCtx.clubId} me=${meAuthor()} mySessions=${sessions} myReactions=${myReactions} isAdmin=${isAdmin} onBack=${() => setPg('clubs')} onOpenProfile=${openProfile} onOpenComments=${openComments} onDeleted=${() => setPg('clubs')}/>`;
-  if (pg === 'goals') return html`<${GoalsScreen} me=${meAuthor()} mySessions=${sessions} isAdmin=${isAdmin} onBack=${() => setPg(null)}/>`;
+  if (pg === 'guides') return html`<${LazyScreen} loader=${loadGuidesScreen} name="GuidesScreen" guides=${gm ? gm.richGuides() : []} onBack=${() => setPg(null)} onOpen=${g => openGuide(g, () => setPg('guides'))}/>`;
+  if (pg === 'guide-detail') return html`<${LazyScreen} loader=${loadGuideDetail} name="GuideDetail" guide=${pgCtx.guide} onBack=${pgCtx.back || (() => setPg(null))}/>`;
+  if (pg === 'clubs') return html`<${LazyScreen} loader=${loadClubsScreen} name="ClubsScreen" me=${meAuthor()} onBack=${() => setPg(null)} onOpenClub=${cid => { setPgCtx({ clubId: cid }); setPg('club-detail'); }}/>`;
+  if (pg === 'club-detail') return html`<${LazyScreen} loader=${loadClubDetail} name="ClubDetail" clubId=${pgCtx.clubId} me=${meAuthor()} mySessions=${sessions} myReactions=${myReactions} isAdmin=${isAdmin} onBack=${() => setPg('clubs')} onOpenProfile=${openProfile} onOpenComments=${openComments} onDeleted=${() => setPg('clubs')}/>`;
+  if (pg === 'goals') return html`<${LazyScreen} loader=${loadGoalsScreen} name="GoalsScreen" me=${meAuthor()} mySessions=${sessions} isAdmin=${isAdmin} onBack=${() => setPg(null)}/>`;
 
   return html`
     <${Wrap}>
@@ -1848,7 +1852,7 @@ function GymPair() {
         boxShadow: '0 6px 20px var(--accent-glow), 0 2px 6px rgba(0,0,0,0.15)',
       }}><${SportIcon} k="comment" size=${24} color=${ACC}/></button>`}
 
-      ${chatOpen && html`<${ChatBot} msgs=${chatMsgs} setMsgs=${setChatMsgs} onClose=${() => setChatOpen(false)}/>`}
+      ${chatOpen && html`<${LazyScreen} loader=${loadChatBot} name="ChatBot" msgs=${chatMsgs} setMsgs=${setChatMsgs} onClose=${() => setChatOpen(false)}/>`}
 
       ${active && !showWorkout && html`<${ResumeBar} workout=${active} onResume=${() => setShowWorkout(true)}/>`}
       <${TabBar} tab=${tab} onTab=${setTab}/>

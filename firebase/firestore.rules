@@ -32,7 +32,12 @@ service cloud.firestore {
 
       allow create: if domainOk() && uid == me()
         && request.resource.data.uid == me()
-        && request.resource.data.email == request.auth.token.email;
+        && request.resource.data.email == request.auth.token.email
+        // totals phải khởi tạo = 0 (chặn xoá-rồi-tạo-lại doc để bịa số tổng); CF ghi số thật sau.
+        && request.resource.data.get(['totals', 'points'], 0) == 0
+        && request.resource.data.get(['totals', 'minutes'], 0) == 0
+        && request.resource.data.get(['totals', 'sessions'], 0) == 0
+        && request.resource.data.get(['totals', 'volumeKg'], 0) == 0;
 
       allow update: if domainOk() && uid == me()
         // uid + email bất biến
@@ -41,7 +46,10 @@ service cloud.firestore {
         // chặn bịa streak vô lý
         && request.resource.data.streak.current is int
         && request.resource.data.streak.current >= 0
-        && request.resource.data.streak.current <= 3650;
+        && request.resource.data.streak.current <= 3650
+        // totals (buổi/phút/điểm/volume) là số liệu tổng — chỉ Cloud Function ghi, client không
+        // được đổi (trước đây bỏ ngỏ nên user tự bịa totals hồ sơ của mình).
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['totals']);
 
       allow delete: if domainOk() && uid == me(); // tự xoá tài khoản của mình
 
@@ -65,16 +73,24 @@ service cloud.firestore {
             && request.resource.data.date       == resource.data.date;
       }
 
-      // Người khác chỉ được đụng vào 2 bộ đếm xã hội, lệch tối đa ±1.
-      function onlyCounters() {
-        return request.resource.data.diff(resource.data).affectedKeys()
-                 .hasOnly(['reactionCount', 'commentCount'])
-            && request.resource.data.reactionCount >= 0
-            && request.resource.data.commentCount  >= 0
-            && (request.resource.data.reactionCount - resource.data.reactionCount) >= -1
-            && (request.resource.data.reactionCount - resource.data.reactionCount) <= 1
-            && (request.resource.data.commentCount  - resource.data.commentCount)  >= -1
-            && (request.resource.data.commentCount  - resource.data.commentCount)  <= 1;
+      // Người thả tim (không phải chủ bài) chỉ được dịch reactionCount đúng ±1, VÀ chỉ khi
+      // doc reactions/{me} thực sự vừa được tạo (+1) hoặc xoá (-1) trong CÙNG batch. existsAfter
+      // gắn số đếm vào reaction THẬT của chính người ghi → không bịa được đếm tim post người khác,
+      // cũng không bơm lặp (react rồi thì +1 nữa sẽ fail vì đã exists). commentCount đã bỏ hẳn
+      // (đếm bằng aggregation) nên không còn đường cho người-không-phải-chủ ghi vào post.
+      function reactionCountBound() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactionCount'])
+          && request.resource.data.reactionCount is int
+          && request.resource.data.reactionCount >= 0
+          && (
+            ( request.resource.data.reactionCount == resource.data.reactionCount + 1
+              && !exists(/databases/$(database)/documents/sessions/$(sid)/reactions/$(me()))
+              && existsAfter(/databases/$(database)/documents/sessions/$(sid)/reactions/$(me())) )
+            ||
+            ( request.resource.data.reactionCount == resource.data.reactionCount - 1
+              && exists(/databases/$(database)/documents/sessions/$(sid)/reactions/$(me()))
+              && !existsAfter(/databases/$(database)/documents/sessions/$(sid)/reactions/$(me())) )
+          );
       }
 
       allow read: if domainOk()
@@ -84,17 +100,21 @@ service cloud.firestore {
         && request.resource.data.authorUid == me()
         && request.resource.data.visibility in ['company', 'private']
         && request.resource.data.reactionCount == 0
-        && request.resource.data.commentCount == 0
         && request.resource.data.durationMin is number
         && request.resource.data.durationMin <= 1440
         && request.resource.data.activeMinutes is number
-        && request.resource.data.activeMinutes <= 180;
+        && request.resource.data.activeMinutes <= 180
+        // Chặn trần điểm buổi: điểm = MET × giờ × 10, MET tối đa (~15) → points ≤ activeMinutes×3.
+        // Ngăn bịa points khổng lồ vào doc buổi (Cloud Function cộng dồn points này cho xếp hạng).
+        && request.resource.data.points is number
+        && request.resource.data.points >= 0
+        && request.resource.data.points <= request.resource.data.activeMinutes * 3;
 
       allow update: if domainOk() && (
            (ownsId() && request.resource.data.authorUid == me() && authorFieldsIntact()
               && request.resource.data.reactionCount == resource.data.reactionCount
-              && request.resource.data.commentCount  == resource.data.commentCount)
-        || onlyCounters()
+              && request.resource.data.points == resource.data.points)  // điểm bất biến sau khi tạo
+        || reactionCountBound()
         || isAdmin()   // admin kiểm duyệt: ẩn/sửa bài vi phạm (F5, UI làm sau)
       );
 
@@ -133,20 +153,14 @@ service cloud.firestore {
     }
 
     // ---------------- leaderboard ----------------
+    // TRỤC XẾP HẠNG — server-authoritative. Client TUYỆT ĐỐI không ghi/sửa được điểm nữa:
+    // trước đây rules chỉ chặn trần nên ai F12 cũng tự ghi entry lên top. Giờ chỉ Cloud Function
+    // (Admin SDK, bỏ qua rules) cộng dồn từ buổi tập THẬT rồi ghi. Client chỉ được ĐỌC và tự XOÁ
+    // entry của mình (opt-out / xoá tài khoản) — xoá chỉ hạ chính mình nên không gian lận được.
     match /leaderboard/{periodId}/entries/{uid} {
       allow read: if domainOk();
-      allow write: if domainOk() && uid == me()
-        && request.resource.data.uid == me()
-        && request.resource.data.minutes  is int && request.resource.data.minutes  <= 20000
-        && request.resource.data.sessions is int && request.resource.data.sessions <= 200
-        // points LÀ field được xếp hạng → phải chặn, nếu không ai cũng ghi points khổng lồ
-        // chiếm top. Trần 100000 rất rộng (max thật ~12k/tháng) nhưng đủ chặn bịa số.
-        && request.resource.data.points is number
-        && request.resource.data.points >= 0
-        && request.resource.data.points <= 100000
-        && request.resource.data.volumeKg is number
-        && request.resource.data.volumeKg >= 0;
-      allow delete: if domainOk() && uid == me(); // cho phép opt-out
+      allow create, update: if false;
+      allow delete: if domainOk() && uid == me();
     }
 
     // ---------------- clubs (Câu lạc bộ theo môn) ----------------

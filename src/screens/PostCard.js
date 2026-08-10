@@ -1,6 +1,7 @@
 // src/screens/PostCard.js — bản redesign. THAY TOÀN BỘ file cũ.
 // Khác bản cũ: avatar viền theo màu môn, hàng số liệu dùng số condensed,
 // và TIM + BÌNH LUẬN dồn về phải CÙNG HÀNG số liệu (bỏ 2 nút to chia đôi thẻ).
+import { useState, useEffect } from 'preact/hooks';
 import { html } from '../html.js';
 import { C, r, F, T, BRAND, SHADOW, sportColor } from '../ui/theme.js';
 import { SportIcon } from '../ui/sportIcons.js';
@@ -8,6 +9,7 @@ import { PhotoView } from '../ui/Lightbox.js';
 import { actOf } from '../domain/activities.js';
 import { summaryStats, headline } from '../domain/session.js';
 import { fDT } from '../domain/format.js';
+import { fetchCommentCount } from '../data/repo-social.js';
 import { t } from '../i18n.js';
 
 function Avatar({ name, photo, color }) {
@@ -21,6 +23,15 @@ export function PostCard({ post, reacted, onReact, onOpenComments, onOpenProfile
   const stats = summaryStats(post);
   const mine = myUid && post.authorUid === myUid;
   const ring = sportColor(a.iconKey);
+
+  // Số bình luận đếm thật bằng aggregation (không còn field commentCount giả được).
+  const sidFull = `${post.authorUid}_${post.id}`;
+  const [commentCount, setCommentCount] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    fetchCommentCount(sidFull).then(n => { if (alive) setCommentCount(n); });
+    return () => { alive = false; };
+  }, [sidFull]);
 
   return html`
     <div style=${{ background: C.bg2, borderRadius: r.xl, marginBottom: 11, border: `1px solid ${C.bdr}`, overflow: 'hidden', boxShadow: SHADOW.card }}>
@@ -58,7 +69,7 @@ export function PostCard({ post, reacted, onReact, onOpenComments, onOpenProfile
             <${SportIcon} k="heart" size=${17} color=${C.red} sw=${reacted ? 2.4 : 1.8}/>${post.reactionCount > 0 ? post.reactionCount : ''}
           </button>
           <button onClick=${onOpenComments} class="btn-action" style=${{ display: 'flex', alignItems: 'center', gap: 5, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12.5, color: C.txt3 }}>
-            <${SportIcon} k="comment" size=${17} color=${BRAND.blue}/>${post.commentCount > 0 ? post.commentCount : ''}
+            <${SportIcon} k="comment" size=${17} color=${BRAND.blue}/>${commentCount > 0 ? commentCount : ''}
           </button>
         </span>
       </div>

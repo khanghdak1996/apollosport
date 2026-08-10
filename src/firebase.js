@@ -18,7 +18,7 @@ const firebaseConfig = {
   storageBucket: "apollo-sport-social.firebasestorage.app",
   messagingSenderId: "368506443580",
   appId: "1:368506443580:web:a553f151fe5894a1a3f039",
-  measurementId: "G-RMX3YR931J"
+  // measurementId đã bỏ: app không dùng Analytics (không getAnalytics/import firebase/analytics).
 };
 
 export let auth = null, db = null, storage = null, fbInitError = null;
