@@ -88,8 +88,7 @@ export function LeaderboardTab({ me, onOpenProfile }) {
   return html`
     <div class="fade-in">
       <div style=${{ background: BRAND.blue, padding: '18px 18px 0', color: '#fff' }}>
-        <p style=${{ margin: '0 0 3px', ...T.h1 }}>${t('lb.title')}</p>
-        <p style=${{ margin: '0 0 12px', fontFamily: F.serif, fontStyle: 'italic', fontSize: 12, color: BRAND.babyBlue }}>${t('lb.subtitle')}</p>
+        <p style=${{ margin: '0 0 12px', ...T.h1 }}>${t('lb.title')}</p>
 
         <div style=${{ display: 'flex', background: 'rgba(255,255,255,.16)', borderRadius: r.md, padding: 3, marginBottom: 10 }}>
           ${segTop('company', t('lb.company'), 'globe')}

@@ -297,7 +297,6 @@ export const STR = {
 
     // ── Bảng xếp hạng ───────────────────────────────────────────
     'lb.title': 'BẢNG XẾP HẠNG',
-    'lb.subtitle': 'Điểm quy đổi theo cường độ — công bằng giữa mọi môn.',
     'lb.company': 'Toàn công ty',
     'lb.dept': 'Phòng ban',
     'lb.week': 'Tuần này',
@@ -831,7 +830,6 @@ export const STR = {
 
     // ── Leaderboard ─────────────────────────────────────────────
     'lb.title': 'LEADERBOARD',
-    'lb.subtitle': 'Points scaled by intensity — fair across every sport.',
     'lb.company': 'Company',
     'lb.dept': 'Department',
     'lb.week': 'This week',

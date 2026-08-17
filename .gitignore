@@ -10,3 +10,10 @@ Thumbs.db
 .env
 .env.*
 .vercel
+
+# Dependencies (tải qua npm install, không commit)
+node_modules/
+**/node_modules/
+
+# Understand-Anything cache
+.ua/
