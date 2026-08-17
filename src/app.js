@@ -1731,7 +1731,7 @@ function GymPair() {
   if (active && showWorkout) {
     if (pg === 'pick-ex') return html`<${PickEx} exList=${exList} onPick=${e => { pgCtx && pgCtx.cb(e); setPg(null); setPgCtx(null); }} onClose=${() => { setPg(null); setPgCtx(null); }} onAddEx=${ex => { saveC([...exList, ex]); }}/>`;
     if (pg === 'save-workout') return html`<${SaveWorkout} workout=${active} gymDots=${gymDotsFor(myBody())} defaultVisibility=${userDoc.prefs?.defaultVisibility || 'company'} onBack=${() => setPg(null)} onDiscard=${() => { if (window.confirm(t('save.discardConfirm'))) { discardWorkout(); setPg(null); } }} onSave=${finishWorkout}/>`;
-    if (pg === 'guide-detail') return html`<${LazyScreen} loader=${loadGuideDetail} name="GuideDetail" guide=${pgCtx.guide} onBack=${pgCtx.back || (() => setPg(null))}/>`;
+    if (pg === 'guide-detail') return html`<${LazyScreen} loader=${loadGuideDetail} name="GuideDetail" guide=${pgCtx?.guide} onBack=${pgCtx?.back || (() => setPg(null))}/>`;
     return html`<${ActiveWorkout} workout=${active} sessions=${sessions} onChange=${saveA} onFinish=${() => setPg('save-workout')} onDiscard=${discardWorkout} onPickEx=${goPickEx} onMinimize=${() => setShowWorkout(false)} onGuide=${async exId => { const g = await ensureGuides(); openGuide(g.guideForExercise(exId), () => { setPgCtx(null); setPg(null); }); }}/>`;
   }
   if (pg === 'create-prog') return html`<${CreateProg} exList=${exList} editProg=${pgCtx} onSave=${p => { saveP(pgCtx ? progs.map(x => x.id === p.id ? p : x) : [...progs, p]); setPg(null); setPgCtx(null); }} onClose=${() => { setPg(null); setPgCtx(null); }}/>`;

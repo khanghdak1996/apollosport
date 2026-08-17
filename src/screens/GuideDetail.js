@@ -24,6 +24,9 @@ function TipBlock({ title, items, tone }) {
 }
 
 export function GuideDetail({ guide, onBack }) {
+  // Chống crash: prop `guide` có thể undefined trong 1 frame khi chuyển route / lazy-load bất đồng bộ
+  // (re-render xen giữa lúc pgCtx chưa có guide). Không guard → `guide.sport` ném lỗi, sập cả app.
+  if (!guide) return null;
   const a = actOf(guide.sport);
   const chips = [guide.muscles, guide.equipment].filter(Boolean);
   // Khớp đúng schema guides.js: ytQuery→URL, media[]→ảnh đầu bài, steps[{text}], sections[{heading,body}], safety[].
