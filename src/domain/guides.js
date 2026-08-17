@@ -21,7 +21,12 @@
 import { EX } from './exercises.js';
 import { EXDB } from '../data/exercises-db.js';
 import { INSTRUCTIONS_VI } from '../data/instructions-vi.js';
-import { vMuscles, vEquip, vLevel } from './fitness-vocab.js';
+import { vMuscles, vEquip, vLevel, eMuscles, eEquip, eLevel } from './fitness-vocab.js';
+import { GUIDES_EN } from './guides-en.js';
+import { getLang } from '../i18n.js';
+
+// true khi giao diện đang ở tiếng Anh → builder/localize dùng nội dung EN.
+const isEN = () => getLang() === 'en';
 
 // URL tìm video hướng dẫn trên YouTube từ một truy vấn.
 export const ytSearchUrl = query => `https://www.youtube.com/results?search_query=${encodeURIComponent(query).replace(/%20/g, '+')}`;
@@ -924,11 +929,11 @@ const SPORT_HERO = {
 
 // Nguồn tham khảo uy tín (đã kiểm HTTP 200) — hiển thị link "Đọc thêm" ở cuối bài.
 const SPORT_SOURCE = {
-  run:        { url: 'https://www.nhs.uk/live-well/exercise/running-and-aerobic-exercises/get-running-with-couch-to-5k/', name: 'NHS – Couch to 5K (Anh)' },
-  walk:       { url: 'https://www.nhs.uk/live-well/exercise/walking-for-health/', name: 'NHS – Walking for health (Anh)' },
-  cycle:      { url: 'https://www.nhs.uk/live-well/exercise/cycling-for-beginners/', name: 'NHS – Cycling for beginners (Anh)' },
-  swim:       { url: 'https://www.nhs.uk/live-well/exercise/swimming-for-fitness/', name: 'NHS – Swimming for fitness (Anh)' },
-  yoga:       { url: 'https://www.nhs.uk/live-well/exercise/guide-to-yoga/', name: 'NHS – A guide to yoga (Anh)' },
+  run:        { url: 'https://www.nhs.uk/live-well/exercise/running-and-aerobic-exercises/get-running-with-couch-to-5k/', name: 'NHS – Couch to 5K (UK)' },
+  walk:       { url: 'https://www.nhs.uk/live-well/exercise/walking-for-health/', name: 'NHS – Walking for health (UK)' },
+  cycle:      { url: 'https://www.nhs.uk/live-well/exercise/cycling-for-beginners/', name: 'NHS – Cycling for beginners (UK)' },
+  swim:       { url: 'https://www.nhs.uk/live-well/exercise/swimming-for-fitness/', name: 'NHS – Swimming for fitness (UK)' },
+  yoga:       { url: 'https://www.nhs.uk/live-well/exercise/guide-to-yoga/', name: 'NHS – A guide to yoga (UK)' },
   badminton:  { url: 'https://en.wikipedia.org/wiki/Badminton', name: 'Wikipedia – Badminton' },
   pickleball: { url: 'https://usapickleball.org/what-is-pickleball/how-to-play/', name: 'USA Pickleball – How to play' },
   tennis:     { url: 'https://www.lta.org.uk/play/ways-to-play/', name: 'LTA – Ways to play tennis' },
@@ -938,7 +943,7 @@ const SPORT_SOURCE = {
 
 // Ghi đè nguồn theo từng bài khi cần khác với mặc định của môn.
 const SOURCE_OVERRIDE = {
-  'run-form': { url: 'https://www.nhs.uk/live-well/exercise/running-and-aerobic-exercises/', name: 'NHS – Running & aerobic exercise (Anh)' },
+  'run-form': { url: 'https://www.nhs.uk/live-well/exercise/running-and-aerobic-exercises/', name: 'NHS – Running & aerobic exercise (UK)' },
 };
 
 // Đổ ảnh hero + nguồn vào các bài chưa có (không ghi đè bài đã tự khai báo media/nguồn riêng).
@@ -957,32 +962,44 @@ const GENERIC_SAFETY = [
   'Dừng lại nếu thấy đau bất thường.',
 ];
 
-// Guide dựng từ thư viện free-exercise-db (nếu bài có trong EXDB): ảnh thật + nhóm cơ VN + các bước.
-// Instructions mặc định tiếng Anh (cờ lang:'en'); nếu có bản dịch trong INSTRUCTIONS_VI → dùng VN.
+const GENERIC_SAFETY_EN = [
+  'Warm up properly before you start.',
+  'Begin with a light weight to learn the movement.',
+  'Stop if you feel any unusual pain.',
+];
+
+// Guide dựng từ thư viện free-exercise-db (nếu bài có trong EXDB): ảnh thật + nhóm cơ + các bước.
+// EN → dùng các bước gốc tiếng Anh của EXDB; VI → dùng INSTRUCTIONS_VI nếu có, ngược lại giữ EN.
 const libraryGuide = exId => {
   const d = EXDB[exId];
   const ex = exById[exId];
   if (!d || !ex) return null;
+  const en = isEN();
+  const allMuscles = [...(d.primaryMuscles || []), ...(d.secondaryMuscles || [])];
   const vi = INSTRUCTIONS_VI[exId];
-  const steps = vi ? vi.map(text => ({ text })) : (d.instructions || []).map(text => ({ text, lang: 'en' }));
-  const muscles = vMuscles([...(d.primaryMuscles || []), ...(d.secondaryMuscles || [])]);
+  // EN: luôn dùng bước tiếng Anh gốc. VI: ưu tiên bản dịch, thiếu thì fallback EN (đánh dấu lang).
+  const steps = en
+    ? (d.instructions || []).map(text => ({ text }))
+    : (vi ? vi.map(text => ({ text })) : (d.instructions || []).map(text => ({ text, lang: 'en' })));
   return {
     id: 'lib-' + exId,
     scope: 'exercise',
     sport: 'gym',
     exId,
     title: ex.name,
-    level: vLevel(d.level) || 'Cơ bản',
-    summary: `Hướng dẫn động tác ${ex.name} — nhóm cơ, các bước và video.`,
-    muscles,
-    equipment: vEquip(d.equipment),
+    level: (en ? eLevel(d.level) : vLevel(d.level)) || (en ? 'Beginner' : 'Cơ bản'),
+    summary: en
+      ? `How to do ${ex.name} — target muscles, step-by-step and a video.`
+      : `Hướng dẫn động tác ${ex.name} — nhóm cơ, các bước và video.`,
+    muscles: en ? eMuscles(allMuscles) : vMuscles(allMuscles),
+    equipment: en ? eEquip(d.equipment) : vEquip(d.equipment),
     ytQuery: `how to do ${ex.name}`,
     media: (d.images || []).map(src => ({ type: 'image', src })),
     steps,
     mistakes: [],
     sections: [],
     tips: [],
-    safety: GENERIC_SAFETY,
+    safety: en ? GENERIC_SAFETY_EN : GENERIC_SAFETY,
     source: 'free-exercise-db',
   };
 };
@@ -992,6 +1009,7 @@ const libraryGuide = exId => {
 const autoExerciseGuide = exId => {
   const ex = exById[exId];
   if (!ex) return null;
+  const en = isEN();
   return {
     id: 'auto-' + exId,
     auto: true,
@@ -999,9 +1017,11 @@ const autoExerciseGuide = exId => {
     sport: 'gym',
     exId,
     title: ex.name,
-    level: 'Cơ bản',
-    summary: `Xem video hướng dẫn động tác ${ex.name}.`,
-    muscles: ex.g,
+    level: en ? 'Beginner' : 'Cơ bản',
+    summary: en
+      ? `Watch a video guide for ${ex.name}.`
+      : `Xem video hướng dẫn động tác ${ex.name}.`,
+    muscles: en ? '' : ex.g, // ex.g là nhãn nhóm cơ tiếng Việt → bỏ trống ở EN thay vì hiện lẫn VN
     equipment: '',
     ytQuery: `how to do ${ex.name}`,
     media: [],
@@ -1009,15 +1029,45 @@ const autoExerciseGuide = exId => {
     mistakes: [],
     sections: [],
     tips: [],
-    safety: GENERIC_SAFETY,
+    safety: en ? GENERIC_SAFETY_EN : GENERIC_SAFETY,
   };
 };
 
+// Áp bản dịch tiếng Anh (GUIDES_EN, tra theo id) lên bài viết tay khi giao diện đang ở EN.
+// Bài dựng động (library/auto) đã tự sinh đúng ngôn ngữ nên không có bản EN → giữ nguyên.
+const localize = g => {
+  if (!g) return g;
+  const en = isEN() && GUIDES_EN[g.id];
+  return en ? { ...g, ...en } : g;
+};
+
 // Danh sách bài VIẾT TAY (dùng cho màn duyệt — không đổ hàng trăm bài library/auto).
-export const richGuides = () => GUIDES;
-export const allGuides = () => GUIDES;
-export const guideById = id => GUIDES.find(g => g.id === id) || null;
-export const guidesForSport = sport => GUIDES.filter(g => g.sport === sport);
+export const richGuides = () => GUIDES.map(localize);
+export const allGuides = () => GUIDES.map(localize);
+export const guideById = id => localize(GUIDES.find(g => g.id === id) || null);
+export const guidesForSport = sport => GUIDES.filter(g => g.sport === sport).map(localize);
 // Ưu tiên: bài viết tay → thư viện (ảnh thật) → auto stub. Mọi bài gym đều có hướng dẫn.
 export const guideForExercise = exId =>
-  GUIDES.find(g => g.scope === 'exercise' && g.exId === exId) || libraryGuide(exId) || autoExerciseGuide(exId);
+  localize(GUIDES.find(g => g.scope === 'exercise' && g.exId === exId)) || libraryGuide(exId) || autoExerciseGuide(exId);
+
+// Nhãn nhóm cơ (EX.g là tiếng Việt) sang tiếng Anh cho "Kho bài tập gym".
+const GYM_GROUP_EN = {
+  'Ngực': 'Chest', 'Chân': 'Legs', 'Lưng': 'Back', 'Mông': 'Glutes',
+  'Vai': 'Shoulders', 'Tay': 'Arms', 'Bụng': 'Abs',
+};
+
+// Kho bài tập gym: toàn bộ EX gom theo nhóm cơ (giữ thứ tự xuất hiện), nhãn nhóm dịch theo ngôn ngữ.
+// Mỗi item chỉ cần { id, name } — GymLibrary mở guideForExercise(id) khi bấm.
+export const gymLibrary = () => {
+  const en = isEN();
+  const groups = [];
+  EX.forEach(e => {
+    let grp = groups.find(x => x.key === e.g);
+    if (!grp) { grp = { key: e.g, label: en ? (GYM_GROUP_EN[e.g] || e.g) : e.g, items: [] }; groups.push(grp); }
+    grp.items.push({ id: e.id, name: e.name });
+  });
+  return groups;
+};
+
+// Tổng số động tác trong kho (cho phụ đề thẻ "folder").
+export const gymExerciseCount = () => EX.length;

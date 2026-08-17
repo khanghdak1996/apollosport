@@ -46,6 +46,7 @@ const loadChatBot      = () => import('./screens/ChatBot.js');
 const loadSettings     = () => import('./screens/Settings.js');
 const loadGuidesScreen = () => import('./screens/GuidesScreen.js');
 const loadGuideDetail  = () => import('./screens/GuideDetail.js');
+const loadGymLibrary   = () => import('./screens/GymLibrary.js');
 const loadClubsScreen  = () => import('./screens/ClubsScreen.js');
 const loadClubDetail   = () => import('./screens/ClubDetail.js');
 const loadGoalsScreen  = () => import('./screens/GoalsScreen.js');
@@ -1329,7 +1330,7 @@ function GymPair() {
   const [pg, setPg] = useState(null);
   const [pgCtx, setPgCtx] = useState(null);
   // Nạp domain/guides.js khi vào route cần hướng dẫn (không nạp lúc mở app); null tới khi sẵn sàng.
-  const gm = useGuidesWhen(pg === 'log-activity' || pg === 'guides');
+  const gm = useGuidesWhen(pg === 'log-activity' || pg === 'guides' || pg === 'gym-library');
   const [ready, setReady] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [finishedWorkout, setFinishedWorkout] = useState(null);
@@ -1730,7 +1731,7 @@ function GymPair() {
   if (active && showWorkout) {
     if (pg === 'pick-ex') return html`<${PickEx} exList=${exList} onPick=${e => { pgCtx && pgCtx.cb(e); setPg(null); setPgCtx(null); }} onClose=${() => { setPg(null); setPgCtx(null); }} onAddEx=${ex => { saveC([...exList, ex]); }}/>`;
     if (pg === 'save-workout') return html`<${SaveWorkout} workout=${active} gymDots=${gymDotsFor(myBody())} defaultVisibility=${userDoc.prefs?.defaultVisibility || 'company'} onBack=${() => setPg(null)} onDiscard=${() => { if (window.confirm(t('save.discardConfirm'))) { discardWorkout(); setPg(null); } }} onSave=${finishWorkout}/>`;
-    if (pg === 'guide-detail') return html`<${GuideDetail} guide=${pgCtx.guide} onBack=${pgCtx.back || (() => setPg(null))}/>`;
+    if (pg === 'guide-detail') return html`<${LazyScreen} loader=${loadGuideDetail} name="GuideDetail" guide=${pgCtx.guide} onBack=${pgCtx.back || (() => setPg(null))}/>`;
     return html`<${ActiveWorkout} workout=${active} sessions=${sessions} onChange=${saveA} onFinish=${() => setPg('save-workout')} onDiscard=${discardWorkout} onPickEx=${goPickEx} onMinimize=${() => setShowWorkout(false)} onGuide=${async exId => { const g = await ensureGuides(); openGuide(g.guideForExercise(exId), () => { setPgCtx(null); setPg(null); }); }}/>`;
   }
   if (pg === 'create-prog') return html`<${CreateProg} exList=${exList} editProg=${pgCtx} onSave=${p => { saveP(pgCtx ? progs.map(x => x.id === p.id ? p : x) : [...progs, p]); setPg(null); setPgCtx(null); }} onClose=${() => { setPg(null); setPgCtx(null); }}/>`;
@@ -1773,7 +1774,8 @@ function GymPair() {
         onSignOut=${() => signOutUser()}
         onDeleteAccount=${deleteAccount}/>`;
   if (pg === 'user-profile') return html`<${ProfileScreen} uid=${pgCtx.uid} isSelf=${pgCtx.isSelf} onBack=${() => { setPg(null); setPgCtx(null); }} onView=${openSess}/>`;
-  if (pg === 'guides') return html`<${LazyScreen} loader=${loadGuidesScreen} name="GuidesScreen" guides=${gm ? gm.richGuides() : []} onBack=${() => setPg(null)} onOpen=${g => openGuide(g, () => setPg('guides'))}/>`;
+  if (pg === 'guides') return html`<${LazyScreen} loader=${loadGuidesScreen} name="GuidesScreen" guides=${gm ? gm.richGuides() : []} gymCount=${gm ? gm.gymExerciseCount() : 0} onBack=${() => setPg(null)} onOpen=${g => openGuide(g, () => setPg('guides'))} onOpenGymLibrary=${() => setPg('gym-library')}/>`;
+  if (pg === 'gym-library') return html`<${LazyScreen} loader=${loadGymLibrary} name="GymLibrary" groups=${gm ? gm.gymLibrary() : []} onBack=${() => setPg('guides')} onOpen=${exId => openGuide(gm.guideForExercise(exId), () => setPg('gym-library'))}/>`;
   if (pg === 'guide-detail') return html`<${LazyScreen} loader=${loadGuideDetail} name="GuideDetail" guide=${pgCtx.guide} onBack=${pgCtx.back || (() => setPg(null))}/>`;
   if (pg === 'clubs') return html`<${LazyScreen} loader=${loadClubsScreen} name="ClubsScreen" me=${meAuthor()} onBack=${() => setPg(null)} onOpenClub=${cid => { setPgCtx({ clubId: cid }); setPg('club-detail'); }}/>`;
   if (pg === 'club-detail') return html`<${LazyScreen} loader=${loadClubDetail} name="ClubDetail" clubId=${pgCtx.clubId} me=${meAuthor()} mySessions=${sessions} myReactions=${myReactions} isAdmin=${isAdmin} onBack=${() => setPg('clubs')} onOpenProfile=${openProfile} onOpenComments=${openComments} onDeleted=${() => setPg('clubs')}/>`;

@@ -6,14 +6,18 @@ import { Empty } from '../ui/primitives.js';
 import { actOf, actLabel } from '../domain/activities.js';
 import { t } from '../i18n.js';
 
-export function GuidesScreen({ guides = [], onOpen, onBack }) {
-  // Nhóm theo môn, giữ thứ tự xuất hiện.
+export function GuidesScreen({ guides = [], gymCount = 0, onOpen, onBack, onOpenGymLibrary }) {
+  // Nhóm theo môn, giữ thứ tự xuất hiện. Section gym: bài từng động tác (scope 'exercise') gộp vào
+  // "folder" Kho bài tập gym → không liệt kê lẻ ở đây.
   const groups = [];
   guides.forEach(g => {
+    if (g.sport === 'gym' && g.scope === 'exercise') return;
     let grp = groups.find(x => x.sport === g.sport);
     if (!grp) { grp = { sport: g.sport, items: [] }; groups.push(grp); }
     grp.items.push(g);
   });
+  // Đảm bảo luôn có nhóm gym để gắn thẻ folder, kể cả khi chưa có bài viết tổng quan nào.
+  if (onOpenGymLibrary && !groups.find(x => x.sport === 'gym')) groups.push({ sport: 'gym', items: [] });
 
   return html`
     <div style=${{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -48,6 +52,17 @@ export function GuidesScreen({ guides = [], onOpen, onBack }) {
                     </div>
                     <p style=${{ margin: 0, fontSize: 12.5, lineHeight: 1.5, color: C.txt3 }}>${g.summary}</p>
                   </div>`)}
+                ${grp.sport === 'gym' && onOpenGymLibrary ? html`
+                  <div onClick=${onOpenGymLibrary} class="card-hover" style=${{ display: 'flex', alignItems: 'center', gap: 12, background: C.bg2, border: `1px solid ${C.bdr}`, borderRadius: r.xl, padding: '14px 16px', marginBottom: 9, cursor: 'pointer' }}>
+                    <span style=${{ width: 38, height: 38, borderRadius: 11, background: sportTint('gym'), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <${SportIcon} k="gym" size=${20} color=${sportColor('gym')}/>
+                    </span>
+                    <div style=${{ flex: 1, minWidth: 0 }}>
+                      <p style=${{ margin: 0, fontSize: 15, fontWeight: 700, color: C.txt1 }}>${t('guides.gymFolder')}</p>
+                      <p style=${{ margin: '2px 0 0', fontSize: 12.5, lineHeight: 1.5, color: C.txt3 }}>${t('guides.gymFolderSub', { n: gymCount })}</p>
+                    </div>
+                    <${SportIcon} k="chevronR" size=${17} color=${C.txt3} sw=${2}/>
+                  </div>` : ''}
               </div>`;
           })}
       </div>
