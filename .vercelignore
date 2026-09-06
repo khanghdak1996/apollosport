@@ -7,3 +7,5 @@ design_handoff_apollo_sport_redesign/
 *.md
 pinegrow.json
 .DS_Store
+test/
+src/package.json

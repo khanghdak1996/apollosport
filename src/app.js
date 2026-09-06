@@ -411,7 +411,7 @@ function SaveWorkout({ workout, gymDots = null, defaultVisibility = 'company', o
     onSave({
       title: t, note: note.trim(), photoFile, visibility, rpe,
       durationMin: parseFloat(durMin) || Math.round((Date.now() - workout.startTime) / 60000),
-      date: isNaN(d) ? undefined : d.toISOString().split('T')[0],
+      date: isNaN(d) ? undefined : dayStr(d),
       loggedAt: isNaN(d) ? Date.now() : d.getTime(),
     });
   };
@@ -1650,7 +1650,7 @@ function GymPair() {
 
   const finishWorkout = async (meta = {}) => {
     if (!active || !userDoc) return;
-    const date = meta.date || new Date(active.startTime).toISOString().split('T')[0];
+    const date = meta.date || dayStr(new Date(active.startTime));
     let photoUrl = meta.photoUrl || null;
     if (meta.photoFile) {
       try { const blob = await compressImage(meta.photoFile); photoUrl = await uploadSessionPhoto(blob, pid, active.id); }
@@ -1682,7 +1682,7 @@ function GymPair() {
   // Ghi buổi tập môn khác (không phải gym).
   const logActivity = async (input) => {
     if (!userDoc) return;
-    const date = new Date().toISOString().split('T')[0];
+    const date = dayStr(new Date());
     const stLocal = advanceStreak(userDoc.streak, date);
     const sess = buildActivitySession(input, meAuthor(), stLocal.current);
     if (input.photoFile) {

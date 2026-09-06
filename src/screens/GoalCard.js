@@ -4,6 +4,7 @@ import { C, r, F, T, BRAND, SHADOW, sportColor, sportTint } from '../ui/theme.js
 import { SportIcon } from '../ui/sportIcons.js';
 import { actOf, actLabel } from '../domain/activities.js';
 import { goalContribution } from '../domain/stats.js';
+import { dayStr } from '../domain/streak.js';
 import { t } from '../i18n.js';
 import { getGoalProgress, setMyGoalProgress, deleteGoal } from '../data/repo-goals.js';
 import { AnnouncementFeed } from './AnnouncementFeed.js';
@@ -34,7 +35,7 @@ export function GoalCard({ goal, me, mySessions, canContribute = true, isAdmin, 
   const METRIC = { sessions: { u: t('goal.mSessionsU'), l: t('goal.mSessionsL') }, minutes: { u: t('goal.mMinutesU'), l: t('goal.mMinutesL') }, distanceKm: { u: t('goal.mKmU'), l: t('goal.mKmL') } };
   const m = METRIC[goal.metric] || METRIC.sessions;
   const a = goal.sport ? actOf(goal.sport) : null;
-  const today = new Date().toISOString().split('T')[0];
+  const today = dayStr(new Date());
   const status = today < goal.startDate ? { t: t('goal.upcoming'), tone: 'quiet' } : today > goal.endDate ? { t: t('goal.ended'), tone: 'quiet' } : { t: t('goal.ongoing'), tone: 'good' };
   const canDelete = goal.creatorUid === me.uid || isAdmin;
 

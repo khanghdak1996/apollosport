@@ -5,9 +5,11 @@ import { Btn } from '../ui/primitives.js';
 import { SportIcon } from '../ui/sportIcons.js';
 import { ACTIVITIES, actOf, actLabel } from '../domain/activities.js';
 import { createGoal } from '../data/repo-goals.js';
+import { dayStr } from '../domain/streak.js';
 import { t } from '../i18n.js';
 
-const iso = d => d.toISOString().split('T')[0];
+// Ngày theo giờ NGƯỜI DÙNG. toISOString() sẽ đổi sang UTC -> lùi 1 ngày ở VN (UTC+7).
+const iso = d => dayStr(d);
 
 // Modal tạo mục tiêu chung. scope='company' (chọn môn tuỳ ý) hoặc 'club' (khoá theo môn nhóm).
 export function GoalForm({ scope, clubId, clubName, clubSport, me, onCreated, onClose }) {

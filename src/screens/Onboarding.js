@@ -41,8 +41,15 @@ export function Onboarding({ initialName = '', onDone }) {
   const toggle = (id) => setSports(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
 
   const weightKg = parseFloat(weight) || 0;
-  // Cân nặng + giới bắt buộc: dùng cho hệ số DOTS chấm điểm gym công bằng theo cân nặng+giới.
-  const ready = name.trim() && gender && weightKg > 0 && !busy;
+  // Cân nặng + giới BẮT BUỘC: dùng cho hệ số DOTS chấm điểm gym công bằng theo cân nặng+giới.
+  // Liệt kê ô còn thiếu thay vì chỉ làm mờ nút — trước đây bấm nút không có phản hồi gì,
+  // người dùng không biết mình thiếu gì (nhãn cũng không ghi ô nào bắt buộc).
+  const missing = [
+    !name.trim() && t('ob.name'),
+    !gender && t('gender.label'),
+    !(weightKg > 0) && t('ob.weight'),
+  ].filter(Boolean);
+  const ready = missing.length === 0 && !busy;
 
   const submit = async () => {
     if (!ready) return;
@@ -57,13 +64,17 @@ export function Onboarding({ initialName = '', onDone }) {
         <h1 style=${{ margin: '0 0 6px', fontSize: 26, fontWeight: 600, color: C.txt1, letterSpacing: '-0.02em' }}>${t('ob.welcome')}</h1>
         <p style=${{ margin: '0 0 24px', color: C.txt2, fontSize: 14.5, lineHeight: 1.5 }}>${t('ob.intro')}</p>
 
-        <${Label} t=${t('ob.name')}/>
+        <div style=${{ margin: '0 0 22px', background: C.bg3, borderRadius: r.md, padding: '14px 16px', fontSize: 13, color: C.txt2, lineHeight: 1.55 }}>
+          <b style=${{ color: C.txt1 }}>${t('ob.whyNeeded')}</b> ${t('ob.whyNeededBody')}
+        </div>
+
+        <${Label} t=${`${t('ob.name')} ${t('ob.required')}`}/>
         <input value=${name} onInput=${e => setName(e.target.value)} placeholder=${t('ob.namePlaceholder')} style=${inputStyle}/>
 
         <${Label} t=${t('ob.dept')} mt=${18}/>
         <${DeptSelect} value=${dept} onChange=${setDept}/>
 
-        <${Label} t=${t('gender.label')} mt=${18}/>
+        <${Label} t=${`${t('gender.label')} ${t('ob.required')}`} mt=${18}/>
         <div style=${{ display: 'flex', gap: 8 }}>
           ${[['male', t('gender.male')], ['female', t('gender.female')]].map(([v, lbl]) => html`
             <button key=${v} onClick=${() => setGender(v)} class="btn-action" style=${{
@@ -72,8 +83,9 @@ export function Onboarding({ initialName = '', onDone }) {
       background: v === gender ? ACC + '1A' : '#fff', color: v === gender ? ACC : C.txt2,
     }}>${lbl}</button>`)}
         </div>
+        <p style=${{ margin: '6px 2px 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>${t('gender.hint')}</p>
 
-        <${Label} t=${t('ob.weight')} mt=${18}/>
+        <${Label} t=${`${t('ob.weight')} ${t('ob.required')}`} mt=${18}/>
         <input type="number" inputmode="decimal" value=${weight} onInput=${e => setWeight(e.target.value)}
           placeholder=${t('ob.weightPlaceholder')} style=${inputStyle}/>
         <p style=${{ margin: '6px 2px 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>${t('ob.weightHint')}</p>
@@ -97,6 +109,10 @@ export function Onboarding({ initialName = '', onDone }) {
       </div>
 
       <div style=${{ borderTop: `1px solid ${C.bdr}`, padding: '14px 18px', background: '#fff', paddingBottom: 'calc(14px + env(safe-area-inset-bottom))' }}>
+        ${missing.length > 0 && html`
+          <p style=${{ margin: '0 0 10px', fontSize: 13, lineHeight: 1.45, color: C.txt3, textAlign: 'center' }}>
+            ${t('ob.missing', { list: missing.join(', ') })}
+          </p>`}
         <${Btn} onClick=${submit} cx=${{ width: '100%', padding: '14px', fontSize: 15, opacity: ready ? 1 : 0.5, pointerEvents: ready ? 'auto' : 'none' }}>
           ${busy ? t('ob.saving') : t('ob.start')}
         </${Btn}>

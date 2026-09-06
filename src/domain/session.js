@@ -3,6 +3,7 @@
 import { actOf, fieldsOf, rpeOf, rpeLabel, actLabel, actVerb, metForSpeed, dotsCoeff } from './activities.js';
 import { t } from '../i18n.js';
 import { uid } from './format.js';
+import { dayStr } from './streak.js';
 import { tVol } from './stats.js';
 
 // Phút vận động dùng để chấm điểm: chặn [0,180] để không thưởng việc tập quá sức
@@ -166,7 +167,7 @@ export function buildGymSession(active, meta, author, streakAtPost = 0, body = n
   const exs = active.exs || [];
   const totalVol = tVol(exs);
   const totalSets = exs.reduce((t, e) => t + e.sets.filter(x => x.done).length, 0);
-  const date = meta.date || new Date(start).toISOString().split('T')[0];
+  const date = meta.date || dayStr(new Date(start));
   const base = {
     id: active.id,
     type: 'gym',
@@ -211,7 +212,7 @@ export function buildActivitySession(input, author, streakAtPost = 0) {
   const km = parseFloat(detail.distanceKm);
   if (!isNaN(km) && km > 0 && durationMin > 0) detail.paceMinPerKm = durationMin / km;
   if (Array.isArray(input.laps) && input.laps.length) detail.laps = input.laps;
-  const date = input.date || new Date(now).toISOString().split('T')[0];
+  const date = input.date || dayStr(new Date(now));
   const base = {
     id: uid(),
     type: input.type,

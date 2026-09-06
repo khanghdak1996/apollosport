@@ -1,4 +1,5 @@
 import { p2 } from './format.js';
+import { dayStr } from './streak.js';
 import { t } from '../i18n.js';
 
     // Lấy danh sách bài tập của một session gym, chịu được cả schema mới (detail.exs) lẫn cũ (exs).
@@ -16,7 +17,7 @@ import { t } from '../i18n.js';
       const d = new Date(dateStr + 'T00:00:00');
       const day = (d.getDay() + 6) % 7;
       d.setDate(d.getDate() - day);
-      return d.toISOString().split('T')[0];
+      return dayStr(d);   // KHÔNG dùng toISOString: nó đổi sang UTC -> lùi 1 ngày ở VN (UTC+7).
     };
     export const fWeek = wk => {
       const start = new Date(wk + 'T00:00:00');
@@ -193,7 +194,7 @@ import { t } from '../i18n.js';
 
     // Hoạt động của TUẦN HIỆN TẠI: {count, minutes, points} — để so với mục tiêu tuần.
     export const currentWeekActivity = sessions => {
-      const wkNow = startOfWeek(new Date().toISOString().split('T')[0]);
+      const wkNow = startOfWeek(dayStr(new Date()));
       let count = 0, minutes = 0, points = 0;
       sessions.forEach(s => {
         if (!s.date || startOfWeek(s.date) !== wkNow) return;
@@ -237,7 +238,7 @@ import { t } from '../i18n.js';
           updated[ex.exId] = {
             weight: Math.max(bestW, old?.weight || 0),
             e1rm: Math.max(bestE, old?.e1rm || 0),
-            date: workout.date || new Date().toISOString().split('T')[0],
+            date: workout.date || dayStr(new Date()),
           };
           newly.push({ exId: ex.exId, name: ex.name, weight: bestW, e1rm: Math.round(bestE), isNewW, isNewE });
         }
