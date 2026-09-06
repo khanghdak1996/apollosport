@@ -62,17 +62,16 @@ test('lọc được danh sách theo khu vực và theo cụm', () => {
   assert.ok(deptsOfCluster('Quang').includes('HN1.PH'));
 });
 
-// Ô chọn phòng ban (DEPARTMENTS) và bảng ánh xạ là hai nguồn khác nhau; lệch nhau nghĩa là
-// có người chọn được phòng mà không tra ra khu vực. Test ghim đúng hai chỗ lệch đã biết
-// tính tới 6/9/2026, để bất kỳ chỗ lệch MỚI nào cũng làm test đỏ ngay.
-const LECH_DA_BIET = {
-  chuaCoAnhXa: ['HN9.XD'],        // có trong ô chọn, Khang chưa gửi ánh xạ — chờ xác nhận
-  chuaCoTrongOChon: ['HN32.LLQ'], // có ánh xạ, chưa có trong ô chọn — chờ xác nhận
-};
+// Ô chọn phòng ban (DEPARTMENTS) và bảng ánh xạ là hai nguồn khác nhau. Lệch nhau nghĩa là
+// có người chọn được phòng mà không tra ra khu vực, hoặc có trung tâm không ai chọn được.
+// Hai danh sách phải khớp tuyệt đối.
+test('mọi phòng ban trong ô chọn đều tra được cụm và khu vực', () => {
+  const chuaCoAnhXa = DEPARTMENTS.filter(d => !clusterOf(d));
+  assert.deepEqual(chuaCoAnhXa, [], 'phòng ban chọn được nhưng không tra ra khu vực');
+});
 
-test('chỗ lệch giữa ô chọn phòng ban và bảng ánh xạ đúng bằng danh sách đã biết', () => {
-  const mapped = new Set(ORG_ROWS.map(([d]) => d));
+test('mọi trung tâm trong bảng ánh xạ đều chọn được ở ô phòng ban', () => {
   const picker = new Set(DEPARTMENTS);
-  assert.deepEqual(DEPARTMENTS.filter(d => !mapped.has(d)), LECH_DA_BIET.chuaCoAnhXa);
-  assert.deepEqual(ORG_ROWS.map(([d]) => d).filter(d => !picker.has(d)), LECH_DA_BIET.chuaCoTrongOChon);
+  const chuaCoTrongOChon = ORG_ROWS.map(([d]) => d).filter(d => !picker.has(d));
+  assert.deepEqual(chuaCoTrongOChon, [], 'trung tâm có trong bảng nhưng không ai chọn được');
 });
