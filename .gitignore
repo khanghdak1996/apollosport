@@ -17,3 +17,9 @@ node_modules/
 
 # Understand-Anything cache
 .ua/
+
+# Log rác do Firebase Emulator sinh ra khi test cục bộ (không phải code)
+*-debug.log
+firebase-debug.*.log
+.firebase/
+firebase-export-*/
