@@ -36,6 +36,7 @@ export function Onboarding({ initialName = '', onDone }) {
   const [gender, setGender] = useState('');
   const [weight, setWeight] = useState('');
   const [sports, setSports] = useState([]);
+  const [goalSessions, setGoalSessions] = useState(0); // 0 = chưa chọn, KHÔNG áp mặc định
   const [busy, setBusy] = useState(false);
 
   const toggle = (id) => setSports(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
@@ -54,7 +55,7 @@ export function Onboarding({ initialName = '', onDone }) {
   const submit = async () => {
     if (!ready) return;
     setBusy(true);
-    try { await onDone({ name: name.trim(), dept: dept.trim(), center: '', gender, weightKg, sports }); }
+    try { await onDone({ name: name.trim(), dept: dept.trim(), center: '', gender, weightKg, sports, goalSessions }); }
     finally { setBusy(false); }
   };
 
@@ -89,6 +90,20 @@ export function Onboarding({ initialName = '', onDone }) {
         <input type="number" inputmode="decimal" value=${weight} onInput=${e => setWeight(e.target.value)}
           placeholder=${t('ob.weightPlaceholder')} style=${inputStyle}/>
         <p style=${{ margin: '6px 2px 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>${t('ob.weightHint')}</p>
+
+        <${Label} t=${t('ob.goal')} mt=${18}/>
+        <div style=${{ display: 'flex', gap: 8 }}>
+          ${[2, 3, 4, 5].map(n => {
+    const on = goalSessions === n;
+    return html`
+            <button key=${n} onClick=${() => setGoalSessions(on ? 0 : n)} class="btn-action" style=${{
+      flex: 1, padding: '12px 0', borderRadius: r.md, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+      border: `1px solid ${on ? ACC : C.bdr}`,
+      background: on ? ACC + '1A' : '#fff', color: on ? ACC : C.txt2,
+    }}>${t('ob.goalUnit', { n })}</button>`;
+  })}
+        </div>
+        <p style=${{ margin: '6px 2px 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>${t('ob.goalHint')}</p>
 
         <${Label} t=${t('ob.sports')} mt=${18}/>
         <div style=${{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
