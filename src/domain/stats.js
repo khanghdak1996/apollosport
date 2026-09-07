@@ -192,6 +192,14 @@ import { t } from '../i18n.js';
       return recs;
     };
 
+    // Trần cho mục tiêu tuần. 21 buổi = 3 buổi/ngày × 7 ngày — quá mức đó là gõ nhầm.
+    export const WEEKLY_GOAL_MAX = { sessions: 21, minutes: 10000 };
+
+    // Chuẩn hoá mục tiêu tuần từ ô nhập hoặc nút chọn nhanh. 0 = chưa đặt mục tiêu.
+    // Dùng chung cho màn Tiến bộ và màn chào mừng để hai nơi không lệch luật nhau.
+    export const clampWeeklyGoal = (v, kind = 'sessions') =>
+      Math.max(0, Math.min(WEEKLY_GOAL_MAX[kind] ?? 0, parseInt(v, 10) || 0));
+
     // Hoạt động của TUẦN HIỆN TẠI: {count, minutes, points} — để so với mục tiêu tuần.
     export const currentWeekActivity = sessions => {
       const wkNow = startOfWeek(dayStr(new Date()));
