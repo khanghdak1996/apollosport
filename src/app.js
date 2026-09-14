@@ -1709,6 +1709,11 @@ function GymPair() {
   const goPickEx = cb => { setPg('pick-ex'); setPgCtx({ cb }); };
   const profile = userDoc ? { id: pid, name: userDoc.name, c: userDoc.accent, img: userDoc.photoURL } : null;
 
+  // Mục tiêu tuần nay BẮT BUỘC chọn ở màn chào mừng, nên mọi tài khoản mới đều có số của
+  // riêng mình. Con số dưới đây chỉ còn dùng cho tài khoản tạo TRƯỚC thay đổi đó — họ chưa
+  // từng được hỏi. Họ đổi được ở mục Cá nhân. Không phải mặc định áp cho người dùng mới.
+  const LEGACY_WEEKLY_GOAL = 3;
+
   const onboard = async (fields) => {
     const goalSessions = clampWeeklyGoal(fields.goalSessions);
     await saveOnboarding(pid, {
@@ -1820,7 +1825,7 @@ function GymPair() {
         </div>
       `}
       <div style=${{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 20, position: 'relative' }}>
-        ${tab === 'home' && html`<${HomeTab} profile=${{ ...profile, photoURL: profile.img }} progs=${progs} sessions=${sessions} streak=${liveStreak(userDoc.streak)} totalSessions=${userDoc.totals?.sessions || 0} onStart=${startWorkout} onView=${openSess} onSwitch=${() => setPg('settings')} onManagePrograms=${() => setPg('progs')} onSeeAll=${() => setTab('me')} weeklyGoal=${userDoc.goals?.sessionsPerWeek || 3}/>`}
+        ${tab === 'home' && html`<${HomeTab} profile=${{ ...profile, photoURL: profile.img }} progs=${progs} sessions=${sessions} streak=${liveStreak(userDoc.streak)} totalSessions=${userDoc.totals?.sessions || 0} onStart=${startWorkout} onView=${openSess} onSwitch=${() => setPg('settings')} onManagePrograms=${() => setPg('progs')} onSeeAll=${() => setTab('me')} weeklyGoal=${userDoc.goals?.sessionsPerWeek || LEGACY_WEEKLY_GOAL}/>`}
         ${tab === 'feed' && html`<${FeedTab} me=${meAuthor()} myReactions=${myReactions} onOpenComments=${openComments} onOpenProfile=${openProfile} onManage=${openSess} moderating=${isAdmin && adminMode} onAdminDelete=${adminDeletePost} refreshKey=${feedKey}/>`}
         ${tab === 'rank' && html`<${LeaderboardTab} me=${meAuthor()} onOpenProfile=${openProfile}/>`}
         ${tab === 'me' && html`
