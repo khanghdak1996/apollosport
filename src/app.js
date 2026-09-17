@@ -7,7 +7,7 @@ import { PhotoView } from './ui/Lightbox.js';
 import { Wrap, Card, Empty, Label, Btn } from './ui/primitives.js';
 import { beep } from './ui/sound.js';
 import { uid, p2, fT, fD, durS, restLabel, fDM, fDT, hrs } from './domain/format.js';
-import { sVol, eVol, tVol, e1rm, startOfWeek, fWeek, pct, weeklyStats, exHistory, lastExSets, trainedExIds, titleOptions, sessionsByTitle, computePRs, exsOf, volOf, weeklyActive, sportBreakdown, distanceProgress, personalRecords, currentWeekActivity } from './domain/stats.js';
+import { sVol, eVol, tVol, e1rm, startOfWeek, fWeek, pct, weeklyStats, exHistory, lastExSets, trainedExIds, titleOptions, sessionsByTitle, computePRs, exsOf, volOf, weeklyActive, sportBreakdown, distanceProgress, personalRecords, currentWeekActivity, clampWeeklyGoal } from './domain/stats.js';
 import { EX } from './domain/exercises.js';
 import { useEXDB } from './data/exercises-db-lazy.js';
 const REST_PRESETS = [60, 90, 120, 180]; // preset thời gian nghỉ giữa set (giây)
@@ -867,8 +867,8 @@ function ProgressTab({ sessions, profile, weights, onAddWeight, hideWeight, goal
   const curWeek = currentWeekActivity(sessions);
   const hasGoal = !!(goals?.sessionsPerWeek || goals?.minutesPerWeek);
   const saveGoals = () => {
-    const s = Math.max(0, Math.min(21, parseInt(gSess) || 0));
-    const m = Math.max(0, Math.min(10000, parseInt(gMin) || 0));
+    const s = clampWeeklyGoal(gSess);
+    const m = clampWeeklyGoal(gMin, 'minutes');
     onSaveGoals && onSaveGoals({ sessionsPerWeek: s, minutesPerWeek: m });
     setGoalEdit(false);
   };
@@ -1709,14 +1709,25 @@ function GymPair() {
   const goPickEx = cb => { setPg('pick-ex'); setPgCtx({ cb }); };
   const profile = userDoc ? { id: pid, name: userDoc.name, c: userDoc.accent, img: userDoc.photoURL } : null;
 
+  // Mục tiêu tuần nay BẮT BUỘC chọn ở màn chào mừng, nên mọi tài khoản mới đều có số của
+  // riêng mình. Con số dưới đây chỉ còn dùng cho tài khoản tạo TRƯỚC thay đổi đó — họ chưa
+  // từng được hỏi. Họ đổi được ở mục Cá nhân. Không phải mặc định áp cho người dùng mới.
+  const LEGACY_WEEKLY_GOAL = 3;
+
   const onboard = async (fields) => {
+    const goalSessions = clampWeeklyGoal(fields.goalSessions);
     await saveOnboarding(pid, {
       name: fields.name, dept: fields.dept, center: fields.center, gender: fields.gender,
       prefs: { ...(userDoc.prefs || {}), sports: fields.sports },
+      goals: { sessionsPerWeek: goalSessions },
     });
     // Cân nặng vào kho riêng tư (addWeight tự lưu local + cloud). Chỉ lưu nếu nhập hợp lệ.
     if (fields.weightKg > 0) addWeight(fields.weightKg);
-    setUserDoc(d => ({ ...d, name: fields.name, dept: fields.dept, center: fields.center, gender: fields.gender || '', prefs: { ...(d.prefs || {}), sports: fields.sports, onboarded: true } }));
+    setUserDoc(d => ({
+      ...d, name: fields.name, dept: fields.dept, center: fields.center, gender: fields.gender || '',
+      ...(goalSessions > 0 ? { goals: { ...(d.goals || {}), sessionsPerWeek: goalSessions } } : {}),
+      prefs: { ...(d.prefs || {}), sports: fields.sports, onboarded: true },
+    }));
   };
 
   if (authUser === undefined) return html`<${Wrap} cx=${{ alignItems: 'center', justifyContent: 'center', color: C.txt2, fontSize: 14 }}>${t('common.loading')}</${Wrap}>`;
@@ -1814,7 +1825,7 @@ function GymPair() {
         </div>
       `}
       <div style=${{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 20, position: 'relative' }}>
-        ${tab === 'home' && html`<${HomeTab} profile=${{ ...profile, photoURL: profile.img }} progs=${progs} sessions=${sessions} streak=${liveStreak(userDoc.streak)} totalSessions=${userDoc.totals?.sessions || 0} onStart=${startWorkout} onView=${openSess} onSwitch=${() => setPg('settings')} onManagePrograms=${() => setPg('progs')} onSeeAll=${() => setTab('me')} weeklyGoal=${userDoc.goals?.sessionsPerWeek || 3}/>`}
+        ${tab === 'home' && html`<${HomeTab} profile=${{ ...profile, photoURL: profile.img }} progs=${progs} sessions=${sessions} streak=${liveStreak(userDoc.streak)} totalSessions=${userDoc.totals?.sessions || 0} onStart=${startWorkout} onView=${openSess} onSwitch=${() => setPg('settings')} onManagePrograms=${() => setPg('progs')} onSeeAll=${() => setTab('me')} weeklyGoal=${userDoc.goals?.sessionsPerWeek || LEGACY_WEEKLY_GOAL}/>`}
         ${tab === 'feed' && html`<${FeedTab} me=${meAuthor()} myReactions=${myReactions} onOpenComments=${openComments} onOpenProfile=${openProfile} onManage=${openSess} moderating=${isAdmin && adminMode} onAdminDelete=${adminDeletePost} refreshKey=${feedKey}/>`}
         ${tab === 'rank' && html`<${LeaderboardTab} me=${meAuthor()} onOpenProfile=${openProfile}/>`}
         ${tab === 'me' && html`

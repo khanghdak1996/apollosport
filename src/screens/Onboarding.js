@@ -4,6 +4,7 @@ import { C, r, ACC } from '../ui/theme.js';
 import { Wrap, Btn, Label } from '../ui/primitives.js';
 import { ACTIVITIES, actLabel } from '../domain/activities.js';
 import { DEPARTMENTS } from '../data/departments.js';
+import { missingOnboardingFields } from '../domain/onboarding.js';
 import { t } from '../i18n.js';
 
 const inputStyle = { width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: r.md, border: `1px solid ${C.bdr}`, fontSize: 15, color: C.txt1, background: '#fff' };
@@ -36,25 +37,23 @@ export function Onboarding({ initialName = '', onDone }) {
   const [gender, setGender] = useState('');
   const [weight, setWeight] = useState('');
   const [sports, setSports] = useState([]);
+  const [goalSessions, setGoalSessions] = useState(0); // 0 = chưa chọn, KHÔNG áp mặc định
   const [busy, setBusy] = useState(false);
 
   const toggle = (id) => setSports(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
 
   const weightKg = parseFloat(weight) || 0;
-  // Cân nặng + giới BẮT BUỘC: dùng cho hệ số DOTS chấm điểm gym công bằng theo cân nặng+giới.
+  // Luật ô bắt buộc nằm ở domain/onboarding.js (có test). Ở đây chỉ dịch khoá sang nhãn.
   // Liệt kê ô còn thiếu thay vì chỉ làm mờ nút — trước đây bấm nút không có phản hồi gì,
-  // người dùng không biết mình thiếu gì (nhãn cũng không ghi ô nào bắt buộc).
-  const missing = [
-    !name.trim() && t('ob.name'),
-    !gender && t('gender.label'),
-    !(weightKg > 0) && t('ob.weight'),
-  ].filter(Boolean);
+  // người dùng không biết mình thiếu gì.
+  const LABEL = { name: 'ob.name', gender: 'gender.label', weightKg: 'ob.weight', goalSessions: 'ob.goal' };
+  const missing = missingOnboardingFields({ name, gender, weightKg, goalSessions }).map(k => t(LABEL[k]));
   const ready = missing.length === 0 && !busy;
 
   const submit = async () => {
     if (!ready) return;
     setBusy(true);
-    try { await onDone({ name: name.trim(), dept: dept.trim(), center: '', gender, weightKg, sports }); }
+    try { await onDone({ name: name.trim(), dept: dept.trim(), center: '', gender, weightKg, sports, goalSessions }); }
     finally { setBusy(false); }
   };
 
@@ -89,6 +88,20 @@ export function Onboarding({ initialName = '', onDone }) {
         <input type="number" inputmode="decimal" value=${weight} onInput=${e => setWeight(e.target.value)}
           placeholder=${t('ob.weightPlaceholder')} style=${inputStyle}/>
         <p style=${{ margin: '6px 2px 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>${t('ob.weightHint')}</p>
+
+        <${Label} t=${`${t('ob.goal')} ${t('ob.required')}`} mt=${18}/>
+        <div style=${{ display: 'flex', gap: 6 }}>
+          ${[1, 2, 3, 4, 5].map(n => {
+    const on = goalSessions === n;
+    return html`
+            <button key=${n} onClick=${() => setGoalSessions(on ? 0 : n)} class="btn-action" style=${{
+      flex: 1, padding: '12px 0', borderRadius: r.md, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+      border: `1px solid ${on ? ACC : C.bdr}`,
+      background: on ? ACC + '1A' : '#fff', color: on ? ACC : C.txt2,
+    }}>${t('ob.goalUnit', { n })}</button>`;
+  })}
+        </div>
+        <p style=${{ margin: '6px 2px 0', fontSize: 12, lineHeight: 1.45, color: C.txt4 }}>${t('ob.goalHint')}</p>
 
         <${Label} t=${t('ob.sports')} mt=${18}/>
         <div style=${{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

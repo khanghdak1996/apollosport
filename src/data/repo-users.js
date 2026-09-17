@@ -34,10 +34,14 @@ export async function updateUserDoc(uid, fields) {
 }
 
 // Lưu kết quả onboarding lần đầu.
-export async function saveOnboarding(uid, { name, dept, center, gender, prefs }) {
-  await setDoc(doc(db, 'users', uid), {
+export async function saveOnboarding(uid, { name, dept, center, gender, prefs, goals }) {
+  const data = {
     name, dept: dept || '', center: center || '', gender: gender || '',
     prefs: { ...prefs, onboarded: true },
     lastActiveAt: serverTimestamp(),
-  }, { merge: true });
+  };
+  // Mục tiêu tuần là TUỲ CHỌN: bỏ qua thì không ghi field nào cả, để hồ sơ không mang
+  // một con số người dùng chưa từng chọn.
+  if (goals && goals.sessionsPerWeek > 0) data.goals = { sessionsPerWeek: goals.sessionsPerWeek };
+  await setDoc(doc(db, 'users', uid), data, { merge: true });
 }
